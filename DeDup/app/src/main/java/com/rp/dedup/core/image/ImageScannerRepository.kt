@@ -1,4 +1,4 @@
-package com.rp.dedup.core
+package com.rp.dedup.core.image
 
 import android.content.ContentUris
 import android.content.Context

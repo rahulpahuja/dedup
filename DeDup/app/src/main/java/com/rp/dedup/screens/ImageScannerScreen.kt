@@ -26,7 +26,7 @@ import androidx.navigation.NavHostController
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.ScannerViewModelFactory
 import com.rp.dedup.core.ScannerContent
-import com.rp.dedup.core.ScannerViewModel
+import com.rp.dedup.core.image.ScannerViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,6 +1,4 @@
-package com.rp.dedup.core
-
-import android.database.Cursor
+package com.rp.dedup.core.image
 
 import android.graphics.Bitmap
 import android.graphics.Color

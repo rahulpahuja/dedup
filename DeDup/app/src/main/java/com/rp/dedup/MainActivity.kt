@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.rp.dedup.core.DataStoreManager
+import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.ui.theme.DeDupTheme
 
 class MainActivity : ComponentActivity() {

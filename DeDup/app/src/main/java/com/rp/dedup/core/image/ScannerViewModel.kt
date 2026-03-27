@@ -1,4 +1,4 @@
-package com.rp.dedup.core
+package com.rp.dedup.core.image
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel

@@ -12,7 +12,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.rp.dedup.core.PermissionRequester
+import com.rp.dedup.core.image.PermissionRequester
 import com.rp.dedup.screens.*
 
 // Provides DrawerState to any composable in the tree without prop drilling

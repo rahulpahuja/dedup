@@ -10,8 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -19,6 +22,7 @@ import com.rp.dedup.Screen
 import com.rp.dedup.ThemeMode
 import com.rp.dedup.ThemeViewModel
 import com.rp.dedup.UserProfileViewModel
+import com.rp.dedup.core.caching.DataStoreManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -28,8 +32,18 @@ fun AppDrawerContent(
     drawerState: DrawerState,
     scope: CoroutineScope
 ) {
+    val context = LocalContext.current
     val profileViewModel: UserProfileViewModel = viewModel()
-    val themeViewModel: ThemeViewModel = viewModel()
+    
+    // ThemeViewModel requires DataStoreManager, so we use a factory
+    val themeViewModel: ThemeViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ThemeViewModel(DataStoreManager(context.applicationContext)) as T
+            }
+        }
+    )
+    
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     var showEditDialog by remember { mutableStateOf(false) }
 
@@ -85,8 +99,11 @@ fun AppDrawerContent(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
+        // Collect theme mode state
+        val currentThemeMode by themeViewModel.themeMode.collectAsState()
+
         ThemeSection(
-            currentMode = themeViewModel.themeMode,
+            currentMode = currentThemeMode,
             onModeChange = { themeViewModel.setThemeMode(it) }
         )
 

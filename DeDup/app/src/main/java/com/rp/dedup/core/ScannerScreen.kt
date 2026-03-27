@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.rp.dedup.core.image.ScannedImage
 
 /**
  * Pure list content — no Scaffold. Used inside [screens.ImageScannerScreen].
@@ -179,13 +180,13 @@ private fun DuplicateGroupCard(
                     key = { _, item -> item.uri.toString() },
                     contentType = { _, _ -> "ImageTile" }
                 ) { idx, item ->
-                    val isSelected = selectedUris.contains(item.uri)
+                    val isSelected = selectedUris.contains(Uri.parse(item.uri))
                     SelectableImageItem(
                         item = item,
                         isSelected = isSelected,
                         isKeep = idx == 0,
-                        onSelect = { onImageSelected(item.uri, !isSelected) },
-                        onDelete = { onDeleteSingleImage(item.uri) }
+                        onSelect = { onImageSelected(Uri.parse(item.uri), !isSelected) },
+                        onDelete = { onDeleteSingleImage(Uri.parse(item.uri)) }
                     )
                 }
             }
@@ -214,7 +215,7 @@ private fun SelectableImageItem(
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(item.uri)
+                .data(Uri.parse(item.uri))
                 .crossfade(false)
                 .build(),
             contentDescription = null,

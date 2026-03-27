@@ -1,4 +1,4 @@
-package com.rp.dedup.core
+package com.rp.dedup.core.caching
 
 import android.content.Context
 import androidx.datastore.core.DataStore
