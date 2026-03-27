@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
@@ -28,7 +29,7 @@ class ImageScannerRepository(private val context: Context) {
         }
     }
 
-    @OptIn(FlowPreview::class) // flatMapMerge requires this opt-in
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class) // flatMapMerge requires this opt-in
     fun scanImagesInParallel(concurrencyLevel: Int = 8): Flow<ScannedImage> {
 
         // Step 1: Fast Query

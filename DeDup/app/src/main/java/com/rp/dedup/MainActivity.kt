@@ -5,12 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.core.DataStoreManager
 import com.rp.dedup.ui.theme.DeDupTheme
 
 class MainActivity : ComponentActivity() {
-    private val themeViewModel: ThemeViewModel by viewModels()
+    private val themeViewModel: ThemeViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ThemeViewModel(DataStoreManager(applicationContext)) as T
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
