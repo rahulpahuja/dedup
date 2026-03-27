@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.rp.dedup.core.image.ScannedImage
@@ -103,7 +104,7 @@ fun ScannerContent(
             ) {
                 itemsIndexed(
                     items = duplicateGroups,
-                    key = { _, group -> group.first().uri.toString() },
+                    key = { _, group -> group.first().uri },
                     contentType = { _, _ -> "DuplicateGroupCard" }
                 ) { index, group ->
                     DuplicateGroupCard(
@@ -177,16 +178,17 @@ private fun DuplicateGroupCard(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 itemsIndexed(
                     items = group,
-                    key = { _, item -> item.uri.toString() },
+                    key = { _, item -> item.uri },
                     contentType = { _, _ -> "ImageTile" }
                 ) { idx, item ->
-                    val isSelected = selectedUris.contains(Uri.parse(item.uri))
+                    val itemUri = item.uri.toUri()
+                    val isSelected = selectedUris.contains(itemUri)
                     SelectableImageItem(
                         item = item,
                         isSelected = isSelected,
                         isKeep = idx == 0,
-                        onSelect = { onImageSelected(Uri.parse(item.uri), !isSelected) },
-                        onDelete = { onDeleteSingleImage(Uri.parse(item.uri)) }
+                        onSelect = { onImageSelected(itemUri, !isSelected) },
+                        onDelete = { onDeleteSingleImage(itemUri) }
                     )
                 }
             }
@@ -215,7 +217,7 @@ private fun SelectableImageItem(
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(Uri.parse(item.uri))
+                .data(item.uri.toUri())
                 .crossfade(false)
                 .build(),
             contentDescription = null,
