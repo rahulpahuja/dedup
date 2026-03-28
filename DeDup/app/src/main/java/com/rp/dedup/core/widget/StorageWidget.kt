@@ -4,10 +4,13 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.text.format.Formatter
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height as composeHeight
 import androidx.compose.foundation.layout.padding as composePadding
 import androidx.compose.foundation.layout.fillMaxWidth as composeFillMaxWidth
+import androidx.compose.foundation.layout.size as composeSize
+import androidx.compose.foundation.layout.width as composeWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator as M3LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment as ComposeAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight as ComposeFontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -39,10 +45,14 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.rp.dedup.MainActivity
+import com.rp.dedup.R
+import com.rp.dedup.UIConstants
 
 class StorageWidget : GlanceAppWidget() {
 
@@ -67,6 +77,29 @@ class StorageWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Header: Logo and App Title
+            Row(
+                modifier = GlanceModifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_dedup_logo),
+                    contentDescription = null,
+                    modifier = GlanceModifier.size(24.dp)
+                )
+                Spacer(modifier = GlanceModifier.width(8.dp))
+                Text(
+                    text = UIConstants.APP_NAME,
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GlanceTheme.colors.primary
+                    )
+                )
+            }
+
+            Spacer(modifier = GlanceModifier.height(12.dp))
+
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -75,14 +108,14 @@ class StorageWidget : GlanceAppWidget() {
                     Text(
                         text = "Used Space",
                         style = TextStyle(
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             color = GlanceTheme.colors.onSurfaceVariant
                         )
                     )
                     Text(
                         text = stats.usedLabel,
                         style = TextStyle(
-                            fontSize = 16.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = GlanceTheme.colors.onSurface
                         )
@@ -91,7 +124,7 @@ class StorageWidget : GlanceAppWidget() {
                 Text(
                     text = "${stats.usedPercent}%",
                     style = TextStyle(
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = GlanceTheme.colors.primary
                     )
@@ -112,7 +145,7 @@ class StorageWidget : GlanceAppWidget() {
             Text(
                 text = "${stats.freeLabel} free",
                 style = TextStyle(
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     color = GlanceTheme.colors.onSurfaceVariant
                 )
             )
@@ -152,7 +185,7 @@ class StorageWidgetReceiver : GlanceAppWidgetReceiver() {
 
 // ── Widget Preview (Standard Compose simulation) ──────────────────────────────
 
-@Preview(showBackground = true, widthDp = 170, heightDp = 130)
+@Preview(showBackground = true, widthDp = 180, heightDp = 150)
 @Composable
 fun StorageWidgetPreview() {
     val stats = WidgetStorageStats(
@@ -175,6 +208,27 @@ fun StorageWidgetPreview() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = ComposeAlignment.CenterHorizontally
             ) {
+                // Header Simulation
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.composeFillMaxWidth(),
+                    verticalAlignment = ComposeAlignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_dedup_logo),
+                        contentDescription = null,
+                        modifier = Modifier.composeSize(20.dp)
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.composeWidth(8.dp))
+                    M3Text(
+                        text = UIConstants.APP_NAME,
+                        fontSize = 13.sp,
+                        fontWeight = ComposeFontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.composeHeight(12.dp))
+
                 androidx.compose.foundation.layout.Row(
                     modifier = Modifier.composeFillMaxWidth(),
                     verticalAlignment = ComposeAlignment.CenterVertically
@@ -184,7 +238,7 @@ fun StorageWidgetPreview() {
                     ) {
                         M3Text(
                             text = "Used Space",
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         M3Text(

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Background -->
+    <path android:pathData="M114,0 H398 A114,114 0 0,1 512,114 V398 A114,114 0 0,1 398,512 H114 A114,114 0 0,1 0,398 V114 A114,114 0 0,1 114,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="163"
+                android:centerY="143"
+                android:gradientRadius="435">
+                <item android:offset="0"    android:color="#FF132545" />
+                <item android:offset="0.55" android:color="#FF090F20" />
+                <item android:offset="1"    android:color="#FF040810" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Star field -->
+    <path android:fillColor="#47FFFFFF" android:pathData="M74.6,72 a1.4,1.4 0 1,0 2.8,0 a1.4,1.4 0 1,0 -2.8,0Z" />
+    <path android:fillColor="#33FFFFFF" android:pathData="M429,88 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0Z" />
+    <path android:fillColor="#26FFFFFF" android:pathData="M458.2,390 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0Z" />
+    <path android:fillColor="#2EFFFFFF" android:pathData="M53.8,395 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0Z" />
+    <path android:fillColor="#38FFFFFF" android:pathData="M387,56 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0Z" />
+    <path android:fillColor="#24FFFFFF" android:pathData="M139,456 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0Z" />
+    <path android:fillColor="#29FFFFFF" android:pathData="M468.8,210 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0Z" />
+    <path android:fillColor="#24FFFFFF" android:pathData="M43,210 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0Z" />
+
+    <!-- Ghost file — back (rotate −18°) -->
+    <group android:translateX="256" android:translateY="244">
+        <group android:rotation="-18">
+            <group android:translateX="-90" android:translateY="-110">
+                <path
+                    android:pathData="M15,0 H165 A15,15 0 0,1 180,15 V205 A15,15 0 0,1 165,220 H15 A15,15 0 0,1 0,205 V15 A15,15 0 0,1 15,0 Z"
+                    android:fillColor="#521A3878"
+                    android:strokeColor="#613D68C0"
+                    android:strokeWidth="2" />
+                <path android:fillColor="#520F2455"
+                    android:pathData="M138,0 L180,42 L138,42 Z" />
+                <path android:fillColor="#00000000"
+                    android:strokeColor="#514070C5" android:strokeWidth="1.5"
+                    android:pathData="M138,0 L180,42" />
+                <path android:fillColor="#2E4285F4"
+                    android:pathData="M23.5,62 H134.5 A3.5,3.5 0 0,1 138,65.5 A3.5,3.5 0 0,1 134.5,69 H23.5 A3.5,3.5 0 0,1 20,65.5 A3.5,3.5 0 0,1 23.5,62 Z" />
+                <path android:fillColor="#2E4285F4"
+                    android:pathData="M23.5,81 H104.5 A3.5,3.5 0 0,1 108,84.5 A3.5,3.5 0 0,1 104.5,88 H23.5 A3.5,3.5 0 0,1 20,84.5 A3.5,3.5 0 0,1 23.5,81 Z" />
+                <path android:fillColor="#2E4285F4"
+                    android:pathData="M23.5,100 H120.5 A3.5,3.5 0 0,1 124,103.5 A3.5,3.5 0 0,1 120.5,107 H23.5 A3.5,3.5 0 0,1 20,103.5 A3.5,3.5 0 0,1 23.5,100 Z" />
+                <path android:fillColor="#00000000"
+                    android:strokeColor="#8CE53535" android:strokeWidth="11"
+                    android:strokeLineCap="round"
+                    android:pathData="M18,155 L162,155" />
+            </group>
+        </group>
+    </group>
+
+    <!-- Ghost file — middle (rotate −8°) -->
+    <group android:translateX="256" android:translateY="244">
+        <group android:rotation="-8">
+            <group android:translateX="-90" android:translateY="-110">
+                <path
+                    android:pathData="M15,0 H165 A15,15 0 0,1 180,15 V205 A15,15 0 0,1 165,220 H15 A15,15 0 0,1 0,205 V15 A15,15 0 0,1 15,0 Z"
+                    android:fillColor="#801F3F85"
+                    android:strokeColor="#8C4272CB"
+                    android:strokeWidth="2" />
+                <path android:fillColor="#80142E62"
+                    android:pathData="M138,0 L180,42 L138,42 Z" />
+                <path android:fillColor="#00000000"
+                    android:strokeColor="#80527FD5" android:strokeWidth="1.5"
+                    android:pathData="M138,0 L180,42" />
+                <path android:fillColor="#595B97F7"
+                    android:pathData="M23.5,62 H134.5 A3.5,3.5 0 0,1 138,65.5 A3.5,3.5 0 0,1 134.5,69 H23.5 A3.5,3.5 0 0,1 20,65.5 A3.5,3.5 0 0,1 23.5,62 Z" />
+                <path android:fillColor="#595B97F7"
+                    android:pathData="M23.5,81 H104.5 A3.5,3.5 0 0,1 108,84.5 A3.5,3.5 0 0,1 104.5,88 H23.5 A3.5,3.5 0 0,1 20,84.5 A3.5,3.5 0 0,1 23.5,81 Z" />
+                <path android:fillColor="#595B97F7"
+                    android:pathData="M23.5,100 H120.5 A3.5,3.5 0 0,1 124,103.5 A3.5,3.5 0 0,1 120.5,107 H23.5 A3.5,3.5 0 0,1 20,103.5 A3.5,3.5 0 0,1 23.5,100 Z" />
+                <path android:fillColor="#00000000"
+                    android:strokeColor="#66E53535" android:strokeWidth="11"
+                    android:strokeLineCap="round"
+                    android:pathData="M18,155 L162,155" />
+            </group>
+        </group>
+    </group>
+
+    <!-- Red × badge (over ghost files) -->
+    <path android:fillColor="#D90A0F1E"
+        android:pathData="M264,116 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0Z" />
+    <path android:pathData="M269,116 a25,25 0 1,0 50,0 a25,25 0 1,0 -50,0Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial"
+                android:centerX="289" android:centerY="109"
+                android:gradientRadius="33">
+                <item android:offset="0" android:color="#FFFF6B6B" />
+                <item android:offset="1" android:color="#FFCC1F1F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M283,105 L305,127" />
+    <path android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M305,105 L283,127" />
+
+    <!-- Front file (keeper) -->
+    <group android:translateX="166" android:translateY="128">
+        <!-- Body -->
+        <path android:pathData="M16,0 H164 A16,16 0 0,1 180,16 V204 A16,16 0 0,1 164,220 H16 A16,16 0 0,1 0,204 V16 A16,16 0 0,1 16,0 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear"
+                    android:startX="166" android:startY="128"
+                    android:endX="193"  android:endY="348">
+                    <item android:offset="0" android:color="#FF5FA3FF" />
+                    <item android:offset="1" android:color="#FF1848C0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <!-- Fold shadow triangle -->
+        <path android:fillColor="#E6193A96"
+            android:pathData="M138,0 L180,0 L180,42 Z" />
+        <!-- Fold face -->
+        <path android:pathData="M138,0 L180,42 L138,42 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear"
+                    android:startX="304" android:startY="128"
+                    android:endX="346"  android:endY="170">
+                    <item android:offset="0" android:color="#FF3468D8" />
+                    <item android:offset="1" android:color="#FF102B80" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <!-- Fold crease -->
+        <path android:fillColor="#00000000"
+            android:strokeColor="#47FFFFFF" android:strokeWidth="1.5"
+            android:pathData="M138,0 L180,42" />
+        <!-- Left edge highlight -->
+        <path android:fillColor="#38FFFFFF"
+            android:pathData="M0,0 H4 V220 H0 Z" />
+        <!-- Top edge highlight -->
+        <path android:fillColor="#2EFFFFFF"
+            android:pathData="M0,0 H180 V3 H0 Z" />
+        <!-- Content lines (pill shapes, graduated opacity) -->
+        <path android:fillColor="#EBFFFFFF"
+            android:pathData="M26,64 H136 A4,4 0 0,1 140,68 A4,4 0 0,1 136,72 H26 A4,4 0 0,1 22,68 A4,4 0 0,1 26,64 Z" />
+        <path android:fillColor="#B8FFFFFF"
+            android:pathData="M26,85 H108 A4,4 0 0,1 112,89 A4,4 0 0,1 108,93 H26 A4,4 0 0,1 22,89 A4,4 0 0,1 26,85 Z" />
+        <path android:fillColor="#B8FFFFFF"
+            android:pathData="M26,106 H128 A4,4 0 0,1 132,110 A4,4 0 0,1 128,114 H26 A4,4 0 0,1 22,110 A4,4 0 0,1 26,106 Z" />
+        <path android:fillColor="#85FFFFFF"
+            android:pathData="M26,127 H92 A4,4 0 0,1 96,131 A4,4 0 0,1 92,135 H26 A4,4 0 0,1 22,131 A4,4 0 0,1 26,127 Z" />
+        <path android:fillColor="#85FFFFFF"
+            android:pathData="M26,148 H116 A4,4 0 0,1 120,152 A4,4 0 0,1 116,156 H26 A4,4 0 0,1 22,152 A4,4 0 0,1 26,148 Z" />
+        <path android:fillColor="#52FFFFFF"
+            android:pathData="M26,169 H76 A4,4 0 0,1 80,173 A4,4 0 0,1 76,177 H26 A4,4 0 0,1 22,173 A4,4 0 0,1 26,169 Z" />
+    </group>
+
+    <!-- Cyan scan beam — wide soft layer -->
+    <path android:fillColor="#1E00D8FF"
+        android:pathData="M93,289 H419 A11,11 0 0,1 430,300 A11,11 0 0,1 419,311 H93 A11,11 0 0,1 82,300 A11,11 0 0,1 93,289 Z" />
+    <!-- Medium layer -->
+    <path android:fillColor="#4700D8FF"
+        android:pathData="M89,293 H423 A7,7 0 0,1 430,300 A7,7 0 0,1 423,307 H89 A7,7 0 0,1 82,300 A7,7 0 0,1 89,293 Z" />
+    <!-- Bright core -->
+    <path android:fillColor="#F200E5FF"
+        android:pathData="M86,296 H426 A4,4 0 0,1 430,300 A4,4 0 0,1 426,304 H86 A4,4 0 0,1 82,300 A4,4 0 0,1 86,296 Z" />
+    <!-- Left terminus dot -->
+    <path android:fillColor="#F200E5FF"
+        android:pathData="M75,300 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0Z" />
+    <!-- Arrowhead -->
+    <path android:fillColor="#F200E5FF"
+        android:pathData="M414,291 L432,300 L414,309 Z" />
+
+    <!-- Green ✓ badge — outer dark ring -->
+    <path android:fillColor="#EB040810"
+        android:pathData="M296,368 a56,56 0 1,0 112,0 a56,56 0 1,0 -112,0Z" />
+    <!-- Green fill -->
+    <path android:fillColor="#FF12C97A"
+        android:pathData="M304,368 a48,48 0 1,0 96,0 a48,48 0 1,0 -96,0Z" />
+    <!-- Inner rim highlight -->
+    <path android:fillColor="#00000000"
+        android:strokeColor="#38FFFFFF" android:strokeWidth="2"
+        android:pathData="M304,368 a48,48 0 1,0 96,0 a48,48 0 1,0 -96,0Z" />
+    <!-- Checkmark -->
+    <path android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="13"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M326,368 L342,386 L378,346" />
+
+    <!-- Satellite sparkles -->
+    <path android:fillColor="#B312C97A"
+        android:pathData="M348.5,312 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0Z" />
+    <path android:fillColor="#8012C97A"
+        android:pathData="M401.5,335 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0Z" />
+    <path android:fillColor="#6112C97A"
+        android:pathData="M406,400 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0Z" />
+    <path android:fillColor="#6112C97A"
+        android:pathData="M298,406 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0Z" />
+    <path android:fillColor="#7312C97A"
+        android:pathData="M294.5,336 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0Z" />
+
+</vector>
