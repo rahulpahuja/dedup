@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -6,8 +8,18 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
 }
 
-// jvmToolchain sets sourceCompatibility, targetCompatibility, and Kotlin jvmTarget
-// in one place — the modern AGP 8+ / Kotlin 2.x way.
+// Load local.properties safely
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+val googleWebClientId = localProperties.getProperty("google_web_client_id") ?: ""
+val facebookAppId = localProperties.getProperty("facebook_app_id") ?: ""
+val facebookClientToken = localProperties.getProperty("facebook_client_token") ?: ""
+
 kotlin {
     jvmToolchain(17)
 }
@@ -24,16 +36,25 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Inject secrets into BuildConfig for Kotlin code access
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+        buildConfigField("String", "FACEBOOK_APP_ID", "\"$facebookAppId\"")
+        buildConfigField("String", "FACEBOOK_CLIENT_TOKEN", "\"$facebookClientToken\"")
+
+        // Manifest placeholders for AndroidManifest.xml access
+        manifestPlaceholders["facebook_app_id"] = facebookAppId
+        manifestPlaceholders["facebook_client_token"] = facebookClientToken
     }
 
     buildTypes {
         debug {
-            // Keep debug fast — no minification, no resource shrinking.
             isMinifyEnabled = false
             isShrinkResources = false
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -41,10 +62,16 @@ android {
         }
     }
 
+    buildFeatures {
+        compose = true
+        buildConfig = true
+        aidl = false
+        resValues = false
+        shaders = false
+    }
+
     packaging {
         resources {
-            // Exclude files that several libraries duplicate; merging them
-            // wastes time during every packageDebugResources task.
             excludes += setOf(
                 "META-INF/LICENSE.md",
                 "META-INF/LICENSE-notice.md",
@@ -55,13 +82,7 @@ android {
             )
         }
     }
-    buildFeatures {
-        compose = true
-        buildConfig = false
-        aidl = false
-        resValues = false
-        shaders = false
-    }
+    
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -93,7 +114,7 @@ dependencies {
     // Coil for Jetpack Compose
     implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // ML Kit on-device image labeling (used for semantic image search)
+    // ML Kit on-device image labeling
     implementation("com.google.mlkit:image-labeling:17.0.9")
     
     implementation(libs.androidx.core.ktx)

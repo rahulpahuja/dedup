@@ -23,6 +23,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.rp.dedup.BuildConfig
 import com.rp.dedup.core.notifications.ToastManager
 import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
@@ -35,13 +36,6 @@ class FirebaseAuthManager(
 
     companion object {
         private const val TAG = "FirebaseAuthManager"
-
-        /**
-         * Your OAuth 2.0 Web Client ID from the Google Cloud Console / Firebase Console.
-         * Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration.
-         * TODO: Replace with your actual Web Client ID before shipping.
-         */
-        const val WEB_CLIENT_ID = "300582514488-0se0sjakfc04r7rfegpm8h0jnd7t7luh.apps.googleusercontent.com"
     }
 
     val currentUser: FirebaseUser?
@@ -99,15 +93,6 @@ class FirebaseAuthManager(
     /**
      * Launches the Credential Manager bottom-sheet to sign the user in with Google,
      * then authenticates with Firebase using the returned ID token.
-     *
-     * Flow:
-     *  1. Try authorised accounts only (enables auto sign-in for returning users).
-     *  2. If no authorised account exists → fall back to all accounts (sign-up flow).
-     *  3. Extract the [GoogleIdTokenCredential] from the Credential Manager response.
-     *  4. Exchange the ID token for a Firebase [FirebaseUser].
-     *
-     * @param activityContext Must be an [Activity] context, not an Application context,
-     *   because Credential Manager needs to attach a bottom sheet to the window.
      */
     suspend fun signInWithGoogle(activityContext: Context): FirebaseUser? {
         return try {
@@ -121,15 +106,9 @@ class FirebaseAuthManager(
         }
     }
 
-    /**
-     * Orchestrates the two-step Credential Manager request:
-     *   Step 1 — Authorised accounts only   (bottom sheet + auto sign-in eligible).
-     *   Step 2 — All device accounts        (shown when step 1 returns [NoCredentialException]).
-     */
     private suspend fun fetchGoogleIdToken(activityContext: Context): String? {
         val credentialManager = CredentialManager.create(activityContext)
 
-        // Step 1: previously-authorised accounts → enables Automatic Sign-in
         return try {
             requestGoogleIdToken(
                 credentialManager = credentialManager,
@@ -139,7 +118,6 @@ class FirebaseAuthManager(
             )
         } catch (e: NoCredentialException) {
             Log.d(TAG, "No authorised accounts; falling back to all-accounts flow")
-            // Step 2: show all Google accounts on the device (new user / different account)
             try {
                 requestGoogleIdToken(
                     credentialManager = credentialManager,
@@ -167,10 +145,6 @@ class FirebaseAuthManager(
         }
     }
 
-    /**
-     * Builds and fires a single Credential Manager [GetCredentialRequest], then
-     * extracts the Google ID token from the response.
-     */
     private suspend fun requestGoogleIdToken(
         credentialManager: CredentialManager,
         activityContext: Context,
@@ -179,7 +153,7 @@ class FirebaseAuthManager(
     ): String? {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts)
-            .setServerClientId(WEB_CLIENT_ID)
+            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
             .setAutoSelectEnabled(autoSelect)
             .setNonce(generateNonce())
             .build()
@@ -195,10 +169,6 @@ class FirebaseAuthManager(
         return extractGoogleIdToken(result)
     }
 
-    /**
-     * Unpacks the [GetCredentialResponse] and returns the raw Google ID token string,
-     * or `null` if the credential type is unrecognised.
-     */
     private fun extractGoogleIdToken(result: GetCredentialResponse): String? {
         val credential = result.credential
         return if (
@@ -217,10 +187,6 @@ class FirebaseAuthManager(
         }
     }
 
-    /**
-     * Generates a cryptographically strong random nonce (Base64-URL-safe, no padding).
-     * Sent with each sign-in request to prevent replay attacks.
-     */
     private fun generateNonce(byteLength: Int = 32): String {
         val randomBytes = ByteArray(byteLength)
         SecureRandom().nextBytes(randomBytes)
@@ -258,9 +224,6 @@ class FirebaseAuthManager(
 
     // ── Phone Auth ────────────────────────────────────────────────────────────
 
-    /**
-     * Step 1 of Phone Auth: Verify the phone number and send OTP.
-     */
     fun verifyPhoneNumber(
         phoneNumber: String,
         activity: Activity,
@@ -281,9 +244,6 @@ class FirebaseAuthManager(
         }
     }
 
-    /**
-     * Step 2 of Phone Auth: Sign in using the verification ID and SMS code.
-     */
     suspend fun signInWithPhoneCode(verificationId: String, smsCode: String): FirebaseUser? {
         return try {
             Log.d(TAG, "Attempting sign-in with phone code")
@@ -298,11 +258,6 @@ class FirebaseAuthManager(
 
     // ── Sign-out ──────────────────────────────────────────────────────────────
 
-    /**
-     * Signs the user out of Firebase.
-     * For Google sign-in, prefer [signOutWithCredentialClear] to also notify
-     * the Credential Manager so the account picker resets for the next sign-in.
-     */
     fun signOut() {
         try {
             Log.d(TAG, "Signing out user: ${currentUser?.email ?: currentUser?.uid}")
@@ -315,15 +270,6 @@ class FirebaseAuthManager(
         }
     }
 
-    /**
-     * Signs the user out of Firebase AND clears the Credential Manager session.
-     *
-     * Clearing credential state is important for Google sign-in: without it the
-     * Credential Manager may skip the account-picker and auto-select the same
-     * account next time, making it impossible to switch accounts.
-     *
-     * @param context Any valid [Context] (Activity or Application both work here).
-     */
     suspend fun signOutWithCredentialClear(context: Context) {
         try {
             Log.d(TAG, "Clearing Credential Manager state")
