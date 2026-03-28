@@ -30,8 +30,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavHostController
 import com.rp.dedup.Screen
-import com.rp.dedup.ThemeMode
-import com.rp.dedup.ThemeViewModel
+import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.PrimaryBlue

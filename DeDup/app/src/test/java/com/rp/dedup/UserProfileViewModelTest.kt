@@ -2,6 +2,7 @@ package com.rp.dedup
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

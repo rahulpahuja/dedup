@@ -14,6 +14,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.rp.dedup.UIConstants.ROUTE_ABOUT
+import com.rp.dedup.UIConstants.ROUTE_ACTIVITY
+import com.rp.dedup.UIConstants.ROUTE_CLEANUP
+import com.rp.dedup.UIConstants.ROUTE_DASHBOARD
+import com.rp.dedup.UIConstants.ROUTE_FILE_BROWSER
+import com.rp.dedup.UIConstants.ROUTE_FILE_SCANNER
+import com.rp.dedup.UIConstants.ROUTE_RESULTS_CONTACTS
+import com.rp.dedup.UIConstants.ROUTE_RESULTS_MEDIA
+import com.rp.dedup.UIConstants.ROUTE_SCAN_HISTORY
+import com.rp.dedup.UIConstants.ROUTE_SETTINGS
+import com.rp.dedup.UIConstants.ROUTE_SPLASH
+import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.image.PermissionRequester
 import com.rp.dedup.screens.*
 
@@ -21,19 +33,19 @@ import com.rp.dedup.screens.*
 val LocalDrawerState = compositionLocalOf<DrawerState> { error("No DrawerState provided") }
 
 sealed class Screen(val route: String) {
-    object Splash : Screen("splash")
-    object Dashboard : Screen("dashboard")
-    object Cleanup : Screen("cleanup")
-    object ResultsContacts : Screen("results_contacts")
-    object ResultsMedia : Screen("results_media")
-    object Activity : Screen("activity")
-    object VideoScanner : Screen("video_scanner")
-    object About : Screen("about")
-    object Settings : Screen("settings")
-    object ScanHistory : Screen("scan_history")
-    object FileBrowser : Screen("file_browser")
-    object FileScanner : Screen("file_scanner/{type}") {
-        fun createRoute(type: String) = "file_scanner/$type"
+    object Splash : Screen(ROUTE_SPLASH)
+    object Dashboard : Screen(ROUTE_DASHBOARD)
+    object Cleanup : Screen(ROUTE_CLEANUP)
+    object ResultsContacts : Screen(ROUTE_RESULTS_CONTACTS)
+    object ResultsMedia : Screen(ROUTE_RESULTS_MEDIA)
+    object Activity : Screen(ROUTE_ACTIVITY)
+    object VideoScanner : Screen(ROUTE_VIDEO_SCANNER)
+    object About : Screen(ROUTE_ABOUT)
+    object Settings : Screen(ROUTE_SETTINGS)
+    object ScanHistory : Screen(ROUTE_SCAN_HISTORY)
+    object FileBrowser : Screen(ROUTE_FILE_BROWSER)
+    object FileScanner : Screen(ROUTE_FILE_SCANNER) {
+        fun createRoute(type: String) = UIConstants.getFileScannerRoute(type)
     }
 }
 

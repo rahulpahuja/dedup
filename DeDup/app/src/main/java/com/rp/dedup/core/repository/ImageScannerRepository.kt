@@ -1,4 +1,4 @@
-package com.rp.dedup.core.image
+package com.rp.dedup.core.repository
 
 import android.content.ContentUris
 import android.content.Context
@@ -6,14 +6,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
+import com.rp.dedup.core.image.ImageHasher
+import com.rp.dedup.core.data.ScannedImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 
 class ImageScannerRepository(private val context: Context) {
 
@@ -33,15 +31,8 @@ class ImageScannerRepository(private val context: Context) {
         }
     }
 
-    @OptIn(
-        FlowPreview::class,
-        ExperimentalCoroutinesApi::class
-    ) // flatMapMerge requires this opt-in
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     fun scanImagesInParallel(concurrencyLevel: Int = 8): Flow<ScannedImage> {
-
-        // Step 1: Fast Query
-        // Fetch ALL URIs and Sizes instantly. This takes milliseconds and uses
-        // almost zero memory because we are only storing strings/numbers, not Bitmaps.
         val imageQueue = mutableListOf<Pair<Uri, Long>>()
 
         val projection = arrayOf(
@@ -61,30 +52,22 @@ class ImageScannerRepository(private val context: Context) {
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val size = cursor.getLong(sizeColumn)
-                val uri =
-                    ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+                val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
                 imageQueue.add(Pair(uri, size))
             }
         }
 
-        // Step 2: The Parallel Pipeline
         return imageQueue.asFlow()
-            // flatMapMerge creates our 4 parallel threads!
             .flatMapMerge(concurrency = concurrencyLevel) { (uri, size) ->
                 flow {
-                    // This block now runs concurrently across 4 threads
                     val bitmap = loadBitmapEfficiently(context, uri)
                     if (bitmap != null) {
                         val hash = ImageHasher.calculateDHash(bitmap)
-                        bitmap.recycle() // Free memory instantly
-
-                        // Emit the result to the UI
+                        bitmap.recycle()
                         emit(ScannedImage(uri = uri.toString(), dHash = hash, sizeInBytes = size))
                     }
                 }
             }
-            // Use Dispatchers.Default (not IO) because calculating the Hamming Distance
-            // and dHash is a heavy mathematical/CPU-bound task.
             .flowOn(Dispatchers.Default)
     }
 }

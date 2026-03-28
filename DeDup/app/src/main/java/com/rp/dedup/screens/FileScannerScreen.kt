@@ -27,11 +27,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.rp.dedup.core.FileScannerRepository
-import com.rp.dedup.core.FileScannerViewModel
-import com.rp.dedup.core.ScannedFile
+import com.rp.dedup.core.repository.FileScannerRepository
+import com.rp.dedup.core.viewmodels.FileScannerViewModel
+import com.rp.dedup.core.data.ScannedFile
 import com.rp.dedup.core.db.AppDatabase
-import com.rp.dedup.core.scanhistory.ScanHistoryRepository
+import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)

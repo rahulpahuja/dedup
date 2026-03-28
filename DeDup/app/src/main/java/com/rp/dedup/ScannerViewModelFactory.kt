@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.rp.dedup.core.db.AppDatabase
-import com.rp.dedup.core.image.ImageScannerRepository
-import com.rp.dedup.core.image.ScannerViewModel
-import com.rp.dedup.core.scanhistory.ScanHistoryRepository
+import com.rp.dedup.core.repository.ImageScannerRepository
+import com.rp.dedup.core.viewmodels.ScannerViewModel
+import com.rp.dedup.core.repository.ScanHistoryRepository
 
 class ScannerViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

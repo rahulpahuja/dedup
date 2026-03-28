@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,7 +32,9 @@ import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
 import com.rp.dedup.core.db.AppDatabase
-import com.rp.dedup.core.scanhistory.ScanHistoryRepository
+import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.viewmodels.DashboardViewModel
+import com.rp.dedup.core.viewmodels.StorageStats
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 

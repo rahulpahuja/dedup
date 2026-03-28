@@ -1,8 +1,9 @@
-package com.rp.dedup.core.browser
+package com.rp.dedup.core.viewmodels
 
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.browser.FileItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

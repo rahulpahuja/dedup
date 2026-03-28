@@ -1,9 +1,10 @@
-package com.rp.dedup.core.scanhistory
+package com.rp.dedup.core.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import com.rp.dedup.core.data.ScanHistory
 import kotlinx.coroutines.flow.Flow
 
 @Dao

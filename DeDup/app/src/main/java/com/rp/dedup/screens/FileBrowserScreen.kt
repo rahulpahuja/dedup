@@ -3,11 +3,7 @@ package com.rp.dedup.screens
 import android.content.Context
 import android.content.Intent
 import android.text.format.DateUtils
-import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -37,8 +33,8 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.rp.dedup.core.browser.FileItem
-import com.rp.dedup.core.browser.FileBrowserViewModel
-import com.rp.dedup.core.browser.SortMode
+import com.rp.dedup.core.viewmodels.FileBrowserViewModel
+import com.rp.dedup.core.viewmodels.SortMode
 import java.io.File
 
 // ─── Entry point ─────────────────────────────────────────────────────────────

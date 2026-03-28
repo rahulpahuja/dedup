@@ -6,11 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.rp.dedup.core.Constants
-import com.rp.dedup.core.image.ScannedImage
-import com.rp.dedup.core.image.ScannedImageDao
-import com.rp.dedup.core.scanhistory.ScanHistory
-import com.rp.dedup.core.scanhistory.ScanHistoryDao
+import com.rp.dedup.core.common.Constants
+import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.dao.ScannedImageDao
+import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.dao.ScanHistoryDao
 
 @Database(entities = [ScannedImage::class, ScanHistory::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {

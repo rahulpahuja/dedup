@@ -1,4 +1,4 @@
-package com.rp.dedup
+package com.rp.dedup.core.viewmodels
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable

@@ -27,9 +27,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.rp.dedup.core.db.AppDatabase
-import com.rp.dedup.core.scanhistory.ScanHistory
-import com.rp.dedup.core.scanhistory.ScanHistoryRepository
-import com.rp.dedup.core.scanhistory.ScanHistoryViewModel
+import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.viewmodels.ScanHistoryViewModel
 import com.rp.dedup.ui.theme.PrimaryBlue
 import java.text.SimpleDateFormat
 import java.util.Date

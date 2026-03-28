@@ -1,5 +1,6 @@
 package com.rp.dedup.core
 
+import com.rp.dedup.core.common.VideoExtensions
 import org.junit.Assert.*
 import org.junit.Test
 

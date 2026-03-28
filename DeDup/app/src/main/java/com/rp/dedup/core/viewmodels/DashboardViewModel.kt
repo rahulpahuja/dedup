@@ -1,10 +1,10 @@
-package com.rp.dedup.screens
+package com.rp.dedup.core.viewmodels
 
 import android.os.Environment
 import android.os.StatFs
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.scanhistory.ScanHistoryRepository
+import com.rp.dedup.core.repository.ScanHistoryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

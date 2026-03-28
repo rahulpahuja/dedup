@@ -1,6 +1,8 @@
 package com.rp.dedup.core
 
 import android.net.Uri
+import com.rp.dedup.core.data.ScannedVideo
+import com.rp.dedup.core.repository.VideoScannerRepository
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify

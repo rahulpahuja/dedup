@@ -1,5 +1,8 @@
 package com.rp.dedup.core.image
 
+import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.repository.ImageScannerRepository
+import com.rp.dedup.core.viewmodels.ScannerViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.mockk

@@ -1,9 +1,12 @@
-package com.rp.dedup.core.image
+package com.rp.dedup.core.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.scanhistory.ScanHistory
-import com.rp.dedup.core.scanhistory.ScanHistoryRepository
+import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.image.ImageHasher
+import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.repository.ImageScannerRepository
+import com.rp.dedup.core.repository.ScanHistoryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable

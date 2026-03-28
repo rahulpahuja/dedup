@@ -1,4 +1,4 @@
-package com.rp.dedup.core
+package com.rp.dedup.core.common
 
 object Constants {
     const val SETTINGS_CACHE: String = "settings_cache"

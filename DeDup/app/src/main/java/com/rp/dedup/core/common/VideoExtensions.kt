@@ -1,4 +1,4 @@
-package com.rp.dedup.core
+package com.rp.dedup.core.common
 
 object VideoExtensions {
     val list = setOf(

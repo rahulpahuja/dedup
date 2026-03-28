@@ -53,9 +53,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.rp.dedup.Screen
-import com.rp.dedup.ThemeMode
-import com.rp.dedup.ThemeViewModel
-import com.rp.dedup.UserProfileViewModel
+import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.viewmodels.ThemeViewModel
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.caching.DataStoreManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

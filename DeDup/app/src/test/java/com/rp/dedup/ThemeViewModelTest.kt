@@ -1,6 +1,8 @@
 package com.rp.dedup
 
 import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -14,7 +16,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 

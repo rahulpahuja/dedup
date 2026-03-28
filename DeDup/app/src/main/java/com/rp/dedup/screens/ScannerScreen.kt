@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.rp.dedup.core.image.ScannedImage
+import com.rp.dedup.core.data.ScannedImage
 
 /**
  * Pure list content — no Scaffold. Used inside [screens.ImageScannerScreen].

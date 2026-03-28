@@ -1,4 +1,4 @@
-package com.rp.dedup.core.scanhistory
+package com.rp.dedup.core.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
