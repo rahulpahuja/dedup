@@ -91,6 +91,16 @@
                 android:resource="@xml/storage_widget_info" />
         </receiver>
 
+        <!-- Receiver for Storage Level Monitoring -->
+        <receiver
+            android:name=".core.notifications.StorageLevelReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
+                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
