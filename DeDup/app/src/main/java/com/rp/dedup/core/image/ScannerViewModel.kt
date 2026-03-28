@@ -81,7 +81,8 @@ class ScannerViewModel(private val repository: ImageScannerRepository) : ViewMod
         for (image in images) {
             var foundGroup = false
             for (group in allScannedGroups) {
-                val distance = ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
+                val distance =
+                    ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
                 if (distance <= 5) {
                     group.add(image)
                     foundGroup = true
