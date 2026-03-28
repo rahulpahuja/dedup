@@ -868,20 +868,23 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
 @Composable
 fun DashboardScreenPreview() {
     DeDupTheme {
-        DashboardScreenContent(
-            navController = rememberNavController(),
-            storageStats = StorageStats(
-                totalBytes = 128L * 1024 * 1024 * 1024,
-                usedBytes = 82L * 1024 * 1024 * 1024,
-                freeBytes = 46L * 1024 * 1024 * 1024
-            ),
-            totalReclaimable = 12L * 1024 * 1024 * 1024,
-            searchResults = emptyList(),
-            isSearching = false,
-            searchProgress = 0 to 0,
-            searchError = null,
-            onSearch = {},
-            onClearSearch = {}
-        )
+        // Fix: Provide a LocalDrawerState to avoid IllegalStateException in Preview
+        CompositionLocalProvider(LocalDrawerState provides rememberDrawerState(DrawerValue.Closed)) {
+            DashboardScreenContent(
+                navController = rememberNavController(),
+                storageStats = StorageStats(
+                    totalBytes = 128L * 1024 * 1024 * 1024,
+                    usedBytes = 82L * 1024 * 1024 * 1024,
+                    freeBytes = 46L * 1024 * 1024 * 1024
+                ),
+                totalReclaimable = 12L * 1024 * 1024 * 1024,
+                searchResults = emptyList(),
+                isSearching = false,
+                searchProgress = 0 to 0,
+                searchError = null,
+                onSearch = {},
+                onClearSearch = {}
+            )
+        }
     }
 }
