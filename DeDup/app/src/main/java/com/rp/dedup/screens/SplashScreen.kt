@@ -332,7 +332,8 @@ fun SplashScreen(navController: NavHostController) {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
 @Composable
 fun SplashScreenPreview() {
     DeDupTheme {

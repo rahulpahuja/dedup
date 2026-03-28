@@ -27,15 +27,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.browser.FileItem
 import com.rp.dedup.core.viewmodels.FileBrowserViewModel
 import com.rp.dedup.core.viewmodels.SortMode
+import com.rp.dedup.ui.theme.DeDupTheme
 import java.io.File
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -62,6 +65,57 @@ fun FileBrowserScreen(navController: NavHostController) {
         vm.navigateUp()
     }
 
+    FileBrowserContent(
+        navController = navController,
+        items = items,
+        currentDir = currentDir,
+        isLoading = isLoading,
+        sortMode = sortMode,
+        searchQuery = searchQuery,
+        breadcrumbs = breadcrumbs,
+        errorMessage = errorMessage,
+        canNavigateUp = vm.canNavigateUp,
+        searchActive = searchActive,
+        onSearchActiveChange = { searchActive = it },
+        onSearchQueryChange = vm::setSearchQuery,
+        onNavigateUp = vm::navigateUp,
+        onNavigateToDir = { vm.navigateTo(File(it)) },
+        onRefresh = vm::refresh,
+        onSortClick = { showSortSheet = true },
+        onOpenFile = { openFile(context, File(it)) }
+    )
+
+    // Sort bottom sheet
+    if (showSortSheet) {
+        SortBottomSheet(
+            currentSort = sortMode,
+            onSelect = { vm.setSortMode(it); showSortSheet = false },
+            onDismiss = { showSortSheet = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FileBrowserContent(
+    navController: NavHostController,
+    items: List<FileItem>,
+    currentDir: File,
+    isLoading: Boolean,
+    sortMode: SortMode,
+    searchQuery: String,
+    breadcrumbs: List<String>,
+    errorMessage: String?,
+    canNavigateUp: Boolean,
+    searchActive: Boolean,
+    onSearchActiveChange: (Boolean) -> Unit,
+    onSearchQueryChange: (String) -> Unit,
+    onNavigateUp: () -> Unit,
+    onNavigateToDir: (String) -> Unit,
+    onRefresh: () -> Unit,
+    onSortClick: () -> Unit,
+    onOpenFile: (String) -> Unit
+) {
     Scaffold(
         topBar = {
             Column {
@@ -70,7 +124,7 @@ fun FileBrowserScreen(navController: NavHostController) {
                         if (searchActive) {
                             OutlinedTextField(
                                 value = searchQuery,
-                                onValueChange = vm::setSearchQuery,
+                                onValueChange = onSearchQueryChange,
                                 placeholder = {
                                     Text(
                                         "Search in ${currentDir.name}…",
@@ -87,8 +141,7 @@ fun FileBrowserScreen(navController: NavHostController) {
                         } else {
                             Text(
                                 currentDir.name.let { name ->
-                                    if (currentDir.absolutePath == android.os.Environment
-                                            .getExternalStorageDirectory().absolutePath
+                                    if (currentDir.absolutePath == "/storage/emulated/0"
                                     ) UIConstants.FILE_BROWSER_ROOT_LABEL else name
                                 },
                                 style = MaterialTheme.typography.titleMedium.copy(
@@ -100,8 +153,8 @@ fun FileBrowserScreen(navController: NavHostController) {
                         }
                     },
                     navigationIcon = {
-                        if (vm.canNavigateUp) {
-                            IconButton(onClick = { vm.navigateUp() }) {
+                        if (canNavigateUp) {
+                            IconButton(onClick = onNavigateUp) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                             }
                         } else {
@@ -112,18 +165,18 @@ fun FileBrowserScreen(navController: NavHostController) {
                     },
                     actions = {
                         IconButton(onClick = {
-                            searchActive = !searchActive
-                            if (!searchActive) vm.setSearchQuery("")
+                            onSearchActiveChange(!searchActive)
+                            if (!searchActive) onSearchQueryChange("")
                         }) {
                             Icon(
                                 if (searchActive) Icons.Default.Close else Icons.Default.Search,
                                 contentDescription = if (searchActive) "Close search" else "Search"
                             )
                         }
-                        IconButton(onClick = { showSortSheet = true }) {
+                        IconButton(onClick = onSortClick) {
                             Icon(Icons.Default.Sort, contentDescription = "Sort")
                         }
-                        IconButton(onClick = { vm.refresh() }) {
+                        IconButton(onClick = onRefresh) {
                             Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                         }
                     },
@@ -213,9 +266,9 @@ fun FileBrowserScreen(navController: NavHostController) {
                     item = item,
                     onClick = {
                         if (item.isDirectory) {
-                            vm.navigateTo(File(item.path))
+                            onNavigateToDir(item.path)
                         } else {
-                            openFile(context, File(item.path))
+                            onOpenFile(item.path)
                         }
                     }
                 )
@@ -227,15 +280,6 @@ fun FileBrowserScreen(navController: NavHostController) {
 
             item { Spacer(Modifier.height(80.dp)) }
         }
-    }
-
-    // Sort bottom sheet
-    if (showSortSheet) {
-        SortBottomSheet(
-            currentSort = sortMode,
-            onSelect = { vm.setSortMode(it); showSortSheet = false },
-            onDismiss = { showSortSheet = false }
-        )
     }
 }
 
@@ -535,5 +579,37 @@ private fun openFile(context: Context, file: File) {
         context.startActivity(Intent.createChooser(intent, "Open with…"))
     } catch (_: Exception) {
         // No app available to handle this file type — silently ignore
+    }
+}
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun FileBrowserPreview() {
+    val mockItems = listOf(
+        FileItem("Documents", "/storage/emulated/0/Documents", true, 0, System.currentTimeMillis(), 5, ""),
+        FileItem("image.jpg", "/storage/emulated/0/image.jpg", false, 1024 * 500, System.currentTimeMillis() - 100000, 0, "jpg"),
+        FileItem("report.pdf", "/storage/emulated/0/report.pdf", false, 1024 * 1024 * 2, System.currentTimeMillis() - 500000, 0, "pdf")
+    )
+    DeDupTheme {
+        FileBrowserContent(
+            navController = rememberNavController(),
+            items = mockItems,
+            currentDir = File("/storage/emulated/0"),
+            isLoading = false,
+            sortMode = SortMode.NAME,
+            searchQuery = "",
+            breadcrumbs = listOf("Internal Storage"),
+            errorMessage = null,
+            canNavigateUp = false,
+            searchActive = false,
+            onSearchActiveChange = {},
+            onSearchQueryChange = {},
+            onNavigateUp = {},
+            onNavigateToDir = {},
+            onRefresh = {},
+            onSortClick = {},
+            onOpenFile = {}
+        )
     }
 }

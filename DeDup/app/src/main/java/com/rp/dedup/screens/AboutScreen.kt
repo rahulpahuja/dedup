@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,8 +122,11 @@ fun AboutScreen(navController: NavHostController) {
     }
 }
 
-@Preview
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
 @Composable
 private fun AboutScreenPreview() {
-    AboutScreen(navController = NavHostController(LocalContext.current))
+    DeDupTheme {
+        AboutScreen(navController = rememberNavController())
+    }
 }
