@@ -1,13 +1,8 @@
 package com.rp.dedup
 
-import android.Manifest
-import android.os.Build
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -28,7 +23,8 @@ import com.rp.dedup.UIConstants.ROUTE_SCAN_HISTORY
 import com.rp.dedup.UIConstants.ROUTE_SETTINGS
 import com.rp.dedup.UIConstants.ROUTE_SPLASH
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
-import com.rp.dedup.core.image.PermissionRequester
+import com.rp.dedup.core.permissions.PermissionGate
+import com.rp.dedup.core.permissions.PermissionManager
 import com.rp.dedup.screens.*
 
 // Provides DrawerState to any composable in the tree without prop drilling
@@ -130,9 +126,9 @@ fun AppNavHost(navController: NavHostController) {
                     route = Screen.FileScanner.route,
                     arguments = listOf(navArgument("type") { type = NavType.StringType })
                 ) { backStackEntry ->
-                    val type = backStackEntry.arguments?.getString("type") ?: "pdf"
-                    val extensions = if (type == "pdf") listOf("pdf") else listOf("apk")
-                    FileScannerScreen(navController, type, extensions)
+                    val fileType = backStackEntry.arguments?.getString("type") ?: "pdf"
+                    val extensions = if (fileType == "pdf") listOf("pdf") else listOf("apk")
+                    FileScannerGatekeeper(navController, fileType, extensions)
                 }
             } // NavHost
             } // Scaffold innerPadding
@@ -142,60 +138,48 @@ fun AppNavHost(navController: NavHostController) {
 
 @Composable
 fun ImageScannerGatekeeper(navController: NavHostController) {
-    var hasPermission by remember { mutableStateOf(false) }
-
-    if (hasPermission) {
+    PermissionGate(
+        permissions      = PermissionManager.IMAGE,
+        rationaleTitle   = "Gallery Access Needed",
+        rationaleMessage = "DeDup needs access to your photos to find and remove duplicate images."
+    ) {
         ImageScannerScreen(navController = navController)
-    } else {
-        PermissionRequester(onPermissionGranted = { hasPermission = true })
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Waiting for gallery permission to scan images...")
-        }
     }
 }
 
 @Composable
 fun VideoScannerGatekeeper(navController: NavHostController) {
-    var hasPermission by remember { mutableStateOf(false) }
-
-    val videoPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_VIDEO
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-
-    if (hasPermission) {
+    PermissionGate(
+        permissions      = PermissionManager.VIDEO,
+        rationaleTitle   = "Video Access Needed",
+        rationaleMessage = "DeDup needs access to your videos to find and remove duplicate recordings."
+    ) {
         VideoScannerScreen(navController = navController)
-    } else {
-        PermissionRequester(
-            onPermissionGranted = { hasPermission = true },
-            tiramisu13Permission = videoPermission
-        )
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Waiting for permission to scan videos...")
-        }
     }
 }
 
 @Composable
 fun FileBrowserGatekeeper(navController: NavHostController) {
-    var hasPermission by remember { mutableStateOf(false) }
-
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-
-    if (hasPermission) {
+    PermissionGate(
+        permissions      = PermissionManager.FILES,
+        rationaleTitle   = "Storage Access Needed",
+        rationaleMessage = "DeDup needs storage access to browse and manage files on your device."
+    ) {
         FileBrowserScreen(navController = navController)
-    } else {
-        PermissionRequester(
-            onPermissionGranted = { hasPermission = true },
-            tiramisu13Permission = permission
-        )
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Waiting for storage permission…")
-        }
+    }
+}
+
+@Composable
+fun FileScannerGatekeeper(
+    navController: NavHostController,
+    type: String,
+    extensions: List<String>
+) {
+    PermissionGate(
+        permissions      = PermissionManager.FILES,
+        rationaleTitle   = "Storage Access Needed",
+        rationaleMessage = "DeDup needs storage access to scan for duplicate ${type.uppercase()} files."
+    ) {
+        FileScannerScreen(navController, type, extensions)
     }
 }

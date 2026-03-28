@@ -1,5 +1,6 @@
 package com.rp.dedup.screens
 
+import android.content.res.Configuration
 import android.net.Uri
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
@@ -173,7 +174,10 @@ fun DashboardScreen(navController: NavHostController) {
                     modifier = if (searchActive) Modifier.fillMaxWidth()
                     else Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, bottom = 12.dp)
+//                        .padding(
+//                            horizontal = 16.dp, bottom = 12.dp, top = 8.dp, end = 8.dp,
+//                            start = 8.dp
+//                        )
                 ) {
                     // ── Search results shown inside expanded SearchBar ─────────────
                     ImageSearchContent(
@@ -850,7 +854,7 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
 }
 
 @Preview(showBackground = true, name = "Light Mode")
-@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
 @Composable
 fun DashboardScreenPreview() {
     DeDupTheme {

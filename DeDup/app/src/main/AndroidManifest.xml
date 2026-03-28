@@ -2,20 +2,48 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ── Internet / Network ── -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- ── Media — Images (API 33+ granular; legacy below API 33) ── -->
     <uses-permission
         android:name="android.permission.READ_MEDIA_IMAGES"
         tools:ignore="PhotoAndVideoPolicy" />
+    <!-- Partial photo/video picker (API 34+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+
+    <!-- ── Media — Video ── -->
     <uses-permission
         android:name="android.permission.READ_MEDIA_VIDEO"
         tools:ignore="PhotoAndVideoPolicy" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <!-- ── Media — Audio (API 33+) ── -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
+    <!-- ── Storage — legacy read (API ≤ 32) ── -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+
+    <!-- ── Storage — legacy write (API ≤ 28, needed for file deletion) ── -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- ── Storage — All Files Access (API 30+, special permission via Settings) ── -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <!-- ── SMS ── -->
+    <uses-permission android:name="android.permission.READ_SMS"
+        tools:ignore="SmsAndCallLogPolicy" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
+    <!-- ── Notifications (API 33+ runtime permission) ── -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".core.app.DeDupApp"
