@@ -86,7 +86,7 @@ fun DashboardScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+            Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
                 if (!searchActive) {
                     TopAppBar(
                         title = {
@@ -171,15 +171,14 @@ fun DashboardScreen(navController: NavHostController) {
                         searchActive = active
                         if (!active) { searchQuery = ""; searchViewModel.clear() }
                     },
-                    modifier = if (searchActive) Modifier.fillMaxWidth()
-                    else Modifier
-                        .fillMaxWidth()
-//                        .padding(
-//                            horizontal = 16.dp, bottom = 12.dp, top = 8.dp, end = 8.dp,
-//                            start = 8.dp
-//                        )
+                    modifier = if (searchActive) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    }
                 ) {
-                    // ── Search results shown inside expanded SearchBar ─────────────
                     ImageSearchContent(
                         query = searchQuery,
                         results = searchResults,
@@ -197,7 +196,6 @@ fun DashboardScreen(navController: NavHostController) {
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // ── Normal dashboard content (hidden while search is active) ───────
             if (!searchActive) {
                 LazyColumn(
                     modifier = Modifier
@@ -257,12 +255,11 @@ fun SavingsCalculatorCard(reclaimableBytes: Long) {
         Currency.getInstance("USD")
     }
     
-    // Average cost of storage per GB (estimate)
     val costPerGb = when (currency.currencyCode) {
-        "INR" -> 5.0  // ₹5 per GB
-        "EUR" -> 0.05 // €0.05 per GB
-        "GBP" -> 0.04 // £0.04 per GB
-        else  -> 0.06 // $0.06 per GB default
+        "INR" -> 5.0
+        "EUR" -> 0.05
+        "GBP" -> 0.04
+        else  -> 0.06
     }
 
     val reclaimableGb = reclaimableBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
@@ -328,7 +325,6 @@ fun StorageSummaryCard(
 ) {
     val context = LocalContext.current
 
-    // Animate both bars on first composition
     val usedFractionAnimated by animateFloatAsState(
         targetValue = stats.usedFraction,
         animationSpec = tween(durationMillis = 900),
@@ -355,8 +351,6 @@ fun StorageSummaryCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
-
-            // ── Header ─────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -384,7 +378,6 @@ fun StorageSummaryCard(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ── Device storage bar ─────────────────────────
             Text(
                 "DEVICE STORAGE",
                 style = MaterialTheme.typography.labelSmall.copy(
@@ -415,7 +408,6 @@ fun StorageSummaryCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ── DeDup savings bar ──────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -689,8 +681,6 @@ fun BottomNavigationBar(navController: NavHostController) {
     }
 }
 
-// ── Semantic search results ───────────────────────────────────────────────────
-
 @Composable
 fun ImageSearchContent(
     query: String,
@@ -700,7 +690,6 @@ fun ImageSearchContent(
     error: String?
 ) {
     when {
-        // Nothing typed yet
         query.isBlank() -> {
             Box(
                 modifier = Modifier.fillMaxSize().padding(48.dp),
@@ -729,7 +718,6 @@ fun ImageSearchContent(
             }
         }
 
-        // Searching — show progress
         isSearching -> {
             Column(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -755,7 +743,6 @@ fun ImageSearchContent(
             }
         }
 
-        // Error
         error != null -> {
             Box(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
@@ -765,7 +752,6 @@ fun ImageSearchContent(
             }
         }
 
-        // No matches
         results.isEmpty() -> {
             Box(
                 modifier = Modifier.fillMaxSize().padding(48.dp),
@@ -794,7 +780,6 @@ fun ImageSearchContent(
             }
         }
 
-        // Results grid
         else -> {
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(
@@ -832,7 +817,6 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        // Matched label chips at the bottom
         Box(
             modifier = Modifier
                 .fillMaxWidth()
