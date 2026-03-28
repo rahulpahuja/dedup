@@ -1,7 +1,6 @@
 package com.rp.dedup.screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,8 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -28,13 +25,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
+import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.viewmodels.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
-import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.PrimaryBlue
 
@@ -54,92 +51,69 @@ fun SettingsScreen(navController: NavHostController) {
     val currentThemeMode by themeViewModel.themeMode.collectAsState()
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(UIConstants.GradientDarkStart, UIConstants.GradientDarkEnd)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Settings",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-    ) {
-        Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "Settings",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
-                    )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Spacer(Modifier.height(4.dp))
+
+            SettingsSectionHeader("Appearance")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.Palette,
+                    iconColor = UIConstants.ColorIconPalette,
+                    title = "Theme",
+                    trailing = { ThemeBadge(currentThemeMode) },
+                    onClick = { showThemeDialog = true }
                 )
             }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Spacer(Modifier.height(4.dp))
 
-                // — Appearance —
-                SettingsSectionHeader("Appearance")
+            Spacer(Modifier.height(8.dp))
 
-                SettingsCard {
-                    SettingsRow(
-                        icon = Icons.Default.Palette,
-                        iconColor = UIConstants.ColorIconPalette,
-                        title = "Theme",
-                        trailing = {
-                            ThemeBadge(currentThemeMode)
-                        },
-                        onClick = { showThemeDialog = true }
-                    )
-                }
+            SettingsSectionHeader("About")
 
-                Spacer(Modifier.height(8.dp))
-
-                // — About —
-                SettingsSectionHeader("About")
-
-                SettingsCard {
-                    SettingsRow(
-                        icon = Icons.Default.Info,
-                        iconColor = UIConstants.ColorIconInfo,
-                        title = "About DeDup",
-                        trailing = {
-                            Text(
-                                UIConstants.APP_VERSION,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color.White.copy(alpha = 0.35f)
-                                )
-                            )
-                        },
-                        onClick = { navController.navigate(Screen.About.route) }
-                    )
-                }
-
-                Spacer(Modifier.height(32.dp))
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.Info,
+                    iconColor = UIConstants.ColorIconInfo,
+                    title = "About DeDup",
+                    trailing = {
+                        Text(
+                            UIConstants.APP_VERSION,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = { navController.navigate(Screen.About.route) }
+                )
             }
+
+            Spacer(Modifier.height(32.dp))
         }
     }
 
@@ -155,41 +129,35 @@ fun SettingsScreen(navController: NavHostController) {
     }
 }
 
-// — Section header —
-
 @Composable
 private fun SettingsSectionHeader(title: String) {
     Text(
         text = title.uppercase(),
         style = MaterialTheme.typography.labelSmall.copy(
-            color = Color.White.copy(alpha = 0.35f),
             fontWeight = FontWeight.Bold,
             letterSpacing = 2.sp
         ),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
     )
 }
-
-// — Glass card wrapper —
 
 @Composable
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White.copy(alpha = 0.06f),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.09f))
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(content = content)
     }
 }
 
-// — Single settings row —
-
 @Composable
 private fun SettingsRow(
     icon: ImageVector,
-    iconColor: Color,
+    iconColor: androidx.compose.ui.graphics.Color,
     title: String,
     trailing: @Composable () -> Unit = {},
     onClick: () -> Unit
@@ -201,10 +169,9 @@ private fun SettingsRow(
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Colored icon container
         Surface(
             shape = RoundedCornerShape(10.dp),
-            color = iconColor.copy(alpha = 0.18f),
+            color = iconColor.copy(alpha = 0.15f),
             modifier = Modifier.size(40.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -222,10 +189,8 @@ private fun SettingsRow(
         Text(
             text = title,
             modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge.copy(
-                color = Color.White,
-                fontWeight = FontWeight.Medium
-            )
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         trailing()
@@ -235,32 +200,28 @@ private fun SettingsRow(
         Icon(
             Icons.AutoMirrored.Filled.ArrowForwardIos,
             contentDescription = null,
-            tint = Color.White.copy(alpha = 0.25f),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.size(14.dp)
         )
     }
 }
 
-// — Theme badge pill —
-
 @Composable
 private fun ThemeBadge(mode: ThemeMode) {
     Surface(
         shape = RoundedCornerShape(8.dp),
-        color = PrimaryBlue.copy(alpha = 0.18f)
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
     ) {
         Text(
             text = mode.name.lowercase().replaceFirstChar { it.uppercaseChar() },
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelMedium.copy(
-                color = PrimaryBlue,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         )
     }
 }
-
-// — Dark styled theme picker dialog —
 
 @Composable
 private fun ThemePickerDialog(
@@ -269,30 +230,28 @@ private fun ThemePickerDialog(
     onSelect: (ThemeMode) -> Unit
 ) {
     val themeOptions = listOf(
-        Triple(ThemeMode.LIGHT,  Icons.Default.LightMode,          UIConstants.ColorThemeLight),
-        Triple(ThemeMode.DARK,   Icons.Default.DarkMode,           UIConstants.ColorThemeDark),
-        Triple(ThemeMode.AUTO,   Icons.Default.SettingsBrightness, UIConstants.ColorThemeAuto)
+        Triple(ThemeMode.LIGHT, Icons.Default.LightMode,          UIConstants.ColorThemeLight),
+        Triple(ThemeMode.DARK,  Icons.Default.DarkMode,           UIConstants.ColorThemeDark),
+        Triple(ThemeMode.AUTO,  Icons.Default.SettingsBrightness, UIConstants.ColorThemeAuto)
     )
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = UIConstants.DialogSurface,
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            tonalElevation = 6.dp
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     "Choose Theme",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     "Controls the app's color scheme",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color.White.copy(alpha = 0.4f)
-                    )
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(Modifier.height(20.dp))
@@ -305,12 +264,12 @@ private fun ThemePickerDialog(
                             .padding(vertical = 4.dp)
                             .clickable { onSelect(mode) },
                         shape = RoundedCornerShape(14.dp),
-                        color = if (selected) PrimaryBlue.copy(alpha = 0.15f)
-                                else Color.White.copy(alpha = 0.04f),
+                        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                         border = BorderStroke(
                             1.dp,
-                            if (selected) PrimaryBlue.copy(alpha = 0.7f)
-                            else Color.White.copy(alpha = 0.08f)
+                            if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                            else MaterialTheme.colorScheme.outlineVariant
                         )
                     ) {
                         Row(
@@ -331,15 +290,16 @@ private fun ThemePickerDialog(
                                 text = mode.name.lowercase().replaceFirstChar { it.uppercaseChar() },
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = if (selected) Color.White else Color.White.copy(alpha = 0.65f),
                                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                                )
+                                ),
+                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             if (selected) {
                                 Icon(
                                     Icons.Default.CheckCircle,
                                     contentDescription = null,
-                                    tint = PrimaryBlue,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -355,9 +315,8 @@ private fun ThemePickerDialog(
                 ) {
                     Text(
                         "Cancel",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            color = Color.White.copy(alpha = 0.4f)
-                        )
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
