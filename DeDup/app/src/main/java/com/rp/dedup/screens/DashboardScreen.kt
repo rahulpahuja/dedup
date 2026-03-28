@@ -219,7 +219,14 @@ fun QuickScanGrid(navController: NavHostController) {
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate(Screen.FileBrowser.route) }
             )
-            Spacer(modifier = Modifier.weight(1f))
+            ScanCategoryCard(
+                title = "Scan History",
+                count = "Log",
+                icon = Icons.Default.History,
+                color = Color(0xFF7986CB),
+                modifier = Modifier.weight(1f),
+                onClick = { navController.navigate(Screen.ScanHistory.route) }
+            )
         }
     }
 }
@@ -347,7 +354,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         currentRoute == Screen.Cleanup.route -> 1
         currentRoute?.startsWith("file_scanner") == true || currentRoute == Screen.FileBrowser.route -> 2
         currentRoute == Screen.VideoScanner.route -> 3
-        currentRoute == Screen.Settings.route -> 4
+        currentRoute == Screen.Settings.route || currentRoute == Screen.ScanHistory.route -> 4
         else -> 0
     }
 
