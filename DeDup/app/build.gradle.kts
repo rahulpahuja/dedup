@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
 }
 
+// jvmToolchain sets sourceCompatibility, targetCompatibility, and Kotlin jvmTarget
+// in one place — the modern AGP 8+ / Kotlin 2.x way.
+kotlin {
+    jvmToolchain(17)
+}
+
 android {
     namespace = "com.rp.dedup"
     compileSdk = 36
@@ -21,6 +27,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Keep debug fast — no minification, no resource shrinking.
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -29,12 +40,27 @@ android {
             )
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+
+    packaging {
+        resources {
+            // Exclude files that several libraries duplicate; merging them
+            // wastes time during every packageDebugResources task.
+            excludes += setOf(
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE-notice.md",
+                "META-INF/NOTICE.md",
+                "META-INF/*.kotlin_module",
+                "META-INF/versions/9/previous-compilation-data.bin",
+                "kotlin-tooling-metadata.json"
+            )
+        }
     }
     buildFeatures {
         compose = true
+        buildConfig = false
+        aidl = false
+        resValues = false
+        shaders = false
     }
     testOptions {
         unitTests {
