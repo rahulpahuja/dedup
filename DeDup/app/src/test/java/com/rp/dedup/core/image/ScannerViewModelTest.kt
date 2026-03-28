@@ -48,6 +48,8 @@ class ScannerViewModelTest {
     fun `startScanning sets isScanning to true while running`() {
         coEvery { repository.scanImagesInParallel(any()) } returns flow { delay(Long.MAX_VALUE) }
         viewModel.startScanning()
+        // isScanning is set inside the Dispatchers.Default coroutine — give it time to start
+        Thread.sleep(300)
         assertTrue(viewModel.isScanning.value)
     }
 
@@ -102,7 +104,9 @@ class ScannerViewModelTest {
     fun `cancelScanning resets isScanning to false`() {
         coEvery { repository.scanImagesInParallel(any()) } returns flow { delay(Long.MAX_VALUE) }
         viewModel.startScanning()
+        Thread.sleep(300) // wait for coroutine to start and set isScanning = true
         viewModel.cancelScanning()
+        Thread.sleep(300) // wait for finally block to run isScanning = false
         assertFalse(viewModel.isScanning.value)
     }
 
@@ -188,11 +192,20 @@ class ScannerViewModelTest {
 
     // --- Helpers ---
 
-    /** Polls until the scan job completes (max 2 s). Works around Dispatchers.Default in prod code. */
+    /**
+     * Polls until the scan job completes (max 2 s).
+     * Works around Dispatchers.Default in prod code — isScanning is set *inside* the
+     * launched coroutine, so we must first wait for it to flip true, then wait for false.
+     */
     private suspend fun waitForScanToFinish(timeoutMs: Long = 2000L) {
         val deadline = System.currentTimeMillis() + timeoutMs
+        // Phase 1: wait for the background coroutine to start and set isScanning = true
+        while (!viewModel.isScanning.value && System.currentTimeMillis() < deadline) {
+            delay(10)
+        }
+        // Phase 2: wait for it to finish and set isScanning = false
         while (viewModel.isScanning.value && System.currentTimeMillis() < deadline) {
-            delay(20)
+            delay(10)
         }
     }
 }

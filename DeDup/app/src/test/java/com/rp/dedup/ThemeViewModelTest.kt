@@ -8,7 +8,9 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.Runs
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -16,6 +18,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ThemeViewModelTest {
 
     @get:Rule
@@ -35,6 +38,7 @@ class ThemeViewModelTest {
     @Test
     fun `initial themeMode is AUTO`() = runTest {
         setup("AUTO")
+        backgroundScope.launch { viewModel.themeMode.collect {} }
         advanceUntilIdle()
         assertEquals(ThemeMode.AUTO, viewModel.themeMode.value)
     }
@@ -42,6 +46,7 @@ class ThemeViewModelTest {
     @Test
     fun `themeMode reads DARK from datastore`() = runTest {
         setup("DARK")
+        backgroundScope.launch { viewModel.themeMode.collect {} }
         advanceUntilIdle()
         assertEquals(ThemeMode.DARK, viewModel.themeMode.value)
     }
@@ -49,6 +54,7 @@ class ThemeViewModelTest {
     @Test
     fun `themeMode reads LIGHT from datastore`() = runTest {
         setup("LIGHT")
+        backgroundScope.launch { viewModel.themeMode.collect {} }
         advanceUntilIdle()
         assertEquals(ThemeMode.LIGHT, viewModel.themeMode.value)
     }
@@ -56,6 +62,7 @@ class ThemeViewModelTest {
     @Test
     fun `invalid stored value falls back to AUTO`() = runTest {
         setup("INVALID_MODE")
+        backgroundScope.launch { viewModel.themeMode.collect {} }
         advanceUntilIdle()
         assertEquals(ThemeMode.AUTO, viewModel.themeMode.value)
     }
@@ -63,6 +70,7 @@ class ThemeViewModelTest {
     @Test
     fun `empty stored value falls back to AUTO`() = runTest {
         setup("")
+        backgroundScope.launch { viewModel.themeMode.collect {} }
         advanceUntilIdle()
         assertEquals(ThemeMode.AUTO, viewModel.themeMode.value)
     }
