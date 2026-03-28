@@ -1,13 +1,47 @@
 package com.rp.dedup.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +54,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.rp.dedup.ui.theme.*
+import com.rp.dedup.ui.theme.DarkCyan
+import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.ui.theme.LightCyan
+import com.rp.dedup.ui.theme.SelectionBarBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +76,11 @@ fun DeduplicationScreen(navController: NavHostController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
                 actions = {
@@ -49,7 +90,11 @@ fun DeduplicationScreen(navController: NavHostController) {
                             modifier = Modifier.size(32.dp),
                             color = MaterialTheme.colorScheme.outlineVariant
                         ) {
-                            Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 },
@@ -133,7 +178,10 @@ fun DeduplicationScreen(navController: NavHostController) {
 
             // Same Number Section
             item {
-                SectionHeader("Same Number", "Different names associated with the same phone number.")
+                SectionHeader(
+                    "Same Number",
+                    "Different names associated with the same phone number."
+                )
                 ContactCard(
                     name = "Sarah Connor",
                     phone = "+1 (212) 999-0000",
@@ -191,7 +239,9 @@ fun DeduplicationScreen(navController: NavHostController) {
 @Composable
 fun SectionHeader(title: String, subtitle: String) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -202,11 +252,24 @@ fun SectionHeader(title: String, subtitle: String) {
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         TextButton(onClick = { }) {
-            Text("Select\nAll", style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.primary))
+            Text(
+                "Select\nAll",
+                style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.primary)
+            )
         }
     }
 }
@@ -274,17 +337,39 @@ fun ContactCard(
                         Spacer(modifier = Modifier.width(16.dp))
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface))
+                        Text(
+                            name,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        )
                         if (phone != null) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                                Icon(
+                                    Icons.Default.Phone,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(phone, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
+                                Text(
+                                    phone,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                )
                             }
                         }
                         if (email != null) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(emailIcon ?: Icons.Default.Email, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(
+                                    emailIcon ?: Icons.Default.Email,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     email,
@@ -298,7 +383,12 @@ fun ContactCard(
                         if (info != null) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (infoIcon != null) {
-                                    Icon(infoIcon, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Icon(
+                                        infoIcon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                     Spacer(modifier = Modifier.width(4.dp))
                                 }
                                 Text(
@@ -351,8 +441,17 @@ fun SelectionBar() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("SELECTION", style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray))
-                Text("7 Contacts", style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold))
+                Text(
+                    "SELECTION",
+                    style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray)
+                )
+                Text(
+                    "7 Contacts",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
             }
             Button(
                 onClick = { },

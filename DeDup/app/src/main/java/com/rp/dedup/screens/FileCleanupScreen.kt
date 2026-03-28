@@ -1,13 +1,41 @@
 package com.rp.dedup.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -22,7 +50,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
-import com.rp.dedup.ui.theme.*
+import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.ui.theme.SelectionBarBackground
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +73,11 @@ fun FileCleanupScreen(navController: NavHostController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
                 actions = {
@@ -54,7 +87,11 @@ fun FileCleanupScreen(navController: NavHostController) {
                             modifier = Modifier.size(32.dp),
                             color = MaterialTheme.colorScheme.outlineVariant
                         ) {
-                            Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 },
@@ -113,7 +150,9 @@ fun FileCleanupScreen(navController: NavHostController) {
                     "Large File Finder",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(0xFF1A237E)
+                        color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(
+                            0xFF1A237E
+                        )
                     )
                 )
                 Text(
@@ -158,7 +197,9 @@ fun FileCleanupScreen(navController: NavHostController) {
                     "Redundant Downloads",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(0xFF1A237E)
+                        color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(
+                            0xFF1A237E
+                        )
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -250,7 +291,12 @@ fun LargeFileCard(
                     modifier = Modifier.size(56.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(28.dp))
+                        Icon(
+                            icon,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(28.dp)
+                        )
                     }
                 }
                 if (!isCountType) {
@@ -258,7 +304,9 @@ fun LargeFileCard(
                         size,
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(0xFF1A237E)
+                            color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(
+                                0xFF1A237E
+                            )
                         )
                     )
                 }
@@ -275,7 +323,10 @@ fun LargeFileCard(
             }
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             )
             Text(
                 subtitle,
@@ -321,7 +372,10 @@ fun DownloadItem(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         name,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
                         modifier = Modifier.weight(1f, fill = false),
                         maxLines = 1
                     )
@@ -375,20 +429,34 @@ fun DeleteSelectionBar() {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "RECLAIMING",
-                    style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray, fontSize = 10.sp)
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.LightGray,
+                        fontSize = 10.sp
+                    )
                 )
                 Text(
                     "160.8 MB",
-                    style = MaterialTheme.typography.titleLarge.copy(color = Color.White, fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
             }
             Button(
                 onClick = { },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(24.dp),
-                modifier = Modifier.height(48.dp).fillMaxWidth(0.6f)
+                modifier = Modifier
+                    .height(48.dp)
+                    .fillMaxWidth(0.6f)
             ) {
-                Text("DELETE SELECTED", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary))
+                Text(
+                    "DELETE SELECTED",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
             }
         }
     }

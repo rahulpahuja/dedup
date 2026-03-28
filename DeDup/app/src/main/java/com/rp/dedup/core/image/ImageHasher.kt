@@ -2,8 +2,8 @@ package com.rp.dedup.core.image
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import androidx.core.graphics.scale
 import androidx.core.graphics.get
+import androidx.core.graphics.scale
 
 object ImageHasher {
 

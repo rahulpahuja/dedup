@@ -6,11 +6,14 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
-import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 
 class ImageScannerRepository(private val context: Context) {
 
@@ -30,7 +33,10 @@ class ImageScannerRepository(private val context: Context) {
         }
     }
 
-    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class) // flatMapMerge requires this opt-in
+    @OptIn(
+        FlowPreview::class,
+        ExperimentalCoroutinesApi::class
+    ) // flatMapMerge requires this opt-in
     fun scanImagesInParallel(concurrencyLevel: Int = 8): Flow<ScannedImage> {
 
         // Step 1: Fast Query
@@ -55,7 +61,8 @@ class ImageScannerRepository(private val context: Context) {
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val size = cursor.getLong(sizeColumn)
-                val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+                val uri =
+                    ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
                 imageQueue.add(Pair(uri, size))
             }
         }

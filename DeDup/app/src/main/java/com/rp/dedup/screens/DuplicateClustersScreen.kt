@@ -1,13 +1,45 @@
 package com.rp.dedup.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -20,7 +52,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
-import com.rp.dedup.ui.theme.*
+import com.rp.dedup.ui.theme.DarkCyan
+import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.ui.theme.RedBadge
+import com.rp.dedup.ui.theme.RedText
+import com.rp.dedup.ui.theme.SelectionBarBackground
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,12 +78,20 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                 },
                 navigationIcon = {
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     IconButton(onClick = { }) {
                         Surface(
@@ -55,7 +99,11 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                             modifier = Modifier.size(32.dp),
                             color = MaterialTheme.colorScheme.outlineVariant
                         ) {
-                            Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 },
@@ -80,14 +128,24 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     "RESULTS / PHOTO & VIDEO",
-                    style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFF00838F), fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color(0xFF00838F),
+                        fontWeight = FontWeight.Bold
+                    )
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             "Duplicate clusters.",
-                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -144,14 +202,31 @@ fun PotentialSpaceCard() {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(4.dp),
-        modifier = Modifier.height(80.dp).width(120.dp)
+        modifier = Modifier
+            .height(80.dp)
+            .width(120.dp)
     ) {
         Row {
-            Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(MaterialTheme.colorScheme.primary))
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.primary)
+            )
             Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.End) {
-                Text("POTENTIAL SPACE", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "POTENTIAL SPACE",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("2.4 GB", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
+                Text(
+                    "2.4 GB",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
             }
         }
     }
@@ -160,20 +235,44 @@ fun PotentialSpaceCard() {
 @Composable
 fun ClusterHeader(id: String, title: String, subtitle: String, duplicateCount: Int) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Text(id, style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+        Text(
+            id,
+            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+        )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface))
-            Text(subtitle, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Surface(
             color = RedBadge.copy(alpha = if (MaterialTheme.colorScheme.onBackground == Color.White) 0.2f else 1f),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(6.dp).background(RedText, CircleShape))
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier
+                    .size(6.dp)
+                    .background(RedText, CircleShape))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Delete $duplicateCount Duplicates", style = MaterialTheme.typography.labelSmall.copy(color = RedText, fontWeight = FontWeight.Bold))
+                Text(
+                    "Delete $duplicateCount Duplicates",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = RedText,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
             }
         }
     }
@@ -192,24 +291,54 @@ fun MainMediaItem(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column {
-            Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)) {
                 // Placeholder for Image/Video
-                Box(modifier = Modifier.fillMaxSize().background(if (isVideo) Color(0xFF0D47A1) else Color(0xFFFFCCBC))) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(if (isVideo) Color(0xFF0D47A1) else Color(0xFFFFCCBC))
+                ) {
                     if (isVideo) {
-                        Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(64.dp).align(Alignment.Center))
+                        Icon(
+                            Icons.Default.PlayCircle,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .size(64.dp)
+                                .align(Alignment.Center)
+                        )
                     }
                 }
-                
+
                 if (badge != null) {
                     Surface(
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.padding(12.dp).align(Alignment.TopStart)
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .align(Alignment.TopStart)
                     ) {
-                        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Bolt, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Bolt,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(12.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(badge, style = MaterialTheme.typography.labelSmall.copy(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 8.sp))
+                            Text(
+                                badge,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 8.sp
+                                )
+                            )
                         }
                     }
                 }
@@ -218,26 +347,60 @@ fun MainMediaItem(
                     Surface(
                         color = Color.Black.copy(alpha = 0.6f),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(8.dp).align(Alignment.BottomEnd)
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .align(Alignment.BottomEnd)
                     ) {
-                        Text("25:34", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall.copy(color = Color.White, fontSize = 8.sp))
+                        Text(
+                            "25:34",
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White,
+                                fontSize = 8.sp
+                            )
+                        )
                     }
                 }
             }
-            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(if (isVideo) Icons.Default.Videocam else Icons.Default.Image, contentDescription = null, tint = DarkCyan, modifier = Modifier.size(14.dp))
+                        Icon(
+                            if (isVideo) Icons.Default.Videocam else Icons.Default.Image,
+                            contentDescription = null,
+                            tint = DarkCyan,
+                            modifier = Modifier.size(14.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(similarity, style = MaterialTheme.typography.labelSmall.copy(color = DarkCyan, fontWeight = FontWeight.Bold))
+                        Text(
+                            similarity,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = DarkCyan,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
                     }
-                    Text("$fileName • $fileInfo", style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        "$fileName • $fileInfo",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Surface(
                     color = Color(0xFF80DEEA),
                     shape = RoundedCornerShape(4.dp)
                 ) {
-                    Text("KEEP", modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = DarkCyan))
+                    Text(
+                        "KEEP",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = DarkCyan
+                        )
+                    )
                 }
             }
         }
@@ -252,15 +415,41 @@ fun DuplicateListItem(label: String, fileName: String, info: String) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(48.dp).background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)))
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(label, style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold, fontSize = 8.sp))
-                Text(fileName, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface))
-                Text(info, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color(0xFFD32F2F),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 8.sp
+                    )
+                )
+                Text(
+                    fileName,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                Text(
+                    info,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             IconButton(onClick = { }) {
-                Icon(Icons.Default.DeleteSweep, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Default.DeleteSweep,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }
@@ -278,13 +467,37 @@ fun PurgeSelectionBar() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("TOTAL SELECTION", style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray, fontSize = 8.sp))
-                Text("412.5 MB", style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold))
+                Text(
+                    "TOTAL SELECTION",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.LightGray,
+                        fontSize = 8.sp
+                    )
+                )
+                Text(
+                    "412.5 MB",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
             }
             Spacer(modifier = Modifier.width(24.dp))
             Column {
-                Text("FILES TO PURGE", style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray, fontSize = 8.sp))
-                Text("12 Items", style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold))
+                Text(
+                    "FILES TO PURGE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.LightGray,
+                        fontSize = 8.sp
+                    )
+                )
+                Text(
+                    "12 Items",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
@@ -293,9 +506,16 @@ fun PurgeSelectionBar() {
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Text("Purge All Duplicates", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold))
+                Text(
+                    "Purge All Duplicates",
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(
+                    Icons.Default.DeleteOutline,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }

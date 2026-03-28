@@ -4,8 +4,19 @@ import android.Manifest
 import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -13,7 +24,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.rp.dedup.core.image.PermissionRequester
-import com.rp.dedup.screens.*
+import com.rp.dedup.screens.AboutScreen
+import com.rp.dedup.screens.ActivityLogScreen
+import com.rp.dedup.screens.AppDrawerContent
+import com.rp.dedup.screens.DashboardScreen
+import com.rp.dedup.screens.DuplicateClustersScreen
+import com.rp.dedup.screens.FileCleanupScreen
+import com.rp.dedup.screens.ImageScannerScreen
+import com.rp.dedup.screens.SettingsScreen
+import com.rp.dedup.screens.SplashScreen
+import com.rp.dedup.screens.VideoScannerScreen
 
 // Provides DrawerState to any composable in the tree without prop drilling
 val LocalDrawerState = compositionLocalOf<DrawerState> { error("No DrawerState provided") }
