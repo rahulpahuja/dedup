@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -65,6 +66,7 @@ import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.ScannerViewModelFactory
 import com.rp.dedup.core.ScannerContent
 import com.rp.dedup.core.viewmodels.ScannerViewModel
+import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -162,8 +164,7 @@ fun ImageScannerScreen(navController: NavHostController) {
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        },
-        bottomBar = { BottomNavigationBar(navController) }
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -344,4 +345,13 @@ private fun ScannerHeader(
     }
 
     HorizontalDivider()
+}
+
+
+@Preview
+@Composable
+private fun ScannerScreenPreview() {
+    DeDupTheme() {
+        ImageScannerScreen(navController = NavHostController(LocalContext.current))
+    }
 }

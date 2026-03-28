@@ -87,8 +87,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        },
-        bottomBar = { BottomNavigationBar(navController) }
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
