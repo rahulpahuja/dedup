@@ -30,6 +30,8 @@ import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.core.FileScannerRepository
 import com.rp.dedup.core.FileScannerViewModel
 import com.rp.dedup.core.ScannedFile
+import com.rp.dedup.core.db.AppDatabase
+import com.rp.dedup.core.scanhistory.ScanHistoryRepository
 import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,10 +42,15 @@ fun FileScannerScreen(
     extensions: List<String>
 ) {
     val context = LocalContext.current
+    val historyType = if (scanType == "pdf") "FILE_PDF" else "FILE_APK"
     val viewModel: FileScannerViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return FileScannerViewModel(FileScannerRepository(context)) as T
+                return FileScannerViewModel(
+                    repository = FileScannerRepository(context),
+                    historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
+                    scanTypeName = historyType
+                ) as T
             }
         }
     )

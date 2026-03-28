@@ -30,6 +30,7 @@ sealed class Screen(val route: String) {
     object VideoScanner : Screen("video_scanner")
     object About : Screen("about")
     object Settings : Screen("settings")
+    object ScanHistory : Screen("scan_history")
     object FileScanner : Screen("file_scanner/{type}") {
         fun createRoute(type: String) = "file_scanner/$type"
     }
@@ -82,6 +83,9 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(navController)
+                }
+                composable(Screen.ScanHistory.route) {
+                    ScanHistoryScreen(navController)
                 }
                 composable(
                     route = Screen.FileScanner.route,

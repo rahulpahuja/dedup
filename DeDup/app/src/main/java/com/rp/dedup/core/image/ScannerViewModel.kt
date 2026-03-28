@@ -2,15 +2,22 @@ package com.rp.dedup.core.image
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.scanhistory.ScanHistory
+import com.rp.dedup.core.scanhistory.ScanHistoryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
-class ScannerViewModel(private val repository: ImageScannerRepository) : ViewModel() {
+class ScannerViewModel(
+    private val repository: ImageScannerRepository,
+    private val historyRepository: ScanHistoryRepository? = null
+) : ViewModel() {
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedImage>>>(emptyList())
     val duplicateGroups: StateFlow<List<List<ScannedImage>>> = _duplicateGroups.asStateFlow()
@@ -20,11 +27,12 @@ class ScannerViewModel(private val repository: ImageScannerRepository) : ViewMod
 
     private val allScannedGroups = mutableListOf<MutableList<ScannedImage>>()
 
-    // --- NEW: Track the active scanning job ---
     private var scanJob: Job? = null
 
     fun startScanning() {
-        // Assign the launch block to our scanJob variable
+        val startTime = System.currentTimeMillis()
+        var wasCancelled = false
+
         scanJob = viewModelScope.launch(Dispatchers.Default) {
             try {
                 _isScanning.value = true
@@ -60,19 +68,19 @@ class ScannerViewModel(private val repository: ImageScannerRepository) : ViewMod
                     .map { it.toList() }
 
             } catch (_: CancellationException) {
-                // This is completely normal! It just means the user hit cancel.
-                // We catch it so we can push whatever duplicates we found BEFORE they hit cancel.
+                wasCancelled = true
                 _duplicateGroups.value = allScannedGroups
                     .filter { it.size > 1 }
                     .map { it.toList() }
             } finally {
-                // Whether it finishes naturally or gets cancelled, always turn off the loading spinner
                 _isScanning.value = false
+                withContext(NonCancellable + Dispatchers.IO) {
+                    saveHistory(startTime, if (wasCancelled) "CANCELLED" else "COMPLETED")
+                }
             }
         }
     }
 
-    // --- NEW: Cancel Function ---
     fun cancelScanning() {
         scanJob?.cancel()
     }
@@ -93,6 +101,22 @@ class ScannerViewModel(private val repository: ImageScannerRepository) : ViewMod
                 allScannedGroups.add(mutableListOf(image))
             }
         }
+    }
+
+    private suspend fun saveHistory(startTime: Long, status: String) {
+        val groups = _duplicateGroups.value
+        historyRepository?.insert(
+            ScanHistory(
+                scanType = "IMAGE",
+                timestamp = startTime,
+                durationMs = System.currentTimeMillis() - startTime,
+                totalScanned = allScannedGroups.sumOf { it.size },
+                duplicateGroups = groups.size,
+                totalDuplicates = groups.sumOf { it.size - 1 },
+                reclaimableBytes = groups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } },
+                status = status
+            )
+        )
     }
 
     fun getAutoClearUris(): List<String> {

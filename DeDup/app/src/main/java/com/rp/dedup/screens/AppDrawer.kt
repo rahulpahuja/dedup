@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
@@ -127,6 +128,12 @@ fun AppDrawerContent(
             label = "Activity Log",
             selected = currentRoute == Screen.Activity.route,
             onClick = { navigateTo(Screen.Activity.route) }
+        )
+        DrawerNavItem(
+            icon = Icons.Default.ManageSearch,
+            label = "Scan History",
+            selected = currentRoute == Screen.ScanHistory.route,
+            onClick = { navigateTo(Screen.ScanHistory.route) }
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
