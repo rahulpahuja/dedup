@@ -112,9 +112,12 @@ class ImageSearchRepository(private val context: Context) {
             "with", "in", "on", "at", "of", "is", "are", "was", "were",
             "and", "or", "for", "to", "image", "photo", "picture", "pic"
         )
-        return query.lowercase()
+        val tokens = query.lowercase()
             .split(" ", ",", ".", ";", "'")
             .map { it.trim() }
-            .filter { it.length > 2 && it !in stopwords }
+            .filter { it.isNotEmpty() && it !in stopwords }
+        
+        // Limit to 10 tokens to prevent excessive processing or potential library limits
+        return tokens.take(10)
     }
 }
