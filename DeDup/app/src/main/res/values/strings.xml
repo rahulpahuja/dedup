@@ -1,5 +1,3 @@
 <resources>
     <string name="app_name">DeDup</string>
-    <string name="facebook_app_id">2079982969241932</string>
-    <string name="facebook_client_token" >b97bc53e216db1ec8788e054d8261bfb</string>
 </resources>
