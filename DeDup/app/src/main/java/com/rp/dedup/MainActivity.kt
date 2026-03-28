@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                     // Demo Activity Trigger Button
                     Button(
                         onClick = {
-                            startActivity(Intent(this@MainActivity, DemoNotificationActivity::class.java))
+                            startActivity(Intent(this@MainActivity, DemotestActivity::class.java))
                         },
                         modifier = Modifier
                             .align(Alignment.TopEnd)

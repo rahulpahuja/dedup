@@ -80,50 +80,110 @@ fun DashboardScreen(navController: NavHostController) {
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
 
-    var searchQuery by rememberSaveable() { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            if (!searchActive) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            UIConstants.APP_NAME,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+            Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+                if (!searchActive) {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                UIConstants.APP_NAME,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             )
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                Icons.Default.Menu,
-                                contentDescription = "Menu",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { }) {
-                            Surface(
-                                shape = CircleShape,
-                                modifier = Modifier.size(32.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            ) {
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = "Profile",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    Icons.Default.Menu,
+                                    contentDescription = "Menu",
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        },
+                        actions = {
+                            IconButton(onClick = { }) {
+                                Surface(
+                                    shape = CircleShape,
+                                    modifier = Modifier.size(32.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                ) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = "Profile",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
                     )
-                )
+                }
+
+                SearchBar(
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            onSearch = { searchViewModel.search(it) },
+                            expanded = searchActive,
+                            onExpandedChange = { active ->
+                                searchActive = active
+                                if (!active) { searchQuery = ""; searchViewModel.clear() }
+                            },
+                            placeholder = {
+                                Text(
+                                    "Find my image wearing a red shirt…",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.ImageSearch,
+                                    contentDescription = "Image search"
+                                )
+                            },
+                            trailingIcon = {
+                                if (searchActive || searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        if (searchActive) {
+                                            searchActive = false
+                                        }
+                                        searchQuery = ""
+                                        searchViewModel.clear()
+                                    }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Close search")
+                                    }
+                                }
+                            }
+                        )
+                    },
+                    expanded = searchActive,
+                    onExpandedChange = { active ->
+                        searchActive = active
+                        if (!active) { searchQuery = ""; searchViewModel.clear() }
+                    },
+                    modifier = if (searchActive) Modifier.fillMaxWidth()
+                    else Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, bottom = 12.dp)
+                ) {
+                    // ── Search results shown inside expanded SearchBar ─────────────
+                    ImageSearchContent(
+                        query = searchQuery,
+                        results = searchResults,
+                        isSearching = isSearching,
+                        progress = searchProgress,
+                        error = searchError
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -139,8 +199,7 @@ fun DashboardScreen(navController: NavHostController) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp),
-                    // Leave room at the top for the floating SearchBar
-                    contentPadding = PaddingValues(top = 72.dp, bottom = 16.dp)
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     item {
                         Text(
@@ -180,61 +239,6 @@ fun DashboardScreen(navController: NavHostController) {
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
-            }
-
-            // ── Semantic search bar (floats at the top) ────────────────────────
-            SearchBar(
-                inputField = {
-                    SearchBarDefaults.InputField(
-                        query = searchQuery,
-                        onQueryChange = { searchQuery = it },
-                        onSearch = { searchViewModel.search(it) },
-                        expanded = searchActive,
-                        onExpandedChange = { active ->
-                            searchActive = active
-                            if (!active) { searchQuery = ""; searchViewModel.clear() }
-                        },
-                        placeholder = {
-                            Text(
-                                "Find my image wearing a red shirt…",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.ImageSearch,
-                                contentDescription = "Image search"
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchActive) {
-                                IconButton(onClick = {
-                                    searchActive = false
-                                    searchQuery = ""
-                                    searchViewModel.clear()
-                                }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Close search")
-                                }
-                            }
-                        }
-                    )
-                },
-                expanded = searchActive,
-                onExpandedChange = { active ->
-                    searchActive = active
-                    if (!active) { searchQuery = ""; searchViewModel.clear() }
-                },
-                modifier = if (searchActive) Modifier.fillMaxWidth()
-                           else Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                // ── Search results shown inside expanded SearchBar ─────────────
-                ImageSearchContent(
-                    query = searchQuery,
-                    results = searchResults,
-                    isSearching = isSearching,
-                    progress = searchProgress,
-                    error = searchError
-                )
             }
         }
     }
