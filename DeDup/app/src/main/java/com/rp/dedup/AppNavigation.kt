@@ -4,6 +4,7 @@ import android.Manifest
 import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -57,10 +58,18 @@ fun AppNavHost(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
+    // Routes that show the persistent bottom navigation bar
+    val showBottomNav = currentRoute == Screen.Dashboard.route
+            || currentRoute == Screen.Cleanup.route
+            || currentRoute == Screen.VideoScanner.route
+            || currentRoute == Screen.Settings.route
+            || currentRoute == Screen.ScanHistory.route
+            || currentRoute == Screen.FileBrowser.route
+            || currentRoute?.startsWith("file_scanner") == true
+
     CompositionLocalProvider(LocalDrawerState provides drawerState) {
         ModalNavigationDrawer(
             drawerState = drawerState,
-            // Disable swipe gesture on splash so users don't accidentally open the drawer
             gesturesEnabled = currentRoute != Screen.Splash.route,
             drawerContent = {
                 AppDrawerContent(
@@ -70,7 +79,16 @@ fun AppNavHost(navController: NavHostController) {
                 )
             }
         ) {
-            NavHost(navController = navController, startDestination = Screen.Splash.route) {
+            Scaffold(
+                bottomBar = {
+                    if (showBottomNav) BottomNavigationBar(navController)
+                }
+            ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Splash.route,
+                modifier = Modifier.padding(innerPadding)
+            ) {
                 composable(Screen.Splash.route) {
                     SplashScreen(navController)
                 }
@@ -116,9 +134,10 @@ fun AppNavHost(navController: NavHostController) {
                     val extensions = if (type == "pdf") listOf("pdf") else listOf("apk")
                     FileScannerScreen(navController, type, extensions)
                 }
-            }
-        }
-    }
+            } // NavHost
+            } // Scaffold innerPadding
+        } // ModalNavigationDrawer
+    } // CompositionLocalProvider
 }
 
 @Composable

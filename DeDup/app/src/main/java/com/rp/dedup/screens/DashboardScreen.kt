@@ -98,7 +98,6 @@ fun DashboardScreen(navController: NavHostController) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        bottomBar = { BottomNavigationBar(navController) }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
