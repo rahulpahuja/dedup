@@ -78,6 +78,14 @@ dependencies {
     implementation(libs.firebase.database)
     implementation("com.google.firebase:firebase-analytics")
 
+    // Credential Manager & Google ID
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // Facebook Login
+    implementation("com.facebook.android:facebook-login:18.2.3")
+
     // Coil for Jetpack Compose
     implementation("io.coil-kt:coil-compose:2.7.0")
 

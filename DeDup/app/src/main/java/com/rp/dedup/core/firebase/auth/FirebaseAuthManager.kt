@@ -1,7 +1,20 @@
 package com.rp.dedup.core.firebase.auth
 
 import android.app.Activity
+import android.content.Context
+import android.util.Base64
 import android.util.Log
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -12,6 +25,7 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.rp.dedup.core.notifications.ToastManager
 import kotlinx.coroutines.tasks.await
+import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
 
 class FirebaseAuthManager(
@@ -21,6 +35,13 @@ class FirebaseAuthManager(
 
     companion object {
         private const val TAG = "FirebaseAuthManager"
+
+        /**
+         * Your OAuth 2.0 Web Client ID from the Google Cloud Console / Firebase Console.
+         * Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration.
+         * TODO: Replace with your actual Web Client ID before shipping.
+         */
+        const val WEB_CLIENT_ID = "300582514488-0se0sjakfc04r7rfegpm8h0jnd7t7luh.apps.googleusercontent.com"
     }
 
     val currentUser: FirebaseUser?
@@ -28,6 +49,8 @@ class FirebaseAuthManager(
 
     val isUserLoggedIn: Boolean
         get() = auth.currentUser != null
+
+    // ── Email / Password ──────────────────────────────────────────────────────
 
     suspend fun signInAnonymously(): FirebaseUser? {
         return try {
@@ -71,17 +94,143 @@ class FirebaseAuthManager(
         }
     }
 
-    suspend fun signInWithGoogle(idToken: String): FirebaseUser? {
+    // ── Sign in with Google (Credential Manager) ──────────────────────────────
+
+    /**
+     * Launches the Credential Manager bottom-sheet to sign the user in with Google,
+     * then authenticates with Firebase using the returned ID token.
+     *
+     * Flow:
+     *  1. Try authorised accounts only (enables auto sign-in for returning users).
+     *  2. If no authorised account exists → fall back to all accounts (sign-up flow).
+     *  3. Extract the [GoogleIdTokenCredential] from the Credential Manager response.
+     *  4. Exchange the ID token for a Firebase [FirebaseUser].
+     *
+     * @param activityContext Must be an [Activity] context, not an Application context,
+     *   because Credential Manager needs to attach a bottom sheet to the window.
+     */
+    suspend fun signInWithGoogle(activityContext: Context): FirebaseUser? {
         return try {
-            Log.d(TAG, "Attempting Google sign-in")
+            val idToken = fetchGoogleIdToken(activityContext) ?: return null
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             signInWithCredential(credential, "Google")
         } catch (e: Exception) {
-            Log.e(TAG, "Google credential creation failed", e)
+            Log.e(TAG, "Google sign-in failed", e)
             toastManager.showLong("Google sign-in failed: ${e.message}")
             null
         }
     }
+
+    /**
+     * Orchestrates the two-step Credential Manager request:
+     *   Step 1 — Authorised accounts only   (bottom sheet + auto sign-in eligible).
+     *   Step 2 — All device accounts        (shown when step 1 returns [NoCredentialException]).
+     */
+    private suspend fun fetchGoogleIdToken(activityContext: Context): String? {
+        val credentialManager = CredentialManager.create(activityContext)
+
+        // Step 1: previously-authorised accounts → enables Automatic Sign-in
+        return try {
+            requestGoogleIdToken(
+                credentialManager = credentialManager,
+                activityContext = activityContext,
+                filterByAuthorizedAccounts = true,
+                autoSelect = true
+            )
+        } catch (e: NoCredentialException) {
+            Log.d(TAG, "No authorised accounts; falling back to all-accounts flow")
+            // Step 2: show all Google accounts on the device (new user / different account)
+            try {
+                requestGoogleIdToken(
+                    credentialManager = credentialManager,
+                    activityContext = activityContext,
+                    filterByAuthorizedAccounts = false,
+                    autoSelect = false
+                )
+            } catch (e2: GetCredentialCancellationException) {
+                Log.d(TAG, "User cancelled Google sign-in")
+                toastManager.showShort("Sign-in cancelled")
+                null
+            } catch (e2: GetCredentialException) {
+                Log.e(TAG, "Google sign-in failed (all-accounts flow)", e2)
+                toastManager.showLong("Google sign-in failed: ${e2.message}")
+                null
+            }
+        } catch (e: GetCredentialCancellationException) {
+            Log.d(TAG, "User cancelled Google sign-in")
+            toastManager.showShort("Sign-in cancelled")
+            null
+        } catch (e: GetCredentialException) {
+            Log.e(TAG, "Google sign-in failed (authorised-accounts flow)", e)
+            toastManager.showLong("Google sign-in failed: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Builds and fires a single Credential Manager [GetCredentialRequest], then
+     * extracts the Google ID token from the response.
+     */
+    private suspend fun requestGoogleIdToken(
+        credentialManager: CredentialManager,
+        activityContext: Context,
+        filterByAuthorizedAccounts: Boolean,
+        autoSelect: Boolean
+    ): String? {
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts)
+            .setServerClientId(WEB_CLIENT_ID)
+            .setAutoSelectEnabled(autoSelect)
+            .setNonce(generateNonce())
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        val result = credentialManager.getCredential(
+            context = activityContext,
+            request = request
+        )
+        return extractGoogleIdToken(result)
+    }
+
+    /**
+     * Unpacks the [GetCredentialResponse] and returns the raw Google ID token string,
+     * or `null` if the credential type is unrecognised.
+     */
+    private fun extractGoogleIdToken(result: GetCredentialResponse): String? {
+        val credential = result.credential
+        return if (
+            credential is CustomCredential &&
+            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+        ) {
+            try {
+                GoogleIdTokenCredential.createFrom(credential.data).idToken
+            } catch (e: GoogleIdTokenParsingException) {
+                Log.e(TAG, "Received an invalid Google ID token response", e)
+                null
+            }
+        } else {
+            Log.e(TAG, "Unexpected credential type: ${credential.type}")
+            null
+        }
+    }
+
+    /**
+     * Generates a cryptographically strong random nonce (Base64-URL-safe, no padding).
+     * Sent with each sign-in request to prevent replay attacks.
+     */
+    private fun generateNonce(byteLength: Int = 32): String {
+        val randomBytes = ByteArray(byteLength)
+        SecureRandom().nextBytes(randomBytes)
+        return Base64.encodeToString(
+            randomBytes,
+            Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING
+        )
+    }
+
+    // ── Other social providers ────────────────────────────────────────────────
 
     suspend fun signInWithFacebook(accessToken: String): FirebaseUser? {
         return try {
@@ -107,6 +256,8 @@ class FirebaseAuthManager(
         }
     }
 
+    // ── Phone Auth ────────────────────────────────────────────────────────────
+
     /**
      * Step 1 of Phone Auth: Verify the phone number and send OTP.
      */
@@ -118,10 +269,10 @@ class FirebaseAuthManager(
         try {
             Log.d(TAG, "Attempting to verify phone number: $phoneNumber")
             val options = PhoneAuthOptions.newBuilder(auth)
-                .setPhoneNumber(phoneNumber)       // Phone number to verify
-                .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
-                .setActivity(activity)             // Activity (for callback binding)
-                .setCallbacks(callbacks)           // OnVerificationStateChangedCallbacks
+                .setPhoneNumber(phoneNumber)
+                .setTimeout(60L, TimeUnit.SECONDS)
+                .setActivity(activity)
+                .setCallbacks(callbacks)
                 .build()
             PhoneAuthProvider.verifyPhoneNumber(options)
         } catch (e: Exception) {
@@ -145,20 +296,13 @@ class FirebaseAuthManager(
         }
     }
 
-    private suspend fun signInWithCredential(credential: AuthCredential, providerName: String): FirebaseUser? {
-        return try {
-            Log.d(TAG, "Signing in with credential from provider: $providerName")
-            val result = auth.signInWithCredential(credential).await()
-            Log.d(TAG, "$providerName sign-in successful: ${result.user?.email ?: result.user?.uid}")
-            toastManager.showShort("Signed in with $providerName")
-            result.user
-        } catch (e: Exception) {
-            Log.e(TAG, "$providerName sign-in failed", e)
-            toastManager.showLong("$providerName sign-in failed: ${e.message}")
-            null
-        }
-    }
+    // ── Sign-out ──────────────────────────────────────────────────────────────
 
+    /**
+     * Signs the user out of Firebase.
+     * For Google sign-in, prefer [signOutWithCredentialClear] to also notify
+     * the Credential Manager so the account picker resets for the next sign-in.
+     */
     fun signOut() {
         try {
             Log.d(TAG, "Signing out user: ${currentUser?.email ?: currentUser?.uid}")
@@ -170,6 +314,28 @@ class FirebaseAuthManager(
             toastManager.showLong("Sign-out failed: ${e.message}")
         }
     }
+
+    /**
+     * Signs the user out of Firebase AND clears the Credential Manager session.
+     *
+     * Clearing credential state is important for Google sign-in: without it the
+     * Credential Manager may skip the account-picker and auto-select the same
+     * account next time, making it impossible to switch accounts.
+     *
+     * @param context Any valid [Context] (Activity or Application both work here).
+     */
+    suspend fun signOutWithCredentialClear(context: Context) {
+        try {
+            Log.d(TAG, "Clearing Credential Manager state")
+            CredentialManager.create(context)
+                .clearCredentialState(ClearCredentialStateRequest())
+        } catch (e: Exception) {
+            Log.w(TAG, "clearCredentialState failed (non-fatal): ${e.message}")
+        }
+        signOut()
+    }
+
+    // ── Account management ────────────────────────────────────────────────────
 
     suspend fun sendPasswordResetEmail(email: String) {
         try {
@@ -193,6 +359,25 @@ class FirebaseAuthManager(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete user", e)
             toastManager.showLong("Failed to delete user: ${e.message}")
+        }
+    }
+
+    // ── Internal ──────────────────────────────────────────────────────────────
+
+    private suspend fun signInWithCredential(
+        credential: AuthCredential,
+        providerName: String
+    ): FirebaseUser? {
+        return try {
+            Log.d(TAG, "Signing in with credential from provider: $providerName")
+            val result = auth.signInWithCredential(credential).await()
+            Log.d(TAG, "$providerName sign-in successful: ${result.user?.email ?: result.user?.uid}")
+            toastManager.showShort("Signed in with $providerName")
+            result.user
+        } catch (e: Exception) {
+            Log.e(TAG, "$providerName sign-in failed", e)
+            toastManager.showLong("$providerName sign-in failed: ${e.message}")
+            null
         }
     }
 }
