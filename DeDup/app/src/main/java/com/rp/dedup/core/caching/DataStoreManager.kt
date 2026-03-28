@@ -7,18 +7,19 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.rp.dedup.core.Constants
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings_cache")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = Constants.SETTINGS_CACHE)
 
 class DataStoreManager(private val context: Context) {
 
     companion object {
-        val LAST_SCAN_TIME = stringPreferencesKey("last_scan_time")
-        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val LAST_SCAN_TIME = stringPreferencesKey(Constants.LAST_SCAN_TIME)
+        val THEME_MODE = stringPreferencesKey(Constants.THEME_MODE)
     }
 
     suspend fun <T> writeData(key: Preferences.Key<T>, value: T) {

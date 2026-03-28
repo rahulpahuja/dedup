@@ -55,7 +55,7 @@ fun ImageScannerScreen(navController: NavHostController) {
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.removeDeletedImagesFromUI(pendingDeleteUris)
+            viewModel.removeDeletedImagesFromUI(pendingDeleteUris.map { it.toString() })
             selectedForDeletion.removeAll(pendingDeleteUris)
             pendingDeleteUris = emptyList()
         }
@@ -69,7 +69,7 @@ fun ImageScannerScreen(navController: NavHostController) {
             deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
         } else {
             uris.forEach { context.contentResolver.delete(it, null, null) }
-            viewModel.removeDeletedImagesFromUI(uris)
+            viewModel.removeDeletedImagesFromUI(uris.map { it.toString() })
             selectedForDeletion.removeAll(uris)
         }
     }
@@ -80,8 +80,9 @@ fun ImageScannerScreen(navController: NavHostController) {
         }
     }
     val manualSavingsBytes = remember(selectedForDeletion.size) {
+        val selectedUriStrings = selectedForDeletion.map { it.toString() }.toHashSet()
         duplicateGroups.flatten()
-            .filter { it.uri in selectedForDeletion }
+            .filter { it.uri in selectedUriStrings }
             .sumOf { it.sizeInBytes }
     }
 
@@ -178,7 +179,7 @@ fun ImageScannerScreen(navController: NavHostController) {
                 Button(
                     onClick = {
                         showAutoClearWarning = false
-                        triggerOSDeletionPrompt(viewModel.getAutoClearUris())
+                        triggerOSDeletionPrompt(viewModel.getAutoClearUris().map { Uri.parse(it) })
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error

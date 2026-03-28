@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -71,7 +72,7 @@ class ImageScannerRepository(private val context: Context) {
                         bitmap.recycle() // Free memory instantly
 
                         // Emit the result to the UI
-                        emit(ScannedImage(uri = uri, dHash = hash, sizeInBytes = size))
+                        emit(ScannedImage(uri = uri.toString(), dHash = hash, sizeInBytes = size))
                     }
                 }
             }

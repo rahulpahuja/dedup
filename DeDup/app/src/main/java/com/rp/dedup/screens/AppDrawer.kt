@@ -118,8 +118,8 @@ fun AppDrawerContent(
         DrawerNavItem(
             icon = Icons.Default.Info,
             label = "About",
-            selected = false,
-            onClick = { scope.launch { drawerState.close() } }
+            selected = currentRoute == Screen.About.route,
+            onClick = { navigateTo(Screen.About.route) }
         )
     }
 

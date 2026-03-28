@@ -5,10 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SdStorage
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.res.painterResource
+import com.rp.dedup.R
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -224,21 +224,12 @@ fun SplashScreen(navController: NavHostController) {
                                     )
                                 )
                         )
-                        // Icon tile
-                        Surface(
-                            modifier = Modifier.size(60.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            color = PrimaryBlue
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.SdStorage,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
+                        // Custom logo
+                        Image(
+                            painter = painterResource(R.drawable.ic_dedup_logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp)
+                        )
                     }
                 }
             }

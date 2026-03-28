@@ -3,6 +3,7 @@ package com.rp.dedup.core
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
+import com.rp.dedup.core.Constants.EMPTY_STRING
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -33,14 +34,14 @@ class VideoScannerRepository(private val context: Context) {
 
             while (cursor.moveToNext()) {
                 val name = cursor.getString(nameColumn) ?: continue
-                val extension = name.substringAfterLast('.', "").lowercase()
+                val extension = name.substringAfterLast('.', EMPTY_STRING).lowercase()
 
                 if (extension !in VideoExtensions.list) continue
 
                 val id = cursor.getLong(idColumn)
                 val size = cursor.getLong(sizeColumn)
                 val duration = cursor.getLong(durationColumn)
-                val mimeType = cursor.getString(mimeTypeColumn) ?: ""
+                val mimeType = cursor.getString(mimeTypeColumn) ?: EMPTY_STRING
                 val uri = ContentUris.withAppendedId(
                     MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id
                 )

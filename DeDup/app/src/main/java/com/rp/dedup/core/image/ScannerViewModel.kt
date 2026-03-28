@@ -1,6 +1,5 @@
 package com.rp.dedup.core.image
 
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +59,7 @@ class ScannerViewModel(private val repository: ImageScannerRepository) : ViewMod
                     .filter { it.size > 1 }
                     .map { it.toList() }
 
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 // This is completely normal! It just means the user hit cancel.
                 // We catch it so we can push whatever duplicates we found BEFORE they hit cancel.
                 _duplicateGroups.value = allScannedGroups
@@ -95,8 +94,8 @@ class ScannerViewModel(private val repository: ImageScannerRepository) : ViewMod
         }
     }
 
-    fun getAutoClearUris(): List<Uri> {
-        val urisToDelete = mutableListOf<Uri>()
+    fun getAutoClearUris(): List<String> {
+        val urisToDelete = mutableListOf<String>()
         _duplicateGroups.value.forEach { group ->
             if (group.size > 1) {
                 for (i in 1 until group.size) {
@@ -107,7 +106,7 @@ class ScannerViewModel(private val repository: ImageScannerRepository) : ViewMod
         return urisToDelete
     }
 
-    fun removeDeletedImagesFromUI(deletedUris: List<Uri>) {
+    fun removeDeletedImagesFromUI(deletedUris: List<String>) {
         allScannedGroups.forEach { group ->
             group.removeAll { it.uri in deletedUris }
         }

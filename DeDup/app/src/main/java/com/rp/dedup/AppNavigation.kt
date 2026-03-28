@@ -26,6 +26,8 @@ sealed class Screen(val route: String) {
     object ResultsMedia : Screen("results_media")
     object Activity : Screen("activity")
     object VideoScanner : Screen("video_scanner")
+    object About : Screen("about")
+    object Settings : Screen("settings")
 }
 
 @Composable
@@ -69,6 +71,12 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.VideoScanner.route) {
                     VideoScannerGatekeeper(navController)
+                }
+                composable(Screen.About.route) {
+                    AboutScreen(navController)
+                }
+                composable(Screen.Settings.route) {
+                    SettingsScreen(navController)
                 }
             }
         }

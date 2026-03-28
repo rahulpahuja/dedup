@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+
+    <!-- Back photo card (the duplicate) — offset right+down, faded -->
+    <path
+        android:fillColor="#0056D2"
+        android:fillAlpha="0.22"
+        android:pathData="M24,18 L58,18 Q64,18 64,24 L64,58 Q64,64 58,64 L24,64 Q18,64 18,58 L18,24 Q18,18 24,18 Z" />
+
+    <!-- Front photo card -->
+    <path
+        android:fillColor="#0056D2"
+        android:pathData="M12,10 L46,10 Q52,10 52,16 L52,50 Q52,56 46,56 L12,56 Q6,56 6,50 L6,16 Q6,10 12,10 Z" />
+
+    <!-- Sun circle inside front card -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14,22 A6,6,0,1,0,26,22 A6,6,0,1,0,14,22 Z" />
+
+    <!-- Mountain silhouette inside front card -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,50 L18,34 L25,43 L33,28 L50,50 Z" />
+
+    <!-- Delete badge circle (top-right, overlapping both cards) -->
+    <path
+        android:fillColor="#FF5252"
+        android:pathData="M52,12 A8,8,0,1,0,68,12 A8,8,0,1,0,52,12 Z" />
+
+    <!-- X mark inside badge -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M56,8 L64,16 M64,8 L56,16" />
+
+</vector>

@@ -10,7 +10,7 @@ kotlin = "2.1.0"
 composeBom = "2024.09.00"
 navigationCompose = "2.8.3"
 datastore = "1.1.2"
-room = "2.6.1"
+room = "2.7.0-alpha11"
 ksp = "2.1.0-1.0.29"
 
 [libraries]
