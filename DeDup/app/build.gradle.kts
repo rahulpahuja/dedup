@@ -86,6 +86,10 @@ dependencies {
     // Facebook Login
     implementation("com.facebook.android:facebook-login:18.2.3")
 
+    // Glance for App Widgets
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.glance:glance-material3:1.1.1")
+
     // Coil for Jetpack Compose
     implementation("io.coil-kt:coil-compose:2.7.0")
 
