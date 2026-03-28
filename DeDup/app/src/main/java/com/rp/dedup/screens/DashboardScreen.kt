@@ -1,5 +1,8 @@
 package com.rp.dedup.screens
 
+import android.text.format.Formatter
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,22 +17,42 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
+import com.rp.dedup.core.db.AppDatabase
+import com.rp.dedup.core.scanhistory.ScanHistoryRepository
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val dashboardViewModel: DashboardViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return DashboardViewModel(
+                    ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao())
+                ) as T
+            }
+        }
+    )
+    val storageStats by dashboardViewModel.storageStats.collectAsState()
+    val totalReclaimable by dashboardViewModel.totalReclaimableBytes.collectAsState()
+
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
 
@@ -94,7 +117,10 @@ fun DashboardScreen(navController: NavHostController) {
             }
 
             item {
-                StorageSummaryCard()
+                StorageSummaryCard(
+                    stats = storageStats,
+                    reclaimableBytes = totalReclaimable
+                )
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
@@ -120,13 +146,41 @@ fun DashboardScreen(navController: NavHostController) {
 }
 
 @Composable
-fun StorageSummaryCard() {
+fun StorageSummaryCard(
+    stats: StorageStats = StorageStats(),
+    reclaimableBytes: Long = 0L
+) {
+    val context = LocalContext.current
+
+    // Animate both bars on first composition
+    val usedFractionAnimated by animateFloatAsState(
+        targetValue = stats.usedFraction,
+        animationSpec = tween(durationMillis = 900),
+        label = "usedFraction"
+    )
+    val savingsFraction = if (stats.usedBytes > 0)
+        (reclaimableBytes.toFloat() / stats.usedBytes).coerceIn(0f, 1f)
+    else 0f
+    val savingsFractionAnimated by animateFloatAsState(
+        targetValue = savingsFraction,
+        animationSpec = tween(durationMillis = 900, delayMillis = 200),
+        label = "savingsFraction"
+    )
+
+    val usedLabel = if (stats.totalBytes > 0)
+        "${Formatter.formatShortFileSize(context, stats.usedBytes)} / ${
+            Formatter.formatShortFileSize(context, stats.totalBytes)
+        }"
+    else "Calculating…"
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
+
+            // ── Header ─────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -139,7 +193,7 @@ fun StorageSummaryCard() {
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
                     Text(
-                        "42.5 GB / 128 GB",
+                        usedLabel,
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -151,21 +205,85 @@ fun StorageSummaryCard() {
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            LinearProgressIndicator(
-                progress = { 0.33f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f),
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── Device storage bar ─────────────────────────
             Text(
-                "33% of your storage is occupied",
+                "DEVICE STORAGE",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
+                )
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            LinearProgressIndicator(
+                progress = { usedFractionAnimated },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f),
+                strokeCap = StrokeCap.Round
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                if (stats.totalBytes > 0)
+                    "${"%.0f".format(stats.usedFraction * 100)}% of storage used  •  " +
+                    "${Formatter.formatShortFileSize(context, stats.freeBytes)} free"
+                else "Loading storage info…",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── DeDup savings bar ──────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "DEDUP SAVINGS",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
+                    )
+                )
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color(0xFF34A853).copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        if (reclaimableBytes > 0)
+                            Formatter.formatShortFileSize(context, reclaimableBytes)
+                        else "0 B",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF34A853)
+                        )
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            LinearProgressIndicator(
+                progress = { savingsFractionAnimated },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = Color(0xFF34A853),
+                trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f),
+                strokeCap = StrokeCap.Round
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                if (reclaimableBytes > 0)
+                    "${"%.1f".format(savingsFraction * 100)}% of used storage identified as reclaimable"
+                else "Run a scan to identify reclaimable space",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f)
             )
         }
     }
