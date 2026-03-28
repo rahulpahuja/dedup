@@ -31,6 +31,7 @@ sealed class Screen(val route: String) {
     object About : Screen("about")
     object Settings : Screen("settings")
     object ScanHistory : Screen("scan_history")
+    object FileBrowser : Screen("file_browser")
     object FileScanner : Screen("file_scanner/{type}") {
         fun createRoute(type: String) = "file_scanner/$type"
     }
@@ -87,6 +88,9 @@ fun AppNavHost(navController: NavHostController) {
                 composable(Screen.ScanHistory.route) {
                     ScanHistoryScreen(navController)
                 }
+                composable(Screen.FileBrowser.route) {
+                    FileBrowserGatekeeper(navController)
+                }
                 composable(
                     route = Screen.FileScanner.route,
                     arguments = listOf(navArgument("type") { type = NavType.StringType })
@@ -133,6 +137,29 @@ fun VideoScannerGatekeeper(navController: NavHostController) {
         )
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Waiting for permission to scan videos...")
+        }
+    }
+}
+
+@Composable
+fun FileBrowserGatekeeper(navController: NavHostController) {
+    var hasPermission by remember { mutableStateOf(false) }
+
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
+    if (hasPermission) {
+        FileBrowserScreen(navController = navController)
+    } else {
+        PermissionRequester(
+            onPermissionGranted = { hasPermission = true },
+            tiramisu13Permission = permission
+        )
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Waiting for storage permission…")
         }
     }
 }

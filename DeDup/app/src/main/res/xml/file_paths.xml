@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Covers Environment.getExternalStorageDirectory() and its subdirectories -->
+    <external-path name="external_storage" path="." />
+    <!-- Covers app-specific external files directory -->
+    <external-files-path name="external_files" path="." />
+</paths>

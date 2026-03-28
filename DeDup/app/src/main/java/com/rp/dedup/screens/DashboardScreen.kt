@@ -210,6 +210,17 @@ fun QuickScanGrid(navController: NavHostController) {
                 onClick = { navController.navigate(Screen.FileScanner.createRoute("apk")) }
             )
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ScanCategoryCard(
+                title = "Browse Files",
+                count = "All",
+                icon = Icons.Default.FolderOpen,
+                color = Color(0xFF00ACC1),
+                modifier = Modifier.weight(1f),
+                onClick = { navController.navigate(Screen.FileBrowser.route) }
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
@@ -334,7 +345,7 @@ fun BottomNavigationBar(navController: NavHostController) {
     val selectedIndex = when {
         currentRoute == Screen.Dashboard.route -> 0
         currentRoute == Screen.Cleanup.route -> 1
-        currentRoute?.startsWith("file_scanner") == true -> 2
+        currentRoute?.startsWith("file_scanner") == true || currentRoute == Screen.FileBrowser.route -> 2
         currentRoute == Screen.VideoScanner.route -> 3
         currentRoute == Screen.Settings.route -> 4
         else -> 0

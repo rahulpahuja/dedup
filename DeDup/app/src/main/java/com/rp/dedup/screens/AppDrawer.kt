@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -134,6 +135,12 @@ fun AppDrawerContent(
             label = "Scan History",
             selected = currentRoute == Screen.ScanHistory.route,
             onClick = { navigateTo(Screen.ScanHistory.route) }
+        )
+        DrawerNavItem(
+            icon = Icons.Default.FolderOpen,
+            label = "File Browser",
+            selected = currentRoute == Screen.FileBrowser.route,
+            onClick = { navigateTo(Screen.FileBrowser.route) }
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))

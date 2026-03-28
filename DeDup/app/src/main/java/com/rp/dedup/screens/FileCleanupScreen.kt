@@ -10,7 +10,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -155,9 +159,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                     "Large File Finder",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(
-                            0xFF1A237E
-                        )
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 )
                 Text(
@@ -166,10 +168,15 @@ fun FileCleanupScreen(navController: NavHostController) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+                var selectedFilter by remember { mutableStateOf(">100MB") }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(">50MB", isSelected = false)
-                    FilterChip(">100MB", isSelected = true)
-                    FilterChip(">500MB", isSelected = false)
+                    listOf(">50MB", ">100MB", ">500MB").forEach { label ->
+                        SizeFilterChip(
+                            text = label,
+                            isSelected = selectedFilter == label,
+                            onClick = { selectedFilter = label }
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -187,7 +194,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                 LargeFileCard(
                     title = "Obsolete Archives",
                     size = "12",
-                    subtitle = "Obsolete Archives",
+                    subtitle = "ZIP & RAR files not opened in 90+ days",
                     icon = Icons.Default.Archive,
                     iconBg = MaterialTheme.colorScheme.secondaryContainer,
                     iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -202,9 +209,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                     "Redundant Downloads",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(
-                            0xFF1A237E
-                        )
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -273,11 +278,13 @@ fun CategoryCard(
 }
 
 @Composable
-fun FilterChip(text: String, isSelected: Boolean) {
+fun SizeFilterChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.height(32.dp)
+        modifier = Modifier
+            .height(32.dp)
+            .clickable(onClick = onClick)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp)) {
             Text(
@@ -332,9 +339,7 @@ fun LargeFileCard(
                         size,
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (MaterialTheme.colorScheme.onBackground == Color.White) Color.White else Color(
-                                0xFF1A237E
-                            )
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                     )
                 }
