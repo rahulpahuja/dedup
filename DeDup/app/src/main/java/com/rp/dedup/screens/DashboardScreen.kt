@@ -78,6 +78,32 @@ fun DashboardScreen(navController: NavHostController) {
     val searchProgress by searchViewModel.progress.collectAsState()
     val searchError by searchViewModel.error.collectAsState()
 
+    DashboardScreenContent(
+        navController = navController,
+        storageStats = storageStats,
+        totalReclaimable = totalReclaimable,
+        searchResults = searchResults,
+        isSearching = isSearching,
+        searchProgress = searchProgress,
+        searchError = searchError,
+        onSearch = { searchViewModel.search(it) },
+        onClearSearch = { searchViewModel.clear() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DashboardScreenContent(
+    navController: NavHostController,
+    storageStats: StorageStats,
+    totalReclaimable: Long,
+    searchResults: List<ImageSearchRepository.SearchResult>,
+    isSearching: Boolean,
+    searchProgress: Pair<Int, Int>,
+    searchError: String?,
+    onSearch: (String) -> Unit,
+    onClearSearch: () -> Unit
+) {
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
 
@@ -133,11 +159,11 @@ fun DashboardScreen(navController: NavHostController) {
                         SearchBarDefaults.InputField(
                             query = searchQuery,
                             onQueryChange = { searchQuery = it },
-                            onSearch = { searchViewModel.search(it) },
+                            onSearch = { onSearch(it) },
                             expanded = searchActive,
                             onExpandedChange = { active ->
                                 searchActive = active
-                                if (!active) { searchQuery = ""; searchViewModel.clear() }
+                                if (!active) { searchQuery = ""; onClearSearch() }
                             },
                             placeholder = {
                                 Text(
@@ -158,7 +184,7 @@ fun DashboardScreen(navController: NavHostController) {
                                             searchActive = false
                                         }
                                         searchQuery = ""
-                                        searchViewModel.clear()
+                                        onClearSearch()
                                     }) {
                                         Icon(Icons.Default.Close, contentDescription = "Close search")
                                     }
@@ -169,7 +195,7 @@ fun DashboardScreen(navController: NavHostController) {
                     expanded = searchActive,
                     onExpandedChange = { active ->
                         searchActive = active
-                        if (!active) { searchQuery = ""; searchViewModel.clear() }
+                        if (!active) { searchQuery = ""; onClearSearch() }
                     },
                     modifier = if (searchActive) {
                         Modifier.fillMaxWidth()
@@ -842,6 +868,20 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
 @Composable
 fun DashboardScreenPreview() {
     DeDupTheme {
-        DashboardScreen(rememberNavController())
+        DashboardScreenContent(
+            navController = rememberNavController(),
+            storageStats = StorageStats(
+                totalBytes = 128L * 1024 * 1024 * 1024,
+                usedBytes = 82L * 1024 * 1024 * 1024,
+                freeBytes = 46L * 1024 * 1024 * 1024
+            ),
+            totalReclaimable = 12L * 1024 * 1024 * 1024,
+            searchResults = emptyList(),
+            isSearching = false,
+            searchProgress = 0 to 0,
+            searchError = null,
+            onSearch = {},
+            onClearSearch = {}
+        )
     }
 }
