@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,7 +80,7 @@ fun DashboardScreen(navController: NavHostController) {
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
 
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by rememberSaveable() { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
 
     Scaffold(

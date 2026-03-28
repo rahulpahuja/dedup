@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,11 +33,64 @@ import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.SelectionBarBackground
 import kotlinx.coroutines.launch
 
+private data class LargeFileItem(
+    val title: String,
+    val subtitle: String,
+    val sizeBytes: Long,      // used for filtering
+    val sizeLabel: String,    // displayed value (may be a count or size string)
+    val icon: ImageVector,
+    val iconBg: Color,
+    val iconTint: Color,
+    val isCountType: Boolean = false
+)
+
+private val MB = 1024L * 1024L
+
+private val largeFileItems = listOf(
+    LargeFileItem(
+        title = "Unused Video Assets",
+        subtitle = "4 high-resolution recordings from June",
+        sizeBytes = 842L * MB,
+        sizeLabel = "842MB",
+        icon = Icons.Default.VideoLibrary,
+        iconBg = Color(0xFFB2EBF2),
+        iconTint = Color(0xFF006064)
+    ),
+    LargeFileItem(
+        title = "Obsolete Archives",
+        subtitle = "ZIP & RAR files not opened in 90+ days",
+        sizeBytes = 145L * MB,
+        sizeLabel = "12",
+        icon = Icons.Default.Archive,
+        iconBg = Color(0xFFEDE7F6),
+        iconTint = Color(0xFF512DA8),
+        isCountType = true
+    ),
+    LargeFileItem(
+        title = "Large App Downloads",
+        subtitle = "APKs and OBBs in Downloads folder",
+        sizeBytes = 68L * MB,
+        sizeLabel = "68MB",
+        icon = Icons.Default.Android,
+        iconBg = Color(0xFFE8F5E9),
+        iconTint = Color(0xFF2E7D32)
+    )
+)
+
+private val sizeFilters = listOf(
+    ">50MB"  to  50L * MB,
+    ">100MB" to 100L * MB,
+    ">200MB" to 200L * MB
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileCleanupScreen(navController: NavHostController) {
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
+    var selectedFilter by remember { mutableStateOf(sizeFilters[1].first) }
+    val minBytes = sizeFilters.firstOrNull { it.first == selectedFilter }?.second ?: 0L
+    val filteredLargeFiles = largeFileItems.filter { it.sizeBytes >= minBytes }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -165,9 +219,8 @@ fun FileCleanupScreen(navController: NavHostController) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                var selectedFilter by remember { mutableStateOf(">100MB") }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(">50MB", ">100MB", ">500MB").forEach { label ->
+                    sizeFilters.forEach { (label, _) ->
                         SizeFilterChip(
                             text = label,
                             isSelected = selectedFilter == label,
@@ -178,27 +231,20 @@ fun FileCleanupScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            item {
+            items(filteredLargeFiles) { file ->
                 LargeFileCard(
-                    title = "Unused Video Assets",
-                    subtitle = "4 high-resolution recordings from June",
-                    size = "842MB",
-                    icon = Icons.Default.VideoLibrary,
-                    iconBg = Color(0xFFB2EBF2),
-                    iconTint = Color(0xFF006064)
+                    title = file.title,
+                    subtitle = file.subtitle,
+                    size = file.sizeLabel,
+                    icon = file.icon,
+                    iconBg = file.iconBg,
+                    iconTint = file.iconTint,
+                    isCountType = file.isCountType
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                LargeFileCard(
-                    title = "Obsolete Archives",
-                    size = "12",
-                    subtitle = "ZIP & RAR files not opened in 90+ days",
-                    icon = Icons.Default.Archive,
-                    iconBg = MaterialTheme.colorScheme.secondaryContainer,
-                    iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    isCountType = true
-                )
-                Spacer(modifier = Modifier.height(32.dp))
             }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
 
             // Redundant Downloads Section
             item {
