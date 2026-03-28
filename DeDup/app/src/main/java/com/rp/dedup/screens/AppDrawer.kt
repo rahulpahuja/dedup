@@ -1,5 +1,6 @@
 package com.rp.dedup.screens
 
+import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -73,8 +75,31 @@ fun AppDrawerContent(
     drawerState: DrawerState,
     scope: CoroutineScope
 ) {
+    // In Previews, we avoid instantiating ViewModels that require Application context
+    if (LocalInspectionMode.current) {
+        AppDrawerContentUI(
+            navController = navController,
+            drawerState = drawerState,
+            scope = scope,
+            userName = "User",
+            userEmail = "user@example.com",
+            currentThemeMode = ThemeMode.AUTO,
+            onProfileUpdate = { _, _ -> },
+            onThemeModeChange = {}
+        )
+        return
+    }
+
     val context = LocalContext.current
-    val profileViewModel: UserProfileViewModel = viewModel()
+    
+    // Provide an explicit factory for UserProfileViewModel to avoid NoSuchMethodException in some environments
+    val profileViewModel: UserProfileViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return UserProfileViewModel(context.applicationContext as Application) as T
+            }
+        }
+    )
 
     // ThemeViewModel requires DataStoreManager, so we use a factory
     val themeViewModel: ThemeViewModel = viewModel(
@@ -85,6 +110,31 @@ fun AppDrawerContent(
         }
     )
 
+    val currentThemeMode by themeViewModel.themeMode.collectAsState()
+
+    AppDrawerContentUI(
+        navController = navController,
+        drawerState = drawerState,
+        scope = scope,
+        userName = profileViewModel.name,
+        userEmail = profileViewModel.email,
+        currentThemeMode = currentThemeMode,
+        onProfileUpdate = { name, email -> profileViewModel.update(name, email) },
+        onThemeModeChange = { themeViewModel.setThemeMode(it) }
+    )
+}
+
+@Composable
+private fun AppDrawerContentUI(
+    navController: NavHostController,
+    drawerState: DrawerState,
+    scope: CoroutineScope,
+    userName: String,
+    userEmail: String,
+    currentThemeMode: ThemeMode,
+    onProfileUpdate: (String, String) -> Unit,
+    onThemeModeChange: (ThemeMode) -> Unit
+) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     var showEditDialog by remember { mutableStateOf(false) }
 
@@ -97,8 +147,8 @@ fun AppDrawerContent(
 
     ModalDrawerSheet {
         ProfileHeader(
-            name = profileViewModel.name,
-            email = profileViewModel.email,
+            name = userName,
+            email = userEmail,
             onEditClick = { showEditDialog = true }
         )
 
@@ -152,12 +202,9 @@ fun AppDrawerContent(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-        // Collect theme mode state
-        val currentThemeMode by themeViewModel.themeMode.collectAsState()
-
         ThemeSection(
             currentMode = currentThemeMode,
-            onModeChange = { themeViewModel.setThemeMode(it) }
+            onModeChange = onThemeModeChange
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -178,11 +225,11 @@ fun AppDrawerContent(
 
     if (showEditDialog) {
         ProfileEditDialog(
-            currentName = profileViewModel.name,
-            currentEmail = profileViewModel.email,
+            currentName = userName,
+            currentEmail = userEmail,
             onDismiss = { showEditDialog = false },
             onSave = { name, email ->
-                profileViewModel.update(name, email)
+                onProfileUpdate(name, email)
                 showEditDialog = false
             }
         )
@@ -334,10 +381,15 @@ private fun ProfileEditDialog(
 @Composable
 private fun AppDrawerContentPreview() {
     DeDupTheme {
-        AppDrawerContent(
+        AppDrawerContentUI(
             navController = rememberNavController(),
             drawerState = rememberDrawerState(initialValue = DrawerValue.Open),
-            scope = rememberCoroutineScope()
+            scope = rememberCoroutineScope(),
+            userName = "John Doe",
+            userEmail = "john@example.com",
+            currentThemeMode = ThemeMode.AUTO,
+            onProfileUpdate = { _, _ -> },
+            onThemeModeChange = {}
         )
     }
 }

@@ -1,14 +1,17 @@
 package com.rp.dedup
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.rp.dedup.UIConstants.ROUTE_ABOUT
 import com.rp.dedup.UIConstants.ROUTE_ACTIVITY
@@ -26,6 +29,7 @@ import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.permissions.PermissionGate
 import com.rp.dedup.core.permissions.PermissionManager
 import com.rp.dedup.screens.*
+import com.rp.dedup.ui.theme.DeDupTheme
 
 // Provides DrawerState to any composable in the tree without prop drilling
 val LocalDrawerState = compositionLocalOf<DrawerState> { error("No DrawerState provided") }
@@ -181,5 +185,15 @@ fun FileScannerGatekeeper(
         rationaleMessage = "DeDup needs storage access to scan for duplicate ${type.uppercase()} files."
     ) {
         FileScannerScreen(navController, type, extensions)
+    }
+}
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+fun AppNavHostPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        AppNavHost(navController = navController)
     }
 }
