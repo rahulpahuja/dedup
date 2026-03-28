@@ -10,19 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class CleanupCategoryStats(
-    val totalSize: Long = 0L,
-    val count: Int = 0,
-    val isLoading: Boolean = false,
-    val files: List<ScannedFile> = emptyList()
-)
-
-data class CleanupScreenState(
-    val videoStats: CleanupCategoryStats = CleanupCategoryStats(),
-    val archiveStats: CleanupCategoryStats = CleanupCategoryStats(),
-    val appDownloadStats: CleanupCategoryStats = CleanupCategoryStats()
-)
-
 class CleanupViewModel(private val repository: FileScannerRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CleanupScreenState())
