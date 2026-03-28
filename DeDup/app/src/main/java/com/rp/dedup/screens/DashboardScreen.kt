@@ -1,5 +1,6 @@
 package com.rp.dedup.screens
 
+import android.net.Uri
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -7,6 +8,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,11 +19,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,15 +36,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
+import com.rp.dedup.core.viewmodels.ImageSearchViewModel
 import com.rp.dedup.core.viewmodels.StorageStats
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.util.Currency
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,95 +65,248 @@ fun DashboardScreen(navController: NavHostController) {
             }
         }
     )
+    val searchViewModel: ImageSearchViewModel = viewModel(
+        factory = ImageSearchViewModel.Factory(context)
+    )
+
     val storageStats by dashboardViewModel.storageStats.collectAsState()
     val totalReclaimable by dashboardViewModel.totalReclaimableBytes.collectAsState()
+    val searchResults by searchViewModel.results.collectAsState()
+    val isSearching by searchViewModel.isSearching.collectAsState()
+    val searchProgress by searchViewModel.progress.collectAsState()
+    val searchError by searchViewModel.error.collectAsState()
 
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
 
+    var searchQuery by remember { mutableStateOf("") }
+    var searchActive by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        UIConstants.APP_NAME,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+            if (!searchActive) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            UIConstants.APP_NAME,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(
-                            Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { }) {
-                        Surface(
-                            shape = CircleShape,
-                            modifier = Modifier.size(32.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        ) {
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(
-                                Icons.Default.Person,
-                                contentDescription = "Profile",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                Icons.Default.Menu,
+                                contentDescription = "Menu",
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-            )
+                    },
+                    actions = {
+                        IconButton(onClick = { }) {
+                            Surface(
+                                shape = CircleShape,
+                                modifier = Modifier.size(32.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            ) {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Profile",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+            }
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp)
         ) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    "Storage Dashboard",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+            // ── Normal dashboard content (hidden while search is active) ───────
+            if (!searchActive) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    // Leave room at the top for the floating SearchBar
+                    contentPadding = PaddingValues(top = 72.dp, bottom = 16.dp)
+                ) {
+                    item {
+                        Text(
+                            "Storage Dashboard",
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                    item {
+                        StorageSummaryCard(
+                            stats = storageStats,
+                            reclaimableBytes = totalReclaimable
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                    item {
+                        SavingsCalculatorCard(reclaimableBytes = totalReclaimable)
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                    item {
+                        Text(
+                            "Quick Scan",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        QuickScanGrid(navController)
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                    item {
+                        OptimizationSection(navController)
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                }
+            }
+
+            // ── Semantic search bar (floats at the top) ────────────────────────
+            SearchBar(
+                inputField = {
+                    SearchBarDefaults.InputField(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        onSearch = { searchViewModel.search(it) },
+                        expanded = searchActive,
+                        onExpandedChange = { active ->
+                            searchActive = active
+                            if (!active) { searchQuery = ""; searchViewModel.clear() }
+                        },
+                        placeholder = {
+                            Text(
+                                "Find my image wearing a red shirt…",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.ImageSearch,
+                                contentDescription = "Image search"
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchActive) {
+                                IconButton(onClick = {
+                                    searchActive = false
+                                    searchQuery = ""
+                                    searchViewModel.clear()
+                                }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Close search")
+                                }
+                            }
+                        }
                     )
+                },
+                expanded = searchActive,
+                onExpandedChange = { active ->
+                    searchActive = active
+                    if (!active) { searchQuery = ""; searchViewModel.clear() }
+                },
+                modifier = if (searchActive) Modifier.fillMaxWidth()
+                           else Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                // ── Search results shown inside expanded SearchBar ─────────────
+                ImageSearchContent(
+                    query = searchQuery,
+                    results = searchResults,
+                    isSearching = isSearching,
+                    progress = searchProgress,
+                    error = searchError
                 )
-                Spacer(modifier = Modifier.height(24.dp))
             }
+        }
+    }
+}
 
-            item {
-                StorageSummaryCard(
-                    stats = storageStats,
-                    reclaimableBytes = totalReclaimable
-                )
-                Spacer(modifier = Modifier.height(32.dp))
+@Composable
+fun SavingsCalculatorCard(reclaimableBytes: Long) {
+    val locale = Locale.getDefault()
+    val currency = try {
+        Currency.getInstance(locale)
+    } catch (_: Exception) {
+        Currency.getInstance("USD")
+    }
+    
+    // Average cost of storage per GB (estimate)
+    val costPerGb = when (currency.currencyCode) {
+        "INR" -> 5.0  // ₹5 per GB
+        "EUR" -> 0.05 // €0.05 per GB
+        "GBP" -> 0.04 // £0.04 per GB
+        else  -> 0.06 // $0.06 per GB default
+    }
+
+    val reclaimableGb = reclaimableBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+    val moneySaved = reclaimableGb * costPerGb
+
+    val currencyFormatter = NumberFormat.getCurrencyInstance(locale).apply {
+        this.currency = currency
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = UIConstants.ColorSavingsGreen.copy(alpha = 0.15f),
+                modifier = Modifier.size(52.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.Payments,
+                        contentDescription = null,
+                        tint = UIConstants.ColorSavingsGreen,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
-
-            item {
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
                 Text(
-                    "Quick Scan",
+                    "Potential Savings",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+                Text(
+                    "Money saved: ${currencyFormatter.format(moneySaved)}",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                QuickScanGrid(navController)
-                Spacer(modifier = Modifier.height(32.dp))
-            }
-
-            item {
-                OptimizationSection(navController)
-                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    "Based on storage cost of ${currencyFormatter.format(costPerGb)} / GB",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                )
             }
         }
     }
@@ -511,6 +677,170 @@ fun BottomNavigationBar(navController: NavHostController) {
             selected = selectedIndex == 4,
             onClick = { navController.navigate(Screen.Settings.route) }
         )
+    }
+}
+
+// ── Semantic search results ───────────────────────────────────────────────────
+
+@Composable
+fun ImageSearchContent(
+    query: String,
+    results: List<ImageSearchRepository.SearchResult>,
+    isSearching: Boolean,
+    progress: Pair<Int, Int>,
+    error: String?
+) {
+    when {
+        // Nothing typed yet
+        query.isBlank() -> {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.ImageSearch,
+                        contentDescription = null,
+                        modifier = Modifier.size(56.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Describe what you're looking for",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "e.g. \"wearing a red shirt\" or \"sunset beach\"",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+
+        // Searching — show progress
+        isSearching -> {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(16.dp))
+                val (labeled, total) = progress
+                Text(
+                    if (total > 0) "Analyzing images… $labeled / $total"
+                    else "Analyzing images…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (total > 0) {
+                    Spacer(Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        progress = { labeled.toFloat() / total },
+                        modifier = Modifier.fillMaxWidth(0.6f)
+                    )
+                }
+            }
+        }
+
+        // Error
+        error != null -> {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(error, color = MaterialTheme.colorScheme.error)
+            }
+        }
+
+        // No matches
+        results.isEmpty() -> {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.SearchOff,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "No matching images found",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Try different words or check gallery permissions",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+
+        // Results grid
+        else -> {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Text(
+                    "${results.size} image${if (results.size != 1) "s" else ""} matched",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(results) { result ->
+                        ImageSearchResultItem(result)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(8.dp))
+    ) {
+        AsyncImage(
+            model = result.uri,
+            contentDescription = result.matchedLabels.joinToString(),
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        // Matched label chips at the bottom
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart)
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
+                .padding(horizontal = 4.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = result.matchedLabels.take(2).joinToString(" · "),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 9.sp,
+                    color = Color.White
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 

@@ -33,6 +33,9 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+// Pre-define the date format to avoid repeated instantiation during list scrolling
+private val historyDateFormatter = SimpleDateFormat("MMM d, yyyy · HH:mm", Locale.getDefault())
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanHistoryScreen(navController: NavHostController) {
@@ -143,9 +146,15 @@ fun ScanHistoryScreen(navController: NavHostController) {
 
 @Composable
 private fun SummaryCard(history: List<ScanHistory>) {
-    val totalScans = history.size
-    val totalDuplicates = history.sumOf { it.totalDuplicates }
-    val totalReclaimable = history.sumOf { it.reclaimableBytes }
+    // Memoize the summary calculations to avoid re-summing during scrolls
+    val summaryStats = remember(history) {
+        object {
+            val totalScans = history.size
+            val totalDuplicates = history.sumOf { it.totalDuplicates }
+            val totalReclaimable = history.sumOf { it.reclaimableBytes }
+        }
+    }
+    
     val context = LocalContext.current
 
     Surface(
@@ -159,7 +168,7 @@ private fun SummaryCard(history: List<ScanHistory>) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SummaryStatColumn(
-                value = totalScans.toString(),
+                value = summaryStats.totalScans.toString(),
                 label = "Total Scans",
                 color = MaterialTheme.colorScheme.primary
             )
@@ -168,7 +177,7 @@ private fun SummaryCard(history: List<ScanHistory>) {
                 color = MaterialTheme.colorScheme.outlineVariant
             )
             SummaryStatColumn(
-                value = totalDuplicates.toString(),
+                value = summaryStats.totalDuplicates.toString(),
                 label = "Duplicates",
                 color = UIConstants.ColorDuplicatesStat
             )
@@ -177,8 +186,8 @@ private fun SummaryCard(history: List<ScanHistory>) {
                 color = MaterialTheme.colorScheme.outlineVariant
             )
             SummaryStatColumn(
-                value = if (totalReclaimable > 0)
-                    Formatter.formatShortFileSize(context, totalReclaimable)
+                value = if (summaryStats.totalReclaimable > 0)
+                    Formatter.formatShortFileSize(context, summaryStats.totalReclaimable)
                 else "—",
                 label = "Reclaimable",
                 color = UIConstants.ColorReclaimableStat
@@ -205,7 +214,11 @@ private fun SummaryStatColumn(value: String, label: String, color: Color) {
 
 @Composable
 private fun ScanHistoryCard(scan: ScanHistory, onDelete: () -> Unit) {
-    val (icon, iconColor, label) = scanTypeDisplay(scan.scanType)
+    // Memoize display data to keep scrolling smooth
+    val displayData = remember(scan.scanType) { scanTypeDisplay(scan.scanType) }
+    val formattedDate = remember(scan.timestamp) { formatTimestamp(scan.timestamp) }
+    val formattedDuration = remember(scan.durationMs) { formatDuration(scan.durationMs) }
+    
     val statusColor = if (scan.status == "COMPLETED") UIConstants.ColorSuccess else UIConstants.ColorWarning
     val context = LocalContext.current
 
@@ -219,22 +232,22 @@ private fun ScanHistoryCard(scan: ScanHistory, onDelete: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = iconColor.copy(alpha = 0.15f),
+                    color = displayData.color.copy(alpha = 0.15f),
                     modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(20.dp))
+                        Icon(displayData.icon, contentDescription = null, tint = displayData.color, modifier = Modifier.size(20.dp))
                     }
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = label,
+                        text = displayData.label,
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = formatTimestamp(scan.timestamp),
+                        text = formattedDate,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -289,7 +302,7 @@ private fun ScanHistoryCard(scan: ScanHistory, onDelete: () -> Unit) {
             Spacer(Modifier.height(10.dp))
 
             Text(
-                text = "Duration: ${formatDuration(scan.durationMs)}",
+                text = "Duration: $formattedDuration",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -373,8 +386,7 @@ private fun scanTypeDisplay(scanType: String): ScanTypeDisplay = when (scanType)
 }
 
 private fun formatTimestamp(epochMillis: Long): String {
-    val sdf = SimpleDateFormat("MMM d, yyyy · HH:mm", Locale.getDefault())
-    return sdf.format(Date(epochMillis))
+    return historyDateFormatter.format(Date(epochMillis))
 }
 
 private fun formatDuration(ms: Long): String {

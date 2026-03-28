@@ -80,6 +80,9 @@ dependencies {
 
     // Coil for Jetpack Compose
     implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // ML Kit on-device image labeling (used for semantic image search)
+    implementation("com.google.mlkit:image-labeling:17.0.9")
     
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
