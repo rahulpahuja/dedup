@@ -40,6 +40,7 @@ import com.rp.dedup.core.viewmodels.FileBrowserViewModel
 import com.rp.dedup.core.viewmodels.SortMode
 import com.rp.dedup.ui.theme.DeDupTheme
 import java.io.File
+import java.util.Locale
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
@@ -304,104 +305,131 @@ private fun BreadcrumbBar(segments: List<String>) {
                     modifier = Modifier
                         .size(10.dp)
                         .padding(horizontal = 2.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
-                Spacer(Modifier.width(2.dp))
             }
-            val isLast = index == segments.lastIndex
             Text(
                 text = segment,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = if (isLast) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isLast) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                )
+                style = MaterialTheme.typography.bodySmall,
+                color = if (index == segments.lastIndex)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = if (index == segments.lastIndex) FontWeight.Bold else FontWeight.Normal
             )
         }
     }
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 }
 
-// ─── File / folder row ────────────────────────────────────────────────────────
+// ─── List items ──────────────────────────────────────────────────────────────
 
 @Composable
 private fun FileItemRow(item: FileItem, onClick: () -> Unit) {
-    val (icon, iconColor) = fileIconAndColor(item)
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Icon container
+        // Icon
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(iconColor.copy(alpha = 0.12f)),
+                .size(40.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (item.isDirectory)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                icon,
+                imageVector = if (item.isDirectory) Icons.Default.Folder else iconForExtension(item.extension),
                 contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(22.dp)
+                tint = if (item.isDirectory)
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                else
+                    MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        Spacer(Modifier.width(14.dp))
+        Spacer(Modifier.width(16.dp))
 
-        // Name + subtitle
+        // Text details
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                item.name,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                text = item.name,
+                style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                if (item.isDirectory) {
-                    "${item.childCount} item${if (item.childCount != 1) "s" else ""}  •  " +
-                            relativeDate(item.lastModified)
-                } else {
-                    formatSize(item.size) + "  •  " + relativeDate(item.lastModified)
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (item.isDirectory) {
+                        "${item.childCount} items"
+                    } else {
+                        formatFileSize(item.size)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "  •  ",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = DateUtils.getRelativeTimeSpanString(
+                        item.lastModified,
+                        System.currentTimeMillis(),
+                        DateUtils.MINUTE_IN_MILLIS
+                    ).toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
-
-        Spacer(Modifier.width(8.dp))
 
         if (item.isDirectory) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
-                modifier = Modifier.size(14.dp)
-            )
-        } else {
-            Text(
-                item.extension.uppercase().take(4),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 9.sp,
-                    color = iconColor
-                ),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(iconColor.copy(alpha = 0.1f))
-                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             )
         }
     }
 }
 
-// ─── Sort bottom sheet ────────────────────────────────────────────────────────
+@Composable
+private fun EmptyFolderState() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 100.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Default.FolderOpen,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "No files found",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+// ─── Bottom Sheet ─────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -410,143 +438,107 @@ private fun SortBottomSheet(
     onSelect: (SortMode) -> Unit,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(bottom = 32.dp)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
             Text(
                 "Sort by",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
             )
-            HorizontalDivider()
-            SortMode.entries.forEach { mode ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onSelect(mode) }
-                        .padding(horizontal = 24.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        sortModeIcon(mode),
-                        contentDescription = null,
-                        tint = if (currentSort == mode) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    Text(
-                        mode.label,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            color = if (currentSort == mode) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                    if (currentSort == mode) {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
+            SortOption(
+                label = "Name",
+                icon = Icons.Default.SortByAlpha,
+                selected = currentSort == SortMode.NAME,
+                onClick = { onSelect(SortMode.NAME) }
+            )
+            SortOption(
+                label = "Date",
+                icon = Icons.Default.Event,
+                selected = currentSort == SortMode.DATE,
+                onClick = { onSelect(SortMode.DATE) }
+            )
+            SortOption(
+                label = "Size",
+                icon = Icons.Default.VerticalAlignBottom,
+                selected = currentSort == SortMode.SIZE,
+                onClick = { onSelect(SortMode.SIZE) }
+            )
         }
     }
 }
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
 
 @Composable
-private fun EmptyFolderState() {
-    Box(
+private fun SortOption(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 80.dp),
-        contentAlignment = Alignment.Center
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.width(16.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        )
+        Spacer(Modifier.weight(1f))
+        if (selected) {
             Icon(
-                Icons.Default.FolderOpen,
+                Icons.Default.Check,
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                "This folder is empty",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-private data class IconSpec(val icon: ImageVector, val color: Color)
+private fun formatFileSize(size: Long): String {
+    if (size <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (Math.log10(size.toDouble()) / Math.log10(1024.0)).toInt()
+    return String.format(Locale.US, "%.1f %s", size / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
+}
 
-private fun fileIconAndColor(item: FileItem): IconSpec {
-    if (item.isDirectory) return IconSpec(Icons.Default.Folder, UIConstants.ColorFileFolder)
-    return when (item.extension) {
-        "jpg", "jpeg", "png", "gif", "webp", "heic", "bmp" ->
-            IconSpec(Icons.Default.Image, UIConstants.ColorFileImage)
-        "mp4", "mkv", "avi", "mov", "webm", "ts", "3gp" ->
-            IconSpec(Icons.Default.Videocam, UIConstants.ColorFileVideo)
-        "mp3", "aac", "ogg", "flac", "wav", "m4a", "opus" ->
-            IconSpec(Icons.Default.MusicNote, UIConstants.ColorFileAudio)
-        "pdf" ->
-            IconSpec(Icons.Default.PictureAsPdf, UIConstants.ColorFilePdf)
-        "apk" ->
-            IconSpec(Icons.Default.Android, UIConstants.ColorFileApk)
-        "zip", "rar", "7z", "tar", "gz" ->
-            IconSpec(Icons.Default.FolderZip, UIConstants.ColorFileArchive)
-        "doc", "docx" ->
-            IconSpec(Icons.Default.Description, UIConstants.ColorFileWordDoc)
-        "xls", "xlsx" ->
-            IconSpec(Icons.Default.TableChart, UIConstants.ColorFileSpreadsheet)
-        "ppt", "pptx" ->
-            IconSpec(Icons.Default.Slideshow, UIConstants.ColorFilePresentation)
-        "txt", "md", "log" ->
-            IconSpec(Icons.Default.Article, UIConstants.ColorFileText)
-        else ->
-            IconSpec(Icons.AutoMirrored.Filled.InsertDriveFile, UIConstants.ColorFileGeneric)
+private fun iconForExtension(ext: String): ImageVector {
+    return when (ext.lowercase()) {
+        "jpg", "jpeg", "png", "webp", "gif" -> Icons.Default.Image
+        "mp4", "mkv", "mov", "avi" -> Icons.Default.Movie
+        "mp3", "wav", "flac", "ogg", "aac" -> Icons.Default.AudioFile
+        "pdf" -> Icons.Default.PictureAsPdf
+        "zip", "rar", "7z", "tar" -> Icons.Default.FolderZip
+        "txt", "doc", "docx", "pdf" -> Icons.AutoMirrored.Filled.InsertDriveFile
+        else -> Icons.AutoMirrored.Filled.InsertDriveFile
     }
-}
-
-private fun sortModeIcon(mode: SortMode): ImageVector = when (mode) {
-    SortMode.NAME -> Icons.Default.SortByAlpha
-    SortMode.SIZE -> Icons.Default.DataUsage
-    SortMode.DATE -> Icons.Default.AccessTime
-}
-
-private fun formatSize(bytes: Long): String = when {
-    bytes <= 0L       -> "0 B"
-    bytes < 1024L     -> "$bytes B"
-    bytes < 1_048_576 -> "%.1f KB".format(bytes / 1024.0)
-    bytes < 1_073_741_824 -> "%.1f MB".format(bytes / 1_048_576.0)
-    else              -> "%.2f GB".format(bytes / 1_073_741_824.0)
-}
-
-private fun relativeDate(epochMillis: Long): String {
-    return DateUtils.getRelativeTimeSpanString(
-        epochMillis,
-        System.currentTimeMillis(),
-        DateUtils.MINUTE_IN_MILLIS,
-        DateUtils.FORMAT_ABBREV_RELATIVE
-    ).toString()
 }
 
 private fun mimeTypeFor(extension: String): String = when (extension.lowercase()) {
     "jpg", "jpeg"      -> "image/jpeg"
     "png"              -> "image/png"
-    "gif"              -> "image/gif"
     "webp"             -> "image/webp"
-    "heic"             -> "image/heic"
+    "gif"              -> "image/gif"
     "mp4"              -> "video/mp4"
     "mkv"              -> "video/x-matroska"
-    "avi"              -> "video/x-msvideo"
     "mov"              -> "video/quicktime"
     "mp3"              -> "audio/mpeg"
     "aac"              -> "audio/aac"
@@ -587,9 +579,9 @@ private fun openFile(context: Context, file: File) {
 @Composable
 private fun FileBrowserPreview() {
     val mockItems = listOf(
-        FileItem("Documents", "/storage/emulated/0/Documents", true, 0, System.currentTimeMillis(), 5, ""),
-        FileItem("image.jpg", "/storage/emulated/0/image.jpg", false, 1024 * 500, System.currentTimeMillis() - 100000, 0, "jpg"),
-        FileItem("report.pdf", "/storage/emulated/0/report.pdf", false, 1024 * 1024 * 2, System.currentTimeMillis() - 500000, 0, "pdf")
+        FileItem("Documents", "/storage/emulated/0/Documents", true, 0L, System.currentTimeMillis(), "", 5),
+        FileItem("image.jpg", "/storage/emulated/0/image.jpg", false, 1024L * 500, System.currentTimeMillis() - 100000, "jpg", 0),
+        FileItem("report.pdf", "/storage/emulated/0/report.pdf", false, 1024L * 1024 * 2, System.currentTimeMillis() - 500000, "pdf", 0)
     )
     DeDupTheme {
         FileBrowserContent(

@@ -77,10 +77,7 @@ fun FileCleanupScreen(navController: NavHostController) {
             )
         },
         bottomBar = {
-            Column {
-                DeleteSelectionBar()
-                BottomNavigationBar(navController)
-            }
+            DeleteSelectionBar()
         }
     ) { paddingValues ->
         LazyColumn(
