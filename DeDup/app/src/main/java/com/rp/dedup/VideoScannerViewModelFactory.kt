@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.rp.dedup.core.repository.VideoScannerRepository
-import com.rp.dedup.core.VideoScannerViewModel
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.viewmodels.VideoScannerViewModel
 
 class VideoScannerViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

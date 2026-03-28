@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavHostController
 import com.rp.dedup.Screen
+import com.rp.dedup.UIConstants
 import com.rp.dedup.core.viewmodels.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.core.caching.DataStoreManager
@@ -57,7 +58,7 @@ fun SettingsScreen(navController: NavHostController) {
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF060D1F), Color(0xFF0D2347))
+                    colors = listOf(UIConstants.GradientDarkStart, UIConstants.GradientDarkEnd)
                 )
             )
     ) {
@@ -105,7 +106,7 @@ fun SettingsScreen(navController: NavHostController) {
                 SettingsCard {
                     SettingsRow(
                         icon = Icons.Default.Palette,
-                        iconColor = Color(0xFF9C27B0),
+                        iconColor = UIConstants.ColorIconPalette,
                         title = "Theme",
                         trailing = {
                             ThemeBadge(currentThemeMode)
@@ -122,11 +123,11 @@ fun SettingsScreen(navController: NavHostController) {
                 SettingsCard {
                     SettingsRow(
                         icon = Icons.Default.Info,
-                        iconColor = Color(0xFF2196F3),
+                        iconColor = UIConstants.ColorIconInfo,
                         title = "About DeDup",
                         trailing = {
                             Text(
-                                "v1.0.0",
+                                UIConstants.APP_VERSION,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = Color.White.copy(alpha = 0.35f)
                                 )
@@ -267,15 +268,15 @@ private fun ThemePickerDialog(
     onSelect: (ThemeMode) -> Unit
 ) {
     val themeOptions = listOf(
-        Triple(ThemeMode.LIGHT,  Icons.Default.LightMode,        Color(0xFFFBC02D)),
-        Triple(ThemeMode.DARK,   Icons.Default.DarkMode,         Color(0xFF7986CB)),
-        Triple(ThemeMode.AUTO,   Icons.Default.SettingsBrightness, Color(0xFF4DB6AC))
+        Triple(ThemeMode.LIGHT,  Icons.Default.LightMode,          UIConstants.ColorThemeLight),
+        Triple(ThemeMode.DARK,   Icons.Default.DarkMode,           UIConstants.ColorThemeDark),
+        Triple(ThemeMode.AUTO,   Icons.Default.SettingsBrightness, UIConstants.ColorThemeAuto)
     )
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFF0D1B3E),
+            color = UIConstants.DialogSurface,
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
         ) {
             Column(modifier = Modifier.padding(24.dp)) {

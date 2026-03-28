@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.rp.dedup.UIConstants
 import com.rp.dedup.core.browser.FileItem
 import com.rp.dedup.core.viewmodels.FileBrowserViewModel
 import com.rp.dedup.core.viewmodels.SortMode
@@ -88,7 +89,7 @@ fun FileBrowserScreen(navController: NavHostController) {
                                 currentDir.name.let { name ->
                                     if (currentDir.absolutePath == android.os.Environment
                                             .getExternalStorageDirectory().absolutePath
-                                    ) "Internal Storage" else name
+                                    ) UIConstants.FILE_BROWSER_ROOT_LABEL else name
                                 },
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold
@@ -443,30 +444,30 @@ private fun EmptyFolderState() {
 private data class IconSpec(val icon: ImageVector, val color: Color)
 
 private fun fileIconAndColor(item: FileItem): IconSpec {
-    if (item.isDirectory) return IconSpec(Icons.Default.Folder, Color(0xFFFBBC05))
+    if (item.isDirectory) return IconSpec(Icons.Default.Folder, UIConstants.ColorFileFolder)
     return when (item.extension) {
         "jpg", "jpeg", "png", "gif", "webp", "heic", "bmp" ->
-            IconSpec(Icons.Default.Image, Color(0xFF4285F4))
+            IconSpec(Icons.Default.Image, UIConstants.ColorFileImage)
         "mp4", "mkv", "avi", "mov", "webm", "ts", "3gp" ->
-            IconSpec(Icons.Default.Videocam, Color(0xFFEA4335))
+            IconSpec(Icons.Default.Videocam, UIConstants.ColorFileVideo)
         "mp3", "aac", "ogg", "flac", "wav", "m4a", "opus" ->
-            IconSpec(Icons.Default.MusicNote, Color(0xFF9C27B0))
+            IconSpec(Icons.Default.MusicNote, UIConstants.ColorFileAudio)
         "pdf" ->
-            IconSpec(Icons.Default.PictureAsPdf, Color(0xFFFF5722))
+            IconSpec(Icons.Default.PictureAsPdf, UIConstants.ColorFilePdf)
         "apk" ->
-            IconSpec(Icons.Default.Android, Color(0xFF34A853))
+            IconSpec(Icons.Default.Android, UIConstants.ColorFileApk)
         "zip", "rar", "7z", "tar", "gz" ->
-            IconSpec(Icons.Default.FolderZip, Color(0xFF607D8B))
+            IconSpec(Icons.Default.FolderZip, UIConstants.ColorFileArchive)
         "doc", "docx" ->
-            IconSpec(Icons.Default.Description, Color(0xFF1A73E8))
+            IconSpec(Icons.Default.Description, UIConstants.ColorFileWordDoc)
         "xls", "xlsx" ->
-            IconSpec(Icons.Default.TableChart, Color(0xFF0F9D58))
+            IconSpec(Icons.Default.TableChart, UIConstants.ColorFileSpreadsheet)
         "ppt", "pptx" ->
-            IconSpec(Icons.Default.Slideshow, Color(0xFFFF6D00))
+            IconSpec(Icons.Default.Slideshow, UIConstants.ColorFilePresentation)
         "txt", "md", "log" ->
-            IconSpec(Icons.Default.Article, Color(0xFF78909C))
+            IconSpec(Icons.Default.Article, UIConstants.ColorFileText)
         else ->
-            IconSpec(Icons.AutoMirrored.Filled.InsertDriveFile, Color(0xFF9E9E9E))
+            IconSpec(Icons.AutoMirrored.Filled.InsertDriveFile, UIConstants.ColorFileGeneric)
     }
 }
 

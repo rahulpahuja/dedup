@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
+import com.rp.dedup.UIConstants
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
@@ -62,7 +64,7 @@ fun DashboardScreen(navController: NavHostController) {
             TopAppBar(
                 title = {
                     Text(
-                        "DeDuplicator",
+                        UIConstants.APP_NAME,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -139,7 +141,7 @@ fun DashboardScreen(navController: NavHostController) {
             }
 
             item {
-                OptimizationSection()
+                OptimizationSection(navController)
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -256,7 +258,7 @@ fun StorageSummaryCard(
                 )
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = Color(0xFF34A853).copy(alpha = 0.15f)
+                    color = UIConstants.ColorSavingsGreen.copy(alpha = 0.15f)
                 ) {
                     Text(
                         if (reclaimableBytes > 0)
@@ -265,7 +267,7 @@ fun StorageSummaryCard(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF34A853)
+                            color = UIConstants.ColorSavingsGreen
                         )
                     )
                 }
@@ -274,7 +276,7 @@ fun StorageSummaryCard(
             LinearProgressIndicator(
                 progress = { savingsFractionAnimated },
                 modifier = Modifier.fillMaxWidth().height(8.dp),
-                color = Color(0xFF34A853),
+                color = UIConstants.ColorSavingsGreen,
                 trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f),
                 strokeCap = StrokeCap.Round
             )
@@ -295,54 +297,54 @@ fun QuickScanGrid(navController: NavHostController) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
-                title = "Images",
+                title = UIConstants.QUICK_SCAN_IMAGES,
                 count = "1.2k",
                 icon = Icons.Default.Image,
-                color = Color(0xFF4285F4),
+                color = UIConstants.ColorImages,
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate(Screen.ResultsContacts.route) }
             )
             ScanCategoryCard(
-                title = "Videos",
+                title = UIConstants.QUICK_SCAN_VIDEOS,
                 count = "45",
                 icon = Icons.Default.Videocam,
-                color = Color(0xFFEA4335),
+                color = UIConstants.ColorVideos,
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate(Screen.VideoScanner.route) }
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
-                title = "Documents",
+                title = UIConstants.QUICK_SCAN_DOCUMENTS,
                 count = "230",
                 icon = Icons.Default.Description,
-                color = Color(0xFFFBBC05),
+                color = UIConstants.ColorDocuments,
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate(Screen.Cleanup.route) }
             )
             ScanCategoryCard(
-                title = "APKs",
+                title = UIConstants.QUICK_SCAN_APKS,
                 count = "12",
                 icon = Icons.Default.Android,
-                color = Color(0xFF34A853),
+                color = UIConstants.ColorApks,
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate(Screen.FileScanner.createRoute("apk")) }
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
-                title = "Browse Files",
+                title = UIConstants.QUICK_SCAN_BROWSE_FILES,
                 count = "All",
                 icon = Icons.Default.FolderOpen,
-                color = Color(0xFF00ACC1),
+                color = UIConstants.ColorBrowseFiles,
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate(Screen.FileBrowser.route) }
             )
             ScanCategoryCard(
-                title = "Scan History",
+                title = UIConstants.QUICK_SCAN_HISTORY,
                 count = "Log",
                 icon = Icons.Default.History,
-                color = Color(0xFF7986CB),
+                color = UIConstants.ColorScanHistory,
                 modifier = Modifier.weight(1f),
                 onClick = { navController.navigate(Screen.ScanHistory.route) }
             )
@@ -391,7 +393,7 @@ fun ScanCategoryCard(
 }
 
 @Composable
-fun OptimizationSection() {
+fun OptimizationSection(navController: NavHostController) {
     Column {
         Text(
             "Optimization Suggestions",
@@ -403,16 +405,18 @@ fun OptimizationSection() {
         Spacer(modifier = Modifier.height(16.dp))
         OptimizationCard(
             title = "Clear Cache Files",
-            description = "Remove 1.2 GB of temporary app data",
+            description = "Remove temporary app data to free up space",
             icon = Icons.Default.CleaningServices,
-            isOptimized = false
+            isOptimized = false,
+            onClick = { navController.navigate(Screen.CacheCleaner.route) }
         )
         Spacer(modifier = Modifier.height(12.dp))
         OptimizationCard(
             title = "Large File Review",
             description = "Analyze 4 files larger than 500 MB",
             icon = Icons.Default.Assessment,
-            isOptimized = true
+            isOptimized = true,
+            onClick = { }
         )
     }
 }
@@ -422,13 +426,14 @@ fun OptimizationCard(
     title: String,
     description: String,
     icon: ImageVector,
-    isOptimized: Boolean
+    isOptimized: Boolean,
+    onClick: () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(20.dp),
         shadowElevation = 1.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -458,7 +463,7 @@ fun OptimizationCard(
             Icon(
                 imageVector = if (isOptimized) Icons.Default.CheckCircle else Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = if (isOptimized) Color(0xFF34A853) else Color(0xFFEA4335)
+                tint = if (isOptimized) UIConstants.ColorSavingsGreen else UIConstants.ColorError
             )
         }
     }
@@ -480,31 +485,31 @@ fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         NavigationBarItem(
             icon = { Icon(Icons.Default.GridView, contentDescription = null) },
-            label = { Text("DASH") },
+            label = { Text(UIConstants.NAV_LABEL_DASH) },
             selected = selectedIndex == 0,
             onClick = { navController.navigate(Screen.Dashboard.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Search, contentDescription = null) },
-            label = { Text("SCAN") },
+            label = { Text(UIConstants.NAV_LABEL_SCAN) },
             selected = selectedIndex == 1,
             onClick = { navController.navigate(Screen.Cleanup.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Description, contentDescription = null) },
-            label = { Text("FILES") },
+            label = { Text(UIConstants.NAV_LABEL_FILES) },
             selected = selectedIndex == 2,
             onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Videocam, contentDescription = null) },
-            label = { Text("VIDEO") },
+            label = { Text(UIConstants.NAV_LABEL_VIDEO) },
             selected = selectedIndex == 3,
             onClick = { navController.navigate(Screen.VideoScanner.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-            label = { Text("SETTINGS") },
+            label = { Text(UIConstants.NAV_LABEL_SETTINGS) },
             selected = selectedIndex == 4,
             onClick = { navController.navigate(Screen.Settings.route) }
         )

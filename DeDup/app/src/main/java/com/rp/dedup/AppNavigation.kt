@@ -16,6 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.rp.dedup.UIConstants.ROUTE_ABOUT
 import com.rp.dedup.UIConstants.ROUTE_ACTIVITY
+import com.rp.dedup.UIConstants.ROUTE_CACHE_CLEANER
 import com.rp.dedup.UIConstants.ROUTE_CLEANUP
 import com.rp.dedup.UIConstants.ROUTE_DASHBOARD
 import com.rp.dedup.UIConstants.ROUTE_FILE_BROWSER
@@ -44,6 +45,7 @@ sealed class Screen(val route: String) {
     object Settings : Screen(ROUTE_SETTINGS)
     object ScanHistory : Screen(ROUTE_SCAN_HISTORY)
     object FileBrowser : Screen(ROUTE_FILE_BROWSER)
+    object CacheCleaner : Screen(ROUTE_CACHE_CLEANER)
     object FileScanner : Screen(ROUTE_FILE_SCANNER) {
         fun createRoute(type: String) = UIConstants.getFileScannerRoute(type)
     }
@@ -102,6 +104,9 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.FileBrowser.route) {
                     FileBrowserGatekeeper(navController)
+                }
+                composable(Screen.CacheCleaner.route) {
+                    CacheCleanerScreen(navController)
                 }
                 composable(
                     route = Screen.FileScanner.route,

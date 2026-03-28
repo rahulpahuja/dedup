@@ -1,4 +1,4 @@
-package com.rp.dedup.core
+package com.rp.dedup.core.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,8 +25,8 @@ class VideoScannerViewModel(
     private val historyRepository: ScanHistoryRepository? = null
 ) : ViewModel() {
 
-    private val _videos = MutableStateFlow<List<ScannedVideo>>(emptyList())
-    val videos: StateFlow<List<ScannedVideo>> = _videos.asStateFlow()
+    private val _duplicateGroups = MutableStateFlow<List<List<ScannedVideo>>>(emptyList())
+    val duplicateGroups: StateFlow<List<List<ScannedVideo>>> = _duplicateGroups.asStateFlow()
 
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
@@ -38,45 +38,52 @@ class VideoScannerViewModel(
         val startTime = System.currentTimeMillis()
         var wasCancelled = false
         _isScanning.value = true
-        _videos.value = emptyList()
+        _duplicateGroups.value = emptyList()
 
-        scanJob = viewModelScope.launch {
+        scanJob = viewModelScope.launch(Dispatchers.Default) {
             try {
-                val batch = mutableListOf<ScannedVideo>()
+                val allVideos = mutableListOf<ScannedVideo>()
 
                 repository.scanVideos()
                     .buffer(capacity = Channel.BUFFERED)
                     .collect { video ->
-                        batch.add(video)
-                        if (batch.size >= BATCH_SIZE) {
-                            _videos.value = _videos.value + batch
-                            batch.clear()
-                        }
+                        allVideos.add(video)
                     }
 
-                if (batch.isNotEmpty()) {
-                    _videos.value = _videos.value + batch
-                }
+                val duplicates = findDuplicates(allVideos)
+                _duplicateGroups.value = duplicates
+
             } catch (_: CancellationException) {
                 wasCancelled = true
             } finally {
                 _isScanning.value = false
                 withContext(NonCancellable + Dispatchers.IO) {
+                    val groups = _duplicateGroups.value
                     historyRepository?.insert(
                         ScanHistory(
                             scanType = "VIDEO",
                             timestamp = startTime,
                             durationMs = System.currentTimeMillis() - startTime,
-                            totalScanned = _videos.value.size,
-                            duplicateGroups = 0,
-                            totalDuplicates = 0,
-                            reclaimableBytes = 0L,
+                            totalScanned = 0, // We could track total scanned if needed
+                            duplicateGroups = groups.size,
+                            totalDuplicates = groups.sumOf { it.size - 1 },
+                            reclaimableBytes = groups.sumOf { group ->
+                                group.drop(1).sumOf { it.sizeInBytes }
+                            },
                             status = if (wasCancelled) "CANCELLED" else "COMPLETED"
                         )
                     )
                 }
             }
         }
+    }
+
+    private fun findDuplicates(allVideos: List<ScannedVideo>): List<List<ScannedVideo>> {
+        // Group by size and duration as a strong heuristic for duplicate videos
+        return allVideos.groupBy { "${it.sizeInBytes}_${it.durationMs}" }
+            .filter { it.value.size > 1 }
+            .values
+            .toList()
     }
 
     fun cancelScanning() {

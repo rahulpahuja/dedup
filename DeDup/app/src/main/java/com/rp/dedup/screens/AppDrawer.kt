@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.rp.dedup.Screen
+import com.rp.dedup.UIConstants
 import com.rp.dedup.core.viewmodels.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
@@ -101,7 +102,7 @@ fun AppDrawerContent(
 
         DrawerNavItem(
             icon = Icons.Default.GridView,
-            label = "Dashboard",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_DASHBOARD),
             selected = currentRoute == Screen.Dashboard.route,
             onClick = { navigateTo(Screen.Dashboard.route) }
         )
@@ -113,32 +114,32 @@ fun AppDrawerContent(
         )
         DrawerNavItem(
             icon = Icons.AutoMirrored.Filled.List,
-            label = "Image Results",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_RESULTS_CONTACTS),
             selected = currentRoute == Screen.ResultsContacts.route
                     || currentRoute == Screen.ResultsMedia.route,
             onClick = { navigateTo(Screen.ResultsContacts.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.Videocam,
-            label = "Video Scanner",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_VIDEO_SCANNER),
             selected = currentRoute == Screen.VideoScanner.route,
             onClick = { navigateTo(Screen.VideoScanner.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.History,
-            label = "Activity Log",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_ACTIVITY),
             selected = currentRoute == Screen.Activity.route,
             onClick = { navigateTo(Screen.Activity.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.ManageSearch,
-            label = "Scan History",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_SCAN_HISTORY),
             selected = currentRoute == Screen.ScanHistory.route,
             onClick = { navigateTo(Screen.ScanHistory.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.FolderOpen,
-            label = "File Browser",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_FILE_BROWSER),
             selected = currentRoute == Screen.FileBrowser.route,
             onClick = { navigateTo(Screen.FileBrowser.route) }
         )
@@ -157,13 +158,13 @@ fun AppDrawerContent(
 
         DrawerNavItem(
             icon = Icons.Default.Settings,
-            label = "Settings",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_SETTINGS),
             selected = false,
             onClick = { scope.launch { drawerState.close() } }
         )
         DrawerNavItem(
             icon = Icons.Default.Info,
-            label = "About",
+            label = UIConstants.getScreenName(UIConstants.ROUTE_ABOUT),
             selected = currentRoute == Screen.About.route,
             onClick = { navigateTo(Screen.About.route) }
         )

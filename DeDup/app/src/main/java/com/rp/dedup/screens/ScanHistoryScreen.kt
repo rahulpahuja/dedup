@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.rp.dedup.UIConstants
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.repository.ScanHistoryRepository
@@ -56,7 +57,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(Color(0xFF060D1F), Color(0xFF0D2347))))
+            .background(Brush.verticalGradient(colors = listOf(UIConstants.GradientDarkStart, UIConstants.GradientDarkEnd)))
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -137,7 +138,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            containerColor = Color(0xFF0D1B3E),
+            containerColor = UIConstants.DialogSurface,
             titleContentColor = Color.White,
             textContentColor = Color.White.copy(alpha = 0.7f),
             title = { Text("Clear All History") },
@@ -147,7 +148,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
                     viewModel.clearAll()
                     showClearDialog = false
                 }) {
-                    Text("Clear", color = Color(0xFFEA4335))
+                    Text("Clear", color = UIConstants.ColorError)
                 }
             },
             dismissButton = {
@@ -190,7 +191,7 @@ private fun SummaryCard(history: List<ScanHistory>) {
             SummaryStatColumn(
                 value = totalDuplicates.toString(),
                 label = "Duplicates",
-                color = Color(0xFFFBC02D)
+                color = UIConstants.ColorDuplicatesStat
             )
             VerticalDivider(
                 modifier = Modifier.height(48.dp),
@@ -201,7 +202,7 @@ private fun SummaryCard(history: List<ScanHistory>) {
                     Formatter.formatShortFileSize(context, totalReclaimable)
                 else "—",
                 label = "Reclaimable",
-                color = Color(0xFF4DB6AC)
+                color = UIConstants.ColorReclaimableStat
             )
         }
     }
@@ -231,7 +232,7 @@ private fun SummaryStatColumn(value: String, label: String, color: Color) {
 @Composable
 private fun ScanHistoryCard(scan: ScanHistory, onDelete: () -> Unit) {
     val (icon, iconColor, label) = scanTypeDisplay(scan.scanType)
-    val statusColor = if (scan.status == "COMPLETED") Color(0xFF4CAF50) else Color(0xFFFF9800)
+    val statusColor = if (scan.status == "COMPLETED") UIConstants.ColorSuccess else UIConstants.ColorWarning
     val context = LocalContext.current
 
     Surface(
@@ -419,11 +420,11 @@ private data class ScanTypeDisplay(
 )
 
 private fun scanTypeDisplay(scanType: String): ScanTypeDisplay = when (scanType) {
-    "IMAGE"    -> ScanTypeDisplay(Icons.Default.Image,          Color(0xFF4285F4), "Photos Scan")
-    "VIDEO"    -> ScanTypeDisplay(Icons.Default.Videocam,       Color(0xFFEA4335), "Videos Scan")
-    "FILE_PDF" -> ScanTypeDisplay(Icons.Default.PictureAsPdf,   Color(0xFFFBC02D), "Documents Scan")
-    "FILE_APK" -> ScanTypeDisplay(Icons.Default.Android,        Color(0xFF34A853), "APKs Scan")
-    else       -> ScanTypeDisplay(Icons.Default.FolderOpen,     Color(0xFF9E9E9E), "File Scan")
+    UIConstants.SCAN_TYPE_IMAGE    -> ScanTypeDisplay(Icons.Default.Image,        UIConstants.ColorImages,    UIConstants.SCAN_LABEL_IMAGE)
+    UIConstants.SCAN_TYPE_VIDEO    -> ScanTypeDisplay(Icons.Default.Videocam,     UIConstants.ColorVideos,    UIConstants.SCAN_LABEL_VIDEO)
+    UIConstants.SCAN_TYPE_FILE_PDF -> ScanTypeDisplay(Icons.Default.PictureAsPdf, UIConstants.ColorDocuments, UIConstants.SCAN_LABEL_PDF)
+    UIConstants.SCAN_TYPE_FILE_APK -> ScanTypeDisplay(Icons.Default.Android,      UIConstants.ColorApks,      UIConstants.SCAN_LABEL_APK)
+    else                           -> ScanTypeDisplay(Icons.Default.FolderOpen,   UIConstants.ColorFileGeneric, UIConstants.SCAN_LABEL_UNKNOWN)
 }
 
 private fun formatTimestamp(epochMillis: Long): String {

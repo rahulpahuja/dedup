@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rp.dedup.R
+import com.rp.dedup.UIConstants
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.PrimaryBlue
 
@@ -57,7 +58,7 @@ fun LoginScreen(
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF060D1F), Color(0xFF0D2347))
+                    colors = listOf(UIConstants.GradientDarkStart, UIConstants.GradientDarkEnd)
                 )
             )
     ) {
@@ -149,7 +150,7 @@ fun LoginScreen(
                     .clip(RoundedCornerShape(14.dp))
                     .background(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(Color(0xFF0056D2), Color(0xFF0099FF))
+                            colors = listOf(UIConstants.LoginButtonStart, UIConstants.LoginButtonEnd)
                         )
                     )
                     .clickable { /* Handle Login */ },
@@ -196,9 +197,9 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                SocialIconButton("G", Color(0xFFEA4335), Modifier.weight(1f)) {}
+                SocialIconButton("G", UIConstants.ColorGoogle, Modifier.weight(1f)) {}
                 SocialIconButton("A", Color.White, Modifier.weight(1f)) {}
-                SocialIconButton("f", Color(0xFF1877F2), Modifier.weight(1f)) {}
+                SocialIconButton("f", UIConstants.ColorFacebook, Modifier.weight(1f)) {}
                 SocialIconButton("X", Color.White, Modifier.weight(1f)) {}
             }
 

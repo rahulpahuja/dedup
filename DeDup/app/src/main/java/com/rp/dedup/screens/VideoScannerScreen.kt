@@ -5,9 +5,11 @@ import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,7 +30,7 @@ import coil.compose.AsyncImage
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.VideoScannerViewModelFactory
 import com.rp.dedup.core.data.ScannedVideo
-import com.rp.dedup.core.VideoScannerViewModel
+import com.rp.dedup.core.viewmodels.VideoScannerViewModel
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -42,7 +44,7 @@ fun VideoScannerScreen(navController: NavHostController) {
         factory = VideoScannerViewModelFactory(context)
     )
 
-    val videos by viewModel.videos.collectAsState()
+    val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
 
     Scaffold(
@@ -50,7 +52,7 @@ fun VideoScannerScreen(navController: NavHostController) {
             TopAppBar(
                 title = {
                     Text(
-                        "DeDuplicator",
+                        "Video Duplicates",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -103,14 +105,14 @@ fun VideoScannerScreen(navController: NavHostController) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "Video Scanner",
+                        "Scanner",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
                     )
-                    if (videos.isNotEmpty()) {
+                    if (duplicateGroups.isNotEmpty()) {
                         Text(
-                            "${videos.size} video${if (videos.size != 1) "s" else ""} found",
+                            "${duplicateGroups.size} duplicate groups found",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -133,7 +135,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                 }
             }
 
-            if (isScanning && videos.isEmpty()) {
+            if (isScanning && duplicateGroups.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -142,12 +144,12 @@ fun VideoScannerScreen(navController: NavHostController) {
                         CircularProgressIndicator()
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "Scanning for videos…",
+                            "Analyzing videos for duplicates…",
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-            } else if (videos.isEmpty()) {
+            } else if (!isScanning && duplicateGroups.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -161,7 +163,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "Tap Scan to find videos",
+                            "No duplicates found. Tap Scan.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -170,19 +172,48 @@ fun VideoScannerScreen(navController: NavHostController) {
                 if (isScanning) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    items(videos, key = { it.uri.toString() }) { video ->
-                        VideoGridItem(video = video)
+                    items(duplicateGroups) { group ->
+                        DuplicateVideoGroup(group = group)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun DuplicateVideoGroup(group: List<ScannedVideo>) {
+    Column {
+        Text(
+            text = "Duplicate Group (${group.size} items)",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        // Fixed height for simplicity within LazyColumn, or use a non-nesting approach
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Display duplicates in a grid-like fashion using Rows
+            val chunks = group.chunked(2)
+            chunks.forEach { rowItems ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    rowItems.forEach { video ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            VideoGridItem(video = video)
+                        }
+                    }
+                    if (rowItems.size < 2) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -254,15 +285,16 @@ private fun VideoGridItem(video: ScannedVideo) {
             
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = video.name,
+                    text = formatFileSize(context, video.sizeInBytes),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = formatFileSize(context, video.sizeInBytes),
+                    text = video.name,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
