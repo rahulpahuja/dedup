@@ -4,36 +4,18 @@ import android.Manifest
 import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.rp.dedup.core.image.PermissionRequester
-import com.rp.dedup.screens.AboutScreen
-import com.rp.dedup.screens.ActivityLogScreen
-import com.rp.dedup.screens.AppDrawerContent
-import com.rp.dedup.screens.DashboardScreen
-import com.rp.dedup.screens.DuplicateClustersScreen
-import com.rp.dedup.screens.FileCleanupScreen
-import com.rp.dedup.screens.ImageScannerScreen
-import com.rp.dedup.screens.SettingsScreen
-import com.rp.dedup.screens.SplashScreen
-import com.rp.dedup.screens.VideoScannerScreen
+import com.rp.dedup.screens.*
 
 // Provides DrawerState to any composable in the tree without prop drilling
 val LocalDrawerState = compositionLocalOf<DrawerState> { error("No DrawerState provided") }
@@ -48,6 +30,9 @@ sealed class Screen(val route: String) {
     object VideoScanner : Screen("video_scanner")
     object About : Screen("about")
     object Settings : Screen("settings")
+    object FileScanner : Screen("file_scanner/{type}") {
+        fun createRoute(type: String) = "file_scanner/$type"
+    }
 }
 
 @Composable
@@ -97,6 +82,14 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(navController)
+                }
+                composable(
+                    route = Screen.FileScanner.route,
+                    arguments = listOf(navArgument("type") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val type = backStackEntry.arguments?.getString("type") ?: "pdf"
+                    val extensions = if (type == "pdf") listOf("pdf") else listOf("apk")
+                    FileScannerScreen(navController, type, extensions)
                 }
             }
         }
