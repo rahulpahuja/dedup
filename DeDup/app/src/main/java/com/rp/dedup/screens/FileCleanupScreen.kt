@@ -1,5 +1,6 @@
 package com.rp.dedup.screens
 
+import android.text.format.Formatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,20 +22,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
+import com.rp.dedup.core.repository.FileScannerRepository
+import com.rp.dedup.core.viewmodels.CleanupViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.SelectionBarBackground
 import kotlinx.coroutines.launch
 
-private data class LargeFileItem(
+private data class LargeFileItemLocal(
     val title: String,
     val subtitle: String,
     val sizeBytes: Long,      // used for filtering
@@ -46,51 +52,58 @@ private data class LargeFileItem(
 
 private val MB = 1024L * 1024L
 
-private val largeFileItems = listOf(
-    LargeFileItem(
-        title = "Unused Video Assets",
-        subtitle = "4 high-resolution recordings from June",
-        sizeBytes = 842L * MB,
-        sizeLabel = "842MB",
-        icon = Icons.Default.VideoLibrary,
-        iconBg = Color(0xFFB2EBF2),
-        iconTint = Color(0xFF006064)
-    ),
-    LargeFileItem(
-        title = "Obsolete Archives",
-        subtitle = "ZIP & RAR files not opened in 90+ days",
-        sizeBytes = 145L * MB,
-        sizeLabel = "12",
-        icon = Icons.Default.Archive,
-        iconBg = Color(0xFFEDE7F6),
-        iconTint = Color(0xFF512DA8),
-        isCountType = true
-    ),
-    LargeFileItem(
-        title = "Large App Downloads",
-        subtitle = "APKs and OBBs in Downloads folder",
-        sizeBytes = 68L * MB,
-        sizeLabel = "68MB",
-        icon = Icons.Default.Android,
-        iconBg = Color(0xFFE8F5E9),
-        iconTint = Color(0xFF2E7D32)
-    )
-)
-
-private val sizeFilters = listOf(
-    ">50MB"  to  50L * MB,
-    ">100MB" to 100L * MB,
-    ">200MB" to 200L * MB
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileCleanupScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val cleanupViewModel: CleanupViewModel = viewModel(
+        factory = CleanupViewModel.Factory(FileScannerRepository(context))
+    )
+    val cleanupState by cleanupViewModel.uiState.collectAsState()
+
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
-    var selectedFilter by remember { mutableStateOf(sizeFilters[1].first) }
+    var selectedFilter by remember { mutableStateOf(">100MB") }
+
+    val sizeFilters = listOf(
+        ">50MB"  to  50L * MB,
+        ">100MB" to 100L * MB,
+        ">200MB" to 200L * MB
+    )
+
+    val largeFileItems = listOf(
+        LargeFileItemLocal(
+            title = "Unused Video Assets",
+            subtitle = if (cleanupState.videoStats.isLoading) "Scanning..." else "${cleanupState.videoStats.count} high-res recordings found",
+            sizeBytes = cleanupState.videoStats.totalSize,
+            sizeLabel = Formatter.formatShortFileSize(context, cleanupState.videoStats.totalSize),
+            icon = Icons.Default.VideoLibrary,
+            iconBg = Color(0xFFB2EBF2),
+            iconTint = Color(0xFF006064)
+        ),
+        LargeFileItemLocal(
+            title = "Obsolete Archives",
+            subtitle = if (cleanupState.archiveStats.isLoading) "Scanning..." else "${cleanupState.archiveStats.count} ZIP & RAR files found",
+            sizeBytes = cleanupState.archiveStats.totalSize,
+            sizeLabel = Formatter.formatShortFileSize(context, cleanupState.archiveStats.totalSize),
+            icon = Icons.Default.Archive,
+            iconBg = Color(0xFFEDE7F6),
+            iconTint = Color(0xFF512DA8)
+        ),
+        LargeFileItemLocal(
+            title = "Large App Downloads",
+            subtitle = if (cleanupState.appDownloadStats.isLoading) "Scanning..." else "${cleanupState.appDownloadStats.count} APKs and OBBs found",
+            sizeBytes = cleanupState.appDownloadStats.totalSize,
+            sizeLabel = Formatter.formatShortFileSize(context, cleanupState.appDownloadStats.totalSize),
+            icon = Icons.Default.Android,
+            iconBg = Color(0xFFE8F5E9),
+            iconTint = Color(0xFF2E7D32)
+        )
+    )
+
     val minBytes = sizeFilters.firstOrNull { it.first == selectedFilter }?.second ?: 0L
     val filteredLargeFiles = largeFileItems.filter { it.sizeBytes >= minBytes }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -239,7 +252,12 @@ fun FileCleanupScreen(navController: NavHostController) {
                     icon = file.icon,
                     iconBg = file.iconBg,
                     iconTint = file.iconTint,
-                    isCountType = file.isCountType
+                    isCountType = file.isCountType,
+                    onClick = {
+                        if (file.title == "Large App Downloads") {
+                            navController.navigate(Screen.FileScanner.createRoute("apk"))
+                        }
+                    }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -349,10 +367,11 @@ fun LargeFileCard(
     icon: ImageVector,
     iconBg: Color,
     iconTint: Color,
-    isCountType: Boolean = false
+    isCountType: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
