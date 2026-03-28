@@ -46,8 +46,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DeDup">
-        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id" />
-        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>
+
+        <!-- Facebook Metadata using Manifest Placeholders -->
+        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="${facebook_app_id}" />
+        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="${facebook_client_token}"/>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
