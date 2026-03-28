@@ -4,7 +4,21 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.text.format.Formatter
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.height as composeHeight
+import androidx.compose.foundation.layout.padding as composePadding
+import androidx.compose.foundation.layout.fillMaxWidth as composeFillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator as M3LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text as M3Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment as ComposeAlignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontWeight as ComposeFontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -34,7 +48,7 @@ class StorageWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val stats = getStorageStats(context)
-        
+
         provideContent {
             GlanceTheme {
                 StorageWidgetContent(stats)
@@ -86,7 +100,6 @@ class StorageWidget : GlanceAppWidget() {
 
             Spacer(modifier = GlanceModifier.height(8.dp))
 
-            // Using official LinearProgressIndicator from Glance 1.1.0+
             LinearProgressIndicator(
                 progress = stats.usedFraction,
                 modifier = GlanceModifier.fillMaxWidth(),
@@ -113,14 +126,14 @@ class StorageWidget : GlanceAppWidget() {
             val total = stat.blockCountLong * blockSize
             val free = stat.availableBlocksLong * blockSize
             val used = total - free
-            
+
             WidgetStorageStats(
                 usedLabel = Formatter.formatShortFileSize(context, used),
                 freeLabel = Formatter.formatShortFileSize(context, free),
                 usedPercent = if (total > 0) (used * 100 / total).toInt() else 0,
                 usedFraction = if (total > 0) used.toFloat() / total else 0f
             )
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             WidgetStorageStats("Error", "Error", 0, 0f)
         }
     }
@@ -135,4 +148,81 @@ data class WidgetStorageStats(
 
 class StorageWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = StorageWidget()
+}
+
+// ── Widget Preview (Standard Compose simulation) ──────────────────────────────
+
+@Preview(showBackground = true, widthDp = 170, heightDp = 130)
+@Composable
+fun StorageWidgetPreview() {
+    val stats = WidgetStorageStats(
+        usedLabel = "42.5 GB",
+        freeLabel = "21.5 GB",
+        usedPercent = 66,
+        usedFraction = 0.66f
+    )
+
+    MaterialTheme {
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.composePadding(8.dp)
+        ) {
+            androidx.compose.foundation.layout.Column(
+                modifier = Modifier
+                    .composePadding(12.dp)
+                    .composeFillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = ComposeAlignment.CenterHorizontally
+            ) {
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.composeFillMaxWidth(),
+                    verticalAlignment = ComposeAlignment.CenterVertically
+                ) {
+                    androidx.compose.foundation.layout.Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        M3Text(
+                            text = "Used Space",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        M3Text(
+                            text = stats.usedLabel,
+                            fontSize = 14.sp,
+                            fontWeight = ComposeFontWeight.Bold
+                        )
+                    }
+                    M3Text(
+                        text = "${stats.usedPercent}%",
+                        fontSize = 16.sp,
+                        fontWeight = ComposeFontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                androidx.compose.foundation.layout.Spacer(
+                    modifier = Modifier.composeHeight(8.dp)
+                )
+
+                M3LinearProgressIndicator(
+                    progress = { stats.usedFraction },
+                    modifier = Modifier.composeFillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = StrokeCap.Round
+                )
+
+                androidx.compose.foundation.layout.Spacer(
+                    modifier = Modifier.composeHeight(8.dp)
+                )
+
+                M3Text(
+                    text = "${stats.freeLabel} free",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }
