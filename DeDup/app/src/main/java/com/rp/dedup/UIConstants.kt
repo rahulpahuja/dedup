@@ -6,6 +6,7 @@ object UIConstants {
 
     // ── Routes ────────────────────────────────────────────────────────────────
     const val ROUTE_SPLASH          = "splash"
+    const val ROUTE_LOGIN           = "login"
     const val ROUTE_DASHBOARD       = "dashboard"
     const val ROUTE_CLEANUP         = "cleanup"
     const val ROUTE_RESULTS_CONTACTS = "results_contacts"
@@ -23,6 +24,7 @@ object UIConstants {
 
     fun getScreenName(route: String?): String {
         if (route == null) return APP_NAME
+        if (route == ROUTE_LOGIN)           return "Login"
         if (route == ROUTE_DASHBOARD)       return "Dashboard"
         if (route == ROUTE_CLEANUP)         return "File Cleanup"
         if (route == ROUTE_SETTINGS)        return "Settings"

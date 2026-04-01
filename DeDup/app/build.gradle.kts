@@ -116,7 +116,10 @@ dependencies {
 
     // ML Kit on-device image labeling
     implementation("com.google.mlkit:image-labeling:17.0.9")
-    
+
+    // Intro showcase / first-run tutorial
+    implementation("com.canopas.intro-showcase-view:introshowcaseview:2.0.1")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

@@ -20,6 +20,7 @@ import com.rp.dedup.UIConstants.ROUTE_CLEANUP
 import com.rp.dedup.UIConstants.ROUTE_DASHBOARD
 import com.rp.dedup.UIConstants.ROUTE_FILE_BROWSER
 import com.rp.dedup.UIConstants.ROUTE_FILE_SCANNER
+import com.rp.dedup.UIConstants.ROUTE_LOGIN
 import com.rp.dedup.UIConstants.ROUTE_RESULTS_CONTACTS
 import com.rp.dedup.UIConstants.ROUTE_RESULTS_MEDIA
 import com.rp.dedup.UIConstants.ROUTE_SCAN_HISTORY
@@ -36,6 +37,7 @@ val LocalDrawerState = compositionLocalOf<DrawerState> { error("No DrawerState p
 
 sealed class Screen(val route: String) {
     object Splash : Screen(ROUTE_SPLASH)
+    object Login : Screen(ROUTE_LOGIN)
     object Dashboard : Screen(ROUTE_DASHBOARD)
     object Cleanup : Screen(ROUTE_CLEANUP)
     object ResultsContacts : Screen(ROUTE_RESULTS_CONTACTS)
@@ -70,7 +72,7 @@ fun AppNavHost(navController: NavHostController) {
     CompositionLocalProvider(LocalDrawerState provides drawerState) {
         ModalNavigationDrawer(
             drawerState = drawerState,
-            gesturesEnabled = currentRoute != Screen.Splash.route,
+            gesturesEnabled = currentRoute != Screen.Splash.route && currentRoute != Screen.Login.route,
             drawerContent = {
                 AppDrawerContent(
                     navController = navController,
@@ -91,6 +93,9 @@ fun AppNavHost(navController: NavHostController) {
             ) {
                 composable(Screen.Splash.route) {
                     SplashScreen(navController)
+                }
+                composable(Screen.Login.route) {
+                    LoginScreen(navController)
                 }
                 composable(Screen.Dashboard.route) {
                     DashboardScreen(navController)

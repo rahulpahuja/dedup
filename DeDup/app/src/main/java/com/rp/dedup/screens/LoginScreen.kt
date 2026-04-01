@@ -42,16 +42,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
+import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.PrimaryBlue
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit
+    navController: NavHostController
 ) {
     var emailOrPhone by remember { mutableStateOf("") }
+
+    val onLoginSuccess = {
+        navController.navigate(Screen.Dashboard.route) {
+            popUpTo(Screen.Login.route) { inclusive = true }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -153,7 +162,7 @@ fun LoginScreen(
                             colors = listOf(UIConstants.LoginButtonStart, UIConstants.LoginButtonEnd)
                         )
                     )
-                    .clickable { /* Handle Login */ },
+                    .clickable { onLoginSuccess() },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -268,6 +277,6 @@ private fun SocialIconButton(
 @Composable
 private fun LoginScreenPreview() {
     DeDupTheme {
-        LoginScreen(onLoginSuccess = {})
+        LoginScreen(navController = rememberNavController())
     }
 }

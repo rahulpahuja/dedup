@@ -39,9 +39,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.canopas.introshowcaseview.IntroShowcase
+import com.canopas.introshowcaseview.ShowcaseStyle
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
+import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.search.ImageSearchRepository
@@ -78,6 +81,12 @@ fun DashboardScreen(navController: NavHostController) {
     val searchProgress by searchViewModel.progress.collectAsState()
     val searchError by searchViewModel.error.collectAsState()
 
+    val dataStoreManager = remember { DataStoreManager(context) }
+    // Default true so tutorial doesn't flash before DataStore loads
+    val tutorialShown by dataStoreManager.readData(DataStoreManager.TUTORIAL_SHOWN, false)
+        .collectAsState(initial = true)
+    val coroutineScope = rememberCoroutineScope()
+
     DashboardScreenContent(
         navController = navController,
         storageStats = storageStats,
@@ -87,7 +96,13 @@ fun DashboardScreen(navController: NavHostController) {
         searchProgress = searchProgress,
         searchError = searchError,
         onSearch = { searchViewModel.search(it) },
-        onClearSearch = { searchViewModel.clear() }
+        onClearSearch = { searchViewModel.clear() },
+        showTutorial = !tutorialShown,
+        onTutorialComplete = {
+            coroutineScope.launch {
+                dataStoreManager.writeData(DataStoreManager.TUTORIAL_SHOWN, true)
+            }
+        }
     )
 }
 
@@ -102,13 +117,27 @@ fun DashboardScreenContent(
     searchProgress: Pair<Int, Int>,
     searchError: String?,
     onSearch: (String) -> Unit,
-    onClearSearch: () -> Unit
+    onClearSearch: () -> Unit,
+    showTutorial: Boolean = false,
+    onTutorialComplete: () -> Unit = {}
 ) {
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var searchActive by remember { mutableStateOf(false) }
+    var searchActive by rememberSaveable { mutableStateOf(false) }
+
+    val tutorialStyle = ShowcaseStyle.Default.copy(
+        backgroundColor = Color(0xFF090F20),
+        backgroundAlpha = 0.97f,
+        targetCircleColor = Color(0xFF5FA3FF)
+    )
+
+    IntroShowcase(
+        showIntroShowCase = showTutorial,
+        dismissOnClickOutside = false,
+        onShowCaseCompleted = onTutorialComplete
+    ) {
 
     Scaffold(
         topBar = {
@@ -202,7 +231,17 @@ fun DashboardScreenContent(
                     } else {
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = 16.dp, vertical = 2.dp)
+                            .introShowCaseTarget(
+                                index = 0,
+                                style = tutorialStyle,
+                                content = {
+                                    TutorialTooltip(
+                                        title = "Smart Image Search",
+                                        body = "Describe what you're looking for in plain English — \"red shirt\", \"beach sunset\", and more."
+                                    )
+                                }
+                            )
                     }
                 ) {
                     ImageSearchContent(
@@ -242,7 +281,17 @@ fun DashboardScreenContent(
                     item {
                         StorageSummaryCard(
                             stats = storageStats,
-                            reclaimableBytes = totalReclaimable
+                            reclaimableBytes = totalReclaimable,
+                            modifier = Modifier.introShowCaseTarget(
+                                index = 1,
+                                style = tutorialStyle,
+                                content = {
+                                    TutorialTooltip(
+                                        title = "Storage Overview",
+                                        body = "See your total device usage and how much space DeDup can reclaim for you."
+                                    )
+                                }
+                            )
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                     }
@@ -259,17 +308,43 @@ fun DashboardScreenContent(
                             )
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        QuickScanGrid(navController)
+                        QuickScanGrid(
+                            navController = navController,
+                            modifier = Modifier.introShowCaseTarget(
+                                index = 2,
+                                style = tutorialStyle,
+                                content = {
+                                    TutorialTooltip(
+                                        title = "Quick Scan",
+                                        body = "Tap any category to find and remove duplicate images, videos, documents, APKs and more."
+                                    )
+                                }
+                            )
+                        )
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                     item {
-                        OptimizationSection(navController)
+                        OptimizationSection(
+                            navController = navController,
+                            modifier = Modifier.introShowCaseTarget(
+                                index = 3,
+                                style = tutorialStyle,
+                                content = {
+                                    TutorialTooltip(
+                                        title = "Optimization Tips",
+                                        body = "Follow these suggestions to clear cache, review large files and keep your device running smoothly."
+                                    )
+                                }
+                            )
+                        )
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
             }
         }
     }
+
+    } // end IntroShowcase
 }
 
 @Composable
@@ -347,7 +422,8 @@ fun SavingsCalculatorCard(reclaimableBytes: Long) {
 @Composable
 fun StorageSummaryCard(
     stats: StorageStats = StorageStats(),
-    reclaimableBytes: Long = 0L
+    reclaimableBytes: Long = 0L,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 
@@ -372,7 +448,7 @@ fun StorageSummaryCard(
     else "Calculating…"
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -484,8 +560,8 @@ fun StorageSummaryCard(
 }
 
 @Composable
-fun QuickScanGrid(navController: NavHostController) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+fun QuickScanGrid(navController: NavHostController, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_IMAGES,
@@ -584,8 +660,8 @@ fun ScanCategoryCard(
 }
 
 @Composable
-fun OptimizationSection(navController: NavHostController) {
-    Column {
+fun OptimizationSection(navController: NavHostController, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
         Text(
             "Optimization Suggestions",
             style = MaterialTheme.typography.titleLarge.copy(
@@ -690,7 +766,8 @@ fun BottomNavigationBar(navController: NavHostController) {
             icon = { Icon(Icons.Default.Description, contentDescription = null) },
             label = { Text(UIConstants.NAV_LABEL_FILES) },
             selected = selectedIndex == 2,
-            onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
+//            onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
+            onClick = { navController.navigate(Screen.FileBrowser.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Videocam, contentDescription = null) },
@@ -863,6 +940,38 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
     }
 }
 
+@Composable
+private fun TutorialTooltip(title: String, body: String) {
+    Column(modifier = Modifier.width(260.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.80f)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Tap anywhere to continue",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF5FA3FF)
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Bottom Navigation - Light")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Bottom Navigation - Dark")
+@Composable
+fun BottomNavigationBarPreview() {
+    DeDupTheme {
+        BottomNavigationBar(navController = rememberNavController())
+    }
+}
+
 @Preview(showBackground = true, name = "Light Mode")
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
 @Composable
@@ -883,7 +992,8 @@ fun DashboardScreenPreview() {
                 searchProgress = 0 to 0,
                 searchError = null,
                 onSearch = {},
-                onClearSearch = {}
+                onClearSearch = {},
+                showTutorial = false
             )
         }
     }
