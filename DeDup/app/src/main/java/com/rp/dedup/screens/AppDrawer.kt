@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -69,6 +70,8 @@ import com.rp.dedup.core.viewmodels.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
+import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -220,6 +223,28 @@ private fun AppDrawerContentUI(
             label = UIConstants.getScreenName(UIConstants.ROUTE_ABOUT),
             selected = currentRoute == Screen.About.route,
             onClick = { navigateTo(Screen.About.route) }
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+        DrawerNavItem(
+            icon = Icons.Default.Logout,
+            label = "Logout",
+            selected = false,
+            onClick = {
+                scope.launch {
+                    val context = navController.context
+                    val toastManager = ToastManager(context)
+                    val authManager = FirebaseAuthManager(toastManager)
+                    
+                    authManager.signOutWithCredentialClear(context)
+                    
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                    drawerState.close()
+                }
+            }
         )
     }
 

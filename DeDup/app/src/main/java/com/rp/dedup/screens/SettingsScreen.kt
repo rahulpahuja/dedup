@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,7 @@ import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.firebase.db.FirebaseDbManager
 import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.core.viewmodels.ThemeViewModel
@@ -182,6 +184,27 @@ fun SettingsScreen(navController: NavHostController) {
                         )
                     },
                     onClick = { navController.navigate(Screen.About.route) }
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            SettingsSectionHeader("Account")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    iconColor = MaterialTheme.colorScheme.error,
+                    title = "Logout",
+                    onClick = {
+                        scope.launch {
+                            val authManager = FirebaseAuthManager(toastManager)
+                            authManager.signOutWithCredentialClear(context)
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }
                 )
             }
 
