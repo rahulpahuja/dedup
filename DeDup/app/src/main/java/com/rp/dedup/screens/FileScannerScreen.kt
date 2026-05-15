@@ -145,34 +145,36 @@ private fun ScannerHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp), // Reduced vertical padding from 16.dp to 8.dp
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = if (isScanning) "Searching files..." else title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium, // Reduced from titleLarge
                 fontWeight = FontWeight.Bold
             )
             if (!isScanning) {
                 Text(
                     text = "$groupCount duplicate groups found",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall, // Reduced from bodyMedium
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
         Button(
             onClick = onScanClick,
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp), // Tighter button
+            modifier = Modifier.height(36.dp) // Fixed smaller height
         ) {
             Icon(
                 imageVector = if (isScanning) Icons.Default.Stop else Icons.Default.Search,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(16.dp) // Reduced icon size
             )
-            Spacer(Modifier.width(8.dp))
-            Text(if (isScanning) "Stop" else "Scan")
+            Spacer(Modifier.width(4.dp))
+            Text(if (isScanning) "Stop" else "Scan", style = MaterialTheme.typography.labelLarge)
         }
     }
     HorizontalDivider()

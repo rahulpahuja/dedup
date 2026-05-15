@@ -1,6 +1,7 @@
 package com.rp.dedup.core.utils
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -56,12 +57,16 @@ object CacheCleaner {
                 dir.walkBottomUp().forEach { file ->
                     if (file != dir) { // Preserve the root cache directories
                         val size = if (file.isFile) file.length() else 0L
-                        if (file.delete()) {
+                        val deleted = file.delete()
+                        if (deleted) {
                             clearedBytes += size
-                            // Emit progress update
-                            val progress = clearedBytes.toFloat() / totalSize
-                            emit(CleaningProgress.Cleaning(progress, clearedBytes))
+                        } else if (file.exists()) {
+                            Log.w("CacheCleaner", "Failed to delete: ${file.absolutePath}")
                         }
+                        
+                        // Emit progress update even if delete fails (to keep UI moving)
+                        val progress = if (totalSize > 0) clearedBytes.toFloat() / totalSize else 1.0f
+                        emit(CleaningProgress.Cleaning(progress.coerceAtMost(1.0f), clearedBytes))
                     }
                 }
             }
