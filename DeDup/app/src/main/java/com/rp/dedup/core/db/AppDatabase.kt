@@ -49,7 +49,11 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 // Initialize SQLCipher libraries
-                SQLiteDatabase.loadLibs(context)
+                try {
+                    System.loadLibrary("sqlcipher")
+                } catch (_: Exception) {
+                    SQLiteDatabase.loadLibs(context)
+                }
                 
                 val factory = SupportFactory(SQLiteDatabase.getBytes(DB_PASSPHRASE.toCharArray()))
                 val builder = Room.databaseBuilder(

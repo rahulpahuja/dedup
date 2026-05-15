@@ -8,7 +8,12 @@ import net.sqlcipher.database.SQLiteDatabase
 class DeDupApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        SQLiteDatabase.loadLibs(this)
+        try {
+            System.loadLibrary("sqlcipher")
+        } catch (_: Exception) {
+            // Fallback for older versions or specific configurations
+            SQLiteDatabase.loadLibs(this)
+        }
         FirebaseApp.initializeApp(applicationContext)
         FacebookSdk.fullyInitialize()
     }
