@@ -2,6 +2,7 @@ package com.rp.dedup.core.firebase.auth
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Base64
@@ -17,6 +18,7 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.AuthCredential
@@ -112,45 +114,50 @@ class FirebaseAuthManager(
         }
     }
 
-    private suspend fun fetchGoogleIdToken(activityContext: Context): String? {
-        if (!isNetworkAvailable(activityContext)) {
+    private suspend fun fetchGoogleIdToken(context: Context): String? {
+        if (!isNetworkAvailable(context)) {
             Log.e(TAG, "No internet connection available for Google sign-in")
             toastManager.showLong("Please check your internet connection and try again.")
             return null
         }
 
+        val activity = context.findActivity()
+        if (activity == null) {
+            Log.e(TAG, "Activity context is required for Credential Manager")
+            return null
+        }
+
         val googleApiAvailability = GoogleApiAvailability.getInstance()
-        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(activityContext)
+        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(activity)
         if (resultCode != ConnectionResult.SUCCESS) {
             Log.e(TAG, "Google Play Services not available: $resultCode")
-            if ((activityContext is Activity) && googleApiAvailability.isUserResolvableError(resultCode)) {
-                googleApiAvailability.getErrorDialog(activityContext, resultCode, 9000)?.show()
+            if (googleApiAvailability.isUserResolvableError(resultCode)) {
+                googleApiAvailability.getErrorDialog(activity, resultCode, 9000)?.show()
             } else {
                 toastManager.showLong("Google Play Services is not available.")
             }
             return null
         }
 
-        val credentialManager = CredentialManager.create(activityContext)
+        val credentialManager = CredentialManager.create(activity)
 
         return try {
+            // First attempt: GetGoogleIdOption (can use auto-select/One Tap if authorized)
             requestGoogleIdToken(
                 credentialManager = credentialManager,
-                activityContext = activityContext,
-                filterByAuthorizedAccounts = true,
-                autoSelect = true
+                activity = activity,
+                filterByAuthorizedAccounts = true
             )
         } catch (e: NoCredentialException) {
-            Log.d(TAG, "No authorised accounts; falling back to all-accounts flow. Error: ${e.message}")
+            Log.d(TAG, "No authorised accounts; falling back to all-accounts flow.")
             try {
-                requestGoogleIdToken(
+                // Second attempt: GetSignInWithGoogleOption (Standard "Sign in with Google" UI)
+                requestSignInWithGoogle(
                     credentialManager = credentialManager,
-                    activityContext = activityContext,
-                    filterByAuthorizedAccounts = false,
-                    autoSelect = false
+                    activity = activity
                 )
             } catch (e2: GetCredentialCancellationException) {
-                Log.d(TAG, "User cancelled Google sign-in (all-accounts flow). Message: ${e2.message}")
+                Log.d(TAG, "User cancelled Google sign-in")
                 toastManager.showShort("Sign-in cancelled")
                 null
             } catch (e2: GetCredentialException) {
@@ -158,13 +165,22 @@ class FirebaseAuthManager(
                 null
             }
         } catch (e: GetCredentialCancellationException) {
-            Log.d(TAG, "User cancelled Google sign-in (authorised flow). Message: ${e.message}")
+            Log.d(TAG, "User cancelled Google sign-in")
             toastManager.showShort("Sign-in cancelled")
             null
         } catch (e: GetCredentialException) {
             handleCredentialException(e, "authorised-accounts")
             null
         }
+    }
+
+    private fun Context.findActivity(): Activity? {
+        var context = this
+        while (context is ContextWrapper) {
+            if (context is Activity) return context
+            context = context.baseContext
+        }
+        return null
     }
 
     private fun handleCredentialException(e: GetCredentialException, flow: String) {
@@ -176,6 +192,8 @@ class FirebaseAuthManager(
                 "Network error. Please check your connection and device clock settings."
             message.contains("16") -> 
                 "Sign-in failed (Error 16). Please ensure your app is correctly registered in the Google Console."
+            message.contains("10") ->
+                "Sign-in failed (Error 10). Check SHA-1 and Client ID configuration."
             else -> "Google sign-in failed: $message"
         }
         toastManager.showLong(userMessage)
@@ -183,22 +201,19 @@ class FirebaseAuthManager(
 
     private suspend fun requestGoogleIdToken(
         credentialManager: CredentialManager,
-        activityContext: Context,
-        filterByAuthorizedAccounts: Boolean,
-        autoSelect: Boolean
+        activity: Activity,
+        filterByAuthorizedAccounts: Boolean
     ): String? {
         val serverClientId = NativeLib().getGoogleWebClientId()
         if (serverClientId.isBlank()) {
-            Log.e(TAG, "Google Server Client ID is empty. Check NativeLib/local.properties")
+            Log.e(TAG, "Google Server Client ID is empty.")
             return null
         }
-
-        Log.d(TAG, "Requesting Google ID token with Client ID: $serverClientId (Filter: $filterByAuthorizedAccounts)")
 
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts)
             .setServerClientId(serverClientId)
-            .setAutoSelectEnabled(autoSelect)
+            .setAutoSelectEnabled(filterByAuthorizedAccounts) // Only auto-select if authorized
             .setNonce(generateNonce())
             .build()
 
@@ -207,7 +222,29 @@ class FirebaseAuthManager(
             .build()
 
         val result = credentialManager.getCredential(
-            context = activityContext,
+            context = activity,
+            request = request
+        )
+        return extractGoogleIdToken(result)
+    }
+
+    private suspend fun requestSignInWithGoogle(
+        credentialManager: CredentialManager,
+        activity: Activity
+    ): String? {
+        val serverClientId = NativeLib().getGoogleWebClientId()
+        if (serverClientId.isBlank()) return null
+
+        val signInWithGoogleOption = GetSignInWithGoogleOption.Builder(serverClientId)
+            .setNonce(generateNonce())
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(signInWithGoogleOption)
+            .build()
+
+        val result = credentialManager.getCredential(
+            context = activity,
             request = request
         )
         return extractGoogleIdToken(result)
