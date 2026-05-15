@@ -11,8 +11,7 @@ import com.rp.dedup.core.data.ScannedImage
 import com.rp.dedup.core.dao.ScannedImageDao
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.dao.ScanHistoryDao
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 @Database(entities = [ScannedImage::class, ScanHistory::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -52,10 +51,10 @@ abstract class AppDatabase : RoomDatabase() {
                 try {
                     System.loadLibrary("sqlcipher")
                 } catch (_: Exception) {
-                    SQLiteDatabase.loadLibs(context)
+                    // Native library already loaded or unavailable
                 }
                 
-                val factory = SupportFactory(SQLiteDatabase.getBytes(DB_PASSPHRASE.toCharArray()))
+                val factory = SupportOpenHelperFactory(DB_PASSPHRASE.toByteArray())
                 val builder = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,

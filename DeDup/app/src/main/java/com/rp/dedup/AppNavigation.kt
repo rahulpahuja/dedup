@@ -26,6 +26,7 @@ import com.rp.dedup.UIConstants.ROUTE_RESULTS_CONTACTS
 import com.rp.dedup.UIConstants.ROUTE_RESULTS_MEDIA
 import com.rp.dedup.UIConstants.ROUTE_SCAN_HISTORY
 import com.rp.dedup.UIConstants.ROUTE_SETTINGS
+import com.rp.dedup.UIConstants.ROUTE_SMART_JUNK
 import com.rp.dedup.UIConstants.ROUTE_SPLASH
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.permissions.PermissionGate
@@ -54,6 +55,7 @@ sealed class Screen(val route: String) {
     object FileScanner : Screen(ROUTE_FILE_SCANNER) {
         fun createRoute(type: String) = UIConstants.getFileScannerRoute(type)
     }
+    object SmartJunk : Screen(ROUTE_SMART_JUNK)
 }
 
 @Composable
@@ -105,6 +107,9 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.Dashboard.route) {
                     DashboardScreen(navController, profileViewModel)
+                }
+                composable(Screen.SmartJunk.route) {
+                    SmartJunkScreen(navController)
                 }
                 composable(Screen.Cleanup.route) {
                     FileCleanupScreen(navController)

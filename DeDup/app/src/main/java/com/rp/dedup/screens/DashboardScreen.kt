@@ -7,11 +7,15 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -217,7 +221,7 @@ fun DashboardScreenContent(
                             },
                             placeholder = {
                                 Text(
-                                    "Find my image wearing a red shirt…",
+                                    "Find \"pet\", \"nature\", \"receipts\"…",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             },
@@ -258,20 +262,28 @@ fun DashboardScreenContent(
                                 style = tutorialStyle,
                                 content = {
                                     TutorialTooltip(
-                                        title = "Smart Image Search",
-                                        body = "Describe what you're looking for in plain English — \"red shirt\", \"beach sunset\", and more."
+                                        title = "Smart AI Search",
+                                        body = "Search for things like \"pets\", \"food\", or \"docs\". AI understands what's inside your photos."
                                     )
                                 }
                             )
                     }
                 ) {
-                    ImageSearchContent(
-                        query = searchQuery,
-                        results = searchResults,
-                        isSearching = isSearching,
-                        progress = searchProgress,
-                        error = searchError
-                    )
+                    Column {
+                        if (searchQuery.isEmpty()) {
+                            SearchSuggestionsRow { suggestion ->
+                                searchQuery = suggestion
+                                onSearch(suggestion)
+                            }
+                        }
+                        ImageSearchContent(
+                            query = searchQuery,
+                            results = searchResults,
+                            isSearching = isSearching,
+                            progress = searchProgress,
+                            error = searchError
+                        )
+                    }
                 }
             }
         }
@@ -358,6 +370,12 @@ fun DashboardScreenContent(
                                 }
                             )
                         )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                    item {
+                        SmartAiCleanupCard(
+                            onClick = { navController.navigate(Screen.SmartJunk.route) }
+                        )
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
@@ -366,6 +384,74 @@ fun DashboardScreenContent(
     }
 
     } // end IntroShowcase
+}
+
+@Composable
+fun SearchSuggestionsRow(onSuggestionClick: (String) -> Unit) {
+    val suggestions = listOf("Pet", "Food", "Nature", "Document", "Vehicle", "Portrait")
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        suggestions.forEach { suggestion ->
+            SuggestionChip(
+                onClick = { onSuggestionClick(suggestion) },
+                label = { Text(suggestion) },
+                shape = RoundedCornerShape(12.dp),
+                colors = SuggestionChipDefaults.suggestionChipColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun SmartAiCleanupCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
+                modifier = Modifier.size(52.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    "Smart AI Cleanup",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    "AI detection for screenshots, memes & receipts",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
 }
 
 @Composable

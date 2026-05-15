@@ -14,12 +14,22 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
 
-class   ImageSearchRepository(private val context: Context) {
+class ImageSearchRepository(private val context: Context) {
 
     private val labeler = ImageLabeling.getClient(
         ImageLabelerOptions.Builder()
-            .setConfidenceThreshold(0.55f)
+            .setConfidenceThreshold(0.50f) // Slightly lower to catch more semantic matches
             .build()
+    )
+
+    // Semantic map for "Human" queries to ML Kit labels
+    private val semanticMap = mapOf(
+        "pet" to listOf("dog", "cat", "animal", "canine", "feline", "bird"),
+        "food" to listOf("dish", "meal", "cuisine", "vegetable", "fruit", "drink", "tableware"),
+        "nature" to listOf("tree", "mountain", "sky", "grass", "water", "lake", "ocean", "forest"),
+        "document" to listOf("text", "paper", "font", "receipt", "whiteboard"),
+        "vehicle" to listOf("car", "bus", "truck", "motorcycle", "bicycle", "aircraft", "boat"),
+        "portrait" to listOf("person", "face", "smile", "selfie", "human")
     )
 
     // In-memory label cache for the app session: uri → list of label strings
@@ -97,7 +107,13 @@ class   ImageSearchRepository(private val context: Context) {
             }.awaitAll().forEach { (labels, uri) ->
                 labeled++
                 val matched = labels.filter { label ->
-                    tokens.any { token -> label.lowercase().contains(token) }
+                    val lowerLabel = label.lowercase()
+                    tokens.any { token -> 
+                        // Direct match
+                        lowerLabel.contains(token) || 
+                        // Semantic match (e.g. user search "pet", label is "dog")
+                        semanticMap[token]?.any { lowerLabel.contains(it) } == true
+                    }
                 }
                 if (matched.isNotEmpty()) results.add(SearchResult(uri, matched))
             }

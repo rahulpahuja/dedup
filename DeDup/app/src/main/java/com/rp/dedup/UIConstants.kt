@@ -19,6 +19,7 @@ object UIConstants {
     const val ROUTE_FILE_BROWSER    = "file_browser"
     const val ROUTE_CACHE_CLEANER   = "cache_cleaner"
     const val ROUTE_FILE_SCANNER    = "file_scanner/{type}"
+    const val ROUTE_SMART_JUNK      = "smart_junk"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -37,6 +38,7 @@ object UIConstants {
         if (route == ROUTE_SCAN_HISTORY)    return "Scan History"
         if (route == ROUTE_FILE_BROWSER)    return "File Browser"
         if (route == ROUTE_CACHE_CLEANER)   return "Cache Cleaner"
+        if (route == ROUTE_SMART_JUNK)      return "Smart Cleanup"
         return APP_NAME
     }
 
@@ -71,6 +73,7 @@ object UIConstants {
     const val QUICK_SCAN_APKS         = "APKs"
     const val QUICK_SCAN_BROWSE_FILES = "Browse Files"
     const val QUICK_SCAN_HISTORY      = "Scan History"
+    const val QUICK_SCAN_SMART_JUNK   = "Smart Cleanup"
 
     // ── File browser ──────────────────────────────────────────────────────────
     const val FILE_BROWSER_ROOT_LABEL = "Internal Storage"

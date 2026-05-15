@@ -3,7 +3,6 @@ package com.rp.dedup.core.app
 import android.app.Application
 import com.facebook.FacebookSdk
 import com.google.firebase.FirebaseApp
-import net.sqlcipher.database.SQLiteDatabase
 
 class DeDupApp : Application() {
     override fun onCreate() {
@@ -11,8 +10,7 @@ class DeDupApp : Application() {
         try {
             System.loadLibrary("sqlcipher")
         } catch (_: Exception) {
-            // Fallback for older versions or specific configurations
-            SQLiteDatabase.loadLibs(this)
+            // Native library already loaded or unavailable
         }
         FirebaseApp.initializeApp(applicationContext)
         FacebookSdk.fullyInitialize()
