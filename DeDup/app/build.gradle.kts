@@ -45,6 +45,30 @@ android {
         // Manifest placeholders for AndroidManifest.xml access
         manifestPlaceholders["facebook_app_id"] = facebookAppId
         manifestPlaceholders["facebook_client_token"] = facebookClientToken
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += ""
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            versionNameSuffix = "-dev"
+        }
+        create("prod") {
+            dimension = "environment"
+        }
     }
 
     buildTypes {
@@ -75,6 +99,10 @@ android {
     }
 
     packaging {
+        jniLibs {
+            // Support 16 KB page sizes by ensuring native libraries are uncompressed and aligned
+            useLegacyPackaging = false
+        }
         resources {
             excludes += setOf(
                 "META-INF/LICENSE.md",

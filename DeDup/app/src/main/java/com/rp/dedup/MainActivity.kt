@@ -55,17 +55,18 @@ class MainActivity : ComponentActivity() {
                     Box(modifier = Modifier.fillMaxSize()) {
                         AppNavHost(navController = navController)
 
-                        // Demo Activity Trigger Button
-                        Button(
-                            onClick = {
-                                startActivity(Intent(this@MainActivity, DemotestActivity::class.java))
-                            },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(top = 48.dp, end = 16.dp)
-                        ) {
-                            Text("D")
-                        }
+//                        // Demo Activity Trigger Button
+//                        Button(
+//
+//                            onClick = {
+//                                startActivity(Intent(this@MainActivity, DemotestActivity::class.java))
+//                            },
+//                            modifier = Modifier
+//                                .align(Alignment.TopEnd)
+//                                .padding(top = 48.dp, end = 16.dp)
+//                        ) {
+//                            Text("D")
+//                        }
                     }
                 }
             }

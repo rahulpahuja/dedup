@@ -31,14 +31,20 @@ import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.firebase.db.FirebaseDbManager
+import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
-import com.rp.dedup.ui.theme.PrimaryBlue
+import kotlinx.coroutines.launch
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavHostController) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val toastManager = remember { ToastManager(context) }
+    val dbManager = remember { FirebaseDbManager() }
 
     val themeViewModel: ThemeViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
@@ -58,6 +64,8 @@ fun SettingsScreen(navController: NavHostController) {
     
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
+    var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
+    var showFeatureRequestDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -137,6 +145,26 @@ fun SettingsScreen(navController: NavHostController) {
                 )
             }
 
+            SettingsSectionHeader("Support & Feedback")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.ChatBubbleOutline,
+                    iconColor = MaterialTheme.colorScheme.primary,
+                    title = "Share Feedback",
+                    onClick = { showFeedbackDialog = true }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                SettingsRow(
+                    icon = Icons.Default.AddCircleOutline,
+                    iconColor = MaterialTheme.colorScheme.secondary,
+                    title = "Request a Feature",
+                    onClick = { showFeatureRequestDialog = true }
+                )
+            }
+
             Spacer(Modifier.height(8.dp))
 
             SettingsSectionHeader("About")
@@ -181,6 +209,98 @@ fun SettingsScreen(navController: NavHostController) {
                 showThresholdDialog = false
             }
         )
+    }
+
+    if (showFeedbackDialog) {
+        FeedbackDialog(
+            title = "Share Feedback",
+            placeholder = "Tell us what you think...",
+            onDismiss = { showFeedbackDialog = false },
+            onSubmit = { content ->
+                scope.launch {
+                    val result = dbManager.submitFeedback("FEEDBACK", content)
+                    if (result.isSuccess) {
+                        toastManager.showShort("Feedback submitted. Thank you!")
+                    } else {
+                        toastManager.showLong("Failed to submit: ${result.exceptionOrNull()?.message}")
+                    }
+                }
+                showFeedbackDialog = false
+            }
+        )
+    }
+
+    if (showFeatureRequestDialog) {
+        FeedbackDialog(
+            title = "Request a Feature",
+            placeholder = "What would you like to see in DeDup?",
+            onDismiss = { showFeatureRequestDialog = false },
+            onSubmit = { content ->
+                scope.launch {
+                    val result = dbManager.submitFeedback("FEATURE_REQUEST", content)
+                    if (result.isSuccess) {
+                        toastManager.showShort("Feature request submitted. Thank you!")
+                    } else {
+                        toastManager.showLong("Failed to submit: ${result.exceptionOrNull()?.message}")
+                    }
+                }
+                showFeatureRequestDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun FeedbackDialog(
+    title: String,
+    placeholder: String,
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit
+) {
+    var text by rememberSaveable { mutableStateOf("") }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    placeholder = { Text(placeholder) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 120.dp),
+                    trailingIcon = {
+                        IconButton(onClick = { /* TODO: Trigger Speech-to-Text */ }) {
+                            Icon(Icons.Default.Mic, contentDescription = "Voice Input")
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Button(
+                        onClick = { onSubmit(text) },
+                        enabled = text.isNotBlank()
+                    ) {
+                        Text("Submit")
+                    }
+                }
+            }
+        }
     }
 }
 

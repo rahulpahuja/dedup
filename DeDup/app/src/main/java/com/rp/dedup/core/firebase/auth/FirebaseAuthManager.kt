@@ -23,7 +23,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
-import com.rp.dedup.BuildConfig
+import com.rp.dedup.core.security.NativeLib
 import com.rp.dedup.core.notifications.ToastManager
 import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
@@ -153,7 +153,7 @@ class FirebaseAuthManager(
     ): String? {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts)
-            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+            .setServerClientId(NativeLib().getGoogleWebClientId())
             .setAutoSelectEnabled(autoSelect)
             .setNonce(generateNonce())
             .build()
