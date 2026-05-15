@@ -77,7 +77,8 @@ import kotlinx.coroutines.launch
 fun AppDrawerContent(
     navController: NavHostController,
     drawerState: DrawerState,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    profileViewModel: UserProfileViewModel
 ) {
     // In Previews, we avoid instantiating ViewModels that require Application context
     if (LocalInspectionMode.current) {
@@ -97,15 +98,6 @@ fun AppDrawerContent(
 
     val context = LocalContext.current
     
-    // Provide an explicit factory for UserProfileViewModel to avoid NoSuchMethodException in some environments
-    val profileViewModel: UserProfileViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return UserProfileViewModel(context.applicationContext as Application) as T
-            }
-        }
-    )
-
     // ThemeViewModel requires DataStoreManager, so we use a factory
     val themeViewModel: ThemeViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {

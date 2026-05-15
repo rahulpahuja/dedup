@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,6 +30,7 @@ import com.rp.dedup.UIConstants.ROUTE_SPLASH
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.permissions.PermissionGate
 import com.rp.dedup.core.permissions.PermissionManager
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.screens.*
 import com.rp.dedup.ui.theme.DeDupTheme
 
@@ -59,6 +61,9 @@ fun AppNavHost(navController: NavHostController) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    
+    // Shared ViewModel to ensure profile updates are reflected everywhere
+    val profileViewModel: UserProfileViewModel = viewModel()
 
     // Routes that show the persistent bottom navigation bar
     val showBottomNav = currentRoute == Screen.Dashboard.route
@@ -77,7 +82,8 @@ fun AppNavHost(navController: NavHostController) {
                 AppDrawerContent(
                     navController = navController,
                     drawerState = drawerState,
-                    scope = scope
+                    scope = scope,
+                    profileViewModel = profileViewModel
                 )
             }
         ) {
@@ -95,7 +101,7 @@ fun AppNavHost(navController: NavHostController) {
                     SplashScreen(navController)
                 }
                 composable(Screen.Login.route) {
-                    LoginScreen(navController)
+                    LoginScreen(navController, profileViewModel)
                 }
                 composable(Screen.Dashboard.route) {
                     DashboardScreen(navController)

@@ -56,13 +56,13 @@ import kotlinx.coroutines.CancellationException
 
 @Composable
 fun LoginScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    profileViewModel: UserProfileViewModel
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val toastManager = remember { ToastManager(context) }
     val authManager = remember { FirebaseAuthManager(toastManager) }
-    val profileViewModel: UserProfileViewModel = viewModel()
     
     var isLoading by remember { mutableStateOf(false) }
 
@@ -210,6 +210,9 @@ fun LoginScreen(
 @Composable
 private fun LoginScreenPreview() {
     DeDupTheme {
-        LoginScreen(navController = rememberNavController())
+        LoginScreen(
+            navController = rememberNavController(),
+            profileViewModel = viewModel()
+        )
     }
 }
