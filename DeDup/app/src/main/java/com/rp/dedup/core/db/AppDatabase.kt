@@ -11,8 +11,10 @@ import com.rp.dedup.core.data.ScannedImage
 import com.rp.dedup.core.dao.ScannedImageDao
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.dao.ScanHistoryDao
+import net.sqlcipher.database.SQLiteDatabase
+import net.sqlcipher.database.SupportFactory
 
-@Database(entities = [ScannedImage::class, ScanHistory::class], version = 2)
+@Database(entities = [ScannedImage::class, ScanHistory::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun scannedImageDao(): ScannedImageDao
     abstract fun scanHistoryDao(): ScanHistoryDao
@@ -20,6 +22,9 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        // In a real app, this should be securely fetched from Android Keystore
+        private const val DB_PASSPHRASE = "secure_dedup_passphrase"
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
@@ -43,13 +48,34 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
+                // Initialize SQLCipher libraries
+                SQLiteDatabase.loadLibs(context)
+                
+                val factory = SupportFactory(SQLiteDatabase.getBytes(DB_PASSPHRASE.toCharArray()))
+                val builder = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     Constants.DATABASE_NAME
                 )
+                    .openHelperFactory(factory)
                     .addMigrations(MIGRATION_1_2)
-                    .build()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+
+                val instance = try {
+                    val db = builder.build()
+                    // Force opening the database to catch encryption issues early
+                    db.openHelper.writableDatabase
+                    db
+                } catch (e: Exception) {
+                    if (e.message?.contains("file is not a database", ignoreCase = true) == true) {
+                        // This happens if the database was previously unencrypted or has a different password
+                        context.applicationContext.deleteDatabase(Constants.DATABASE_NAME)
+                        builder.build()
+                    } else {
+                        throw e
+                    }
+                }
+
                 INSTANCE = instance
                 instance
             }

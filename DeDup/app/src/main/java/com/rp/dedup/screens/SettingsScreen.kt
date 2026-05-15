@@ -48,8 +48,16 @@ fun SettingsScreen(navController: NavHostController) {
         }
     )
 
+    val settingsViewModel: com.rp.dedup.core.viewmodels.SettingsViewModel = viewModel(
+        factory = com.rp.dedup.core.viewmodels.SettingsViewModel.Factory(DataStoreManager(context.applicationContext))
+    )
+
     val currentThemeMode by themeViewModel.themeMode.collectAsState()
+    val similarityThreshold by settingsViewModel.similarityThreshold.collectAsState()
+    val excludedFolders by settingsViewModel.excludedFolders.collectAsState()
+    
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
+    var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -95,6 +103,42 @@ fun SettingsScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(8.dp))
 
+            SettingsSectionHeader("Scanning")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.Tune,
+                    iconColor = MaterialTheme.colorScheme.primary,
+                    title = "Similarity Sensitivity",
+                    trailing = {
+                        Text(
+                            "$similarityThreshold bits",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = { showThresholdDialog = true }
+                )
+                
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                
+                SettingsRow(
+                    icon = Icons.Default.FolderOff,
+                    iconColor = MaterialTheme.colorScheme.error,
+                    title = "Excluded Folders",
+                    trailing = {
+                        Text(
+                            "${excludedFolders.size} excluded",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = { /* Navigate to exclusion list screen or show dialog */ }
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
             SettingsSectionHeader("About")
 
             SettingsCard {
@@ -126,6 +170,68 @@ fun SettingsScreen(navController: NavHostController) {
                 showThemeDialog = false
             }
         )
+    }
+
+    if (showThresholdDialog) {
+        ThresholdPickerDialog(
+            currentValue = similarityThreshold,
+            onDismiss = { showThresholdDialog = false },
+            onSelect = { value ->
+                settingsViewModel.setSimilarityThreshold(value)
+                showThresholdDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun ThresholdPickerDialog(
+    currentValue: Int,
+    onDismiss: () -> Unit,
+    onSelect: (Int) -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    "Image Similarity",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    "Lower bits mean more strict (only very similar images). Higher bits mean more relaxed.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                var sliderValue by remember { mutableStateOf(currentValue.toFloat()) }
+                
+                Slider(
+                    value = sliderValue,
+                    onValueChange = { sliderValue = it },
+                    valueRange = 0f..20f,
+                    steps = 19
+                )
+                
+                Text(
+                    text = "${sliderValue.toInt()} bits difference allowed",
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    style = MaterialTheme.typography.labelLarge
+                )
+
+                Spacer(Modifier.height(24.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    Button(onClick = { onSelect(sliderValue.toInt()) }) { Text("Save") }
+                }
+            }
+        }
     }
 }
 

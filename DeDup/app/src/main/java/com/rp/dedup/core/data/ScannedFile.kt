@@ -7,5 +7,6 @@ data class ScannedFile(
     val name: String,
     val size: Long,
     val path: String,
-    val extension: String
+    val extension: String,
+    val checksum: String? = null
 )

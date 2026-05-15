@@ -8,15 +8,19 @@ import androidx.core.graphics.scale
 object ImageHasher {
 
     fun calculateDHash(bitmap: Bitmap): Long {
-        // 1. Resize to 9x8 (72 pixels total)
-        val resized = bitmap.scale(9, 8)
+        // 1. Resize to 9x8 (72 pixels total) using a pooled bitmap if possible
+        val resized = BitmapPool.acquire(9, 8, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(resized)
+        val rect = android.graphics.Rect(0, 0, 9, 8)
+        canvas.drawBitmap(bitmap, null, rect, null)
+        
         var hash = 0L
 
         // 2 & 3. Compare adjacent pixels
         for (y in 0 until 8) {
             for (x in 0 until 8) {
-                val leftPixel = resized[x, y]
-                val rightPixel = resized[x + 1, y]
+                val leftPixel = resized.getPixel(x, y)
+                val rightPixel = resized.getPixel(x + 1, y)
 
                 val leftLuminance = getLuminance(leftPixel)
                 val rightLuminance = getLuminance(rightPixel)
@@ -29,10 +33,8 @@ object ImageHasher {
             }
         }
 
-        // Free up memory immediately
-        if (resized != bitmap) {
-            resized.recycle()
-        }
+        // Return to pool instead of recycling
+        BitmapPool.release(resized)
 
         return hash
     }

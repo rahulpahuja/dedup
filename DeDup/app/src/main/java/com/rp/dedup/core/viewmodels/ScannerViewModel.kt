@@ -13,13 +13,16 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
 class ScannerViewModel(
     private val repository: ImageScannerRepository,
-    private val historyRepository: ScanHistoryRepository? = null
+    private val historyRepository: ScanHistoryRepository? = null,
+    private val dataStoreManager: com.rp.dedup.core.caching.DataStoreManager? = null
 ) : ViewModel() {
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedImage>>>(emptyList())
@@ -28,9 +31,12 @@ class ScannerViewModel(
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
-    private val allScannedGroups = mutableListOf<MutableList<ScannedImage>>()
+    private val allScannedGroups = mutableMapOf<Long, MutableList<ScannedImage>>()
 
     private var scanJob: Job? = null
+    
+    private var similarityThreshold = 5
+    private var excludedFolders = emptyList<String>()
 
     fun startScanning() {
         val startTime = System.currentTimeMillis()
@@ -41,11 +47,19 @@ class ScannerViewModel(
                 _isScanning.value = true
                 allScannedGroups.clear()
                 _duplicateGroups.value = emptyList()
+                
+                // Load settings before scanning
+                dataStoreManager?.let { manager ->
+                    similarityThreshold = manager.readData(com.rp.dedup.core.caching.DataStoreManager.SIMILARITY_THRESHOLD, "5")
+                        .map { it.toIntOrNull() ?: 5 }.first()
+                    excludedFolders = manager.readData(com.rp.dedup.core.caching.DataStoreManager.EXCLUDED_FOLDERS, "")
+                        .map { if (it.isEmpty()) emptyList() else it.split(",") }.first()
+                }
 
                 val batchBuffer = mutableListOf<ScannedImage>()
                 var lastUiUpdateTime = System.currentTimeMillis()
 
-                repository.scanImagesInParallel(concurrencyLevel = 4).collect { newImage ->
+                repository.scanImagesInParallel(concurrencyLevel = 4, excludedFolders = excludedFolders).collect { newImage ->
                     batchBuffer.add(newImage)
 
                     if (batchBuffer.size >= 20) {
@@ -54,7 +68,7 @@ class ScannerViewModel(
 
                         val currentTime = System.currentTimeMillis()
                         if (currentTime - lastUiUpdateTime > 500) {
-                            _duplicateGroups.value = allScannedGroups
+                            _duplicateGroups.value = allScannedGroups.values
                                 .filter { it.size > 1 }
                                 .map { it.toList() }
                             lastUiUpdateTime = currentTime
@@ -66,13 +80,13 @@ class ScannerViewModel(
                     processBatch(batchBuffer)
                 }
 
-                _duplicateGroups.value = allScannedGroups
+                _duplicateGroups.value = allScannedGroups.values
                     .filter { it.size > 1 }
                     .map { it.toList() }
 
             } catch (_: CancellationException) {
                 wasCancelled = true
-                _duplicateGroups.value = allScannedGroups
+                _duplicateGroups.value = allScannedGroups.values
                     .filter { it.size > 1 }
                     .map { it.toList() }
             } finally {
@@ -91,17 +105,26 @@ class ScannerViewModel(
     private fun processBatch(images: List<ScannedImage>) {
         for (image in images) {
             var foundGroup = false
-            for (group in allScannedGroups) {
-                val distance =
-                    ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
-                if (distance <= 5) {
-                    group.add(image)
-                    foundGroup = true
-                    break
+            // First try exact hash match for O(1)
+            val exactGroup = allScannedGroups[image.dHash]
+            if (exactGroup != null) {
+                exactGroup.add(image)
+                foundGroup = true
+            } else {
+                // If no exact match, try Hamming distance check for near-duplicates
+                // This is still O(Groups) but we only do it if O(1) fails
+                for (group in allScannedGroups.values) {
+                    val distance =
+                        ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
+                    if (distance <= similarityThreshold) {
+                        group.add(image)
+                        foundGroup = true
+                        break
+                    }
                 }
             }
             if (!foundGroup) {
-                allScannedGroups.add(mutableListOf(image))
+                allScannedGroups[image.dHash] = mutableListOf(image)
             }
         }
     }
@@ -113,7 +136,7 @@ class ScannerViewModel(
                 scanType = "IMAGE",
                 timestamp = startTime,
                 durationMs = System.currentTimeMillis() - startTime,
-                totalScanned = allScannedGroups.sumOf { it.size },
+                totalScanned = allScannedGroups.values.sumOf { it.size },
                 duplicateGroups = groups.size,
                 totalDuplicates = groups.sumOf { it.size - 1 },
                 reclaimableBytes = groups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } },
@@ -135,10 +158,10 @@ class ScannerViewModel(
     }
 
     fun removeDeletedImagesFromUI(deletedUris: List<String>) {
-        allScannedGroups.forEach { group ->
+        allScannedGroups.values.forEach { group ->
             group.removeAll { it.uri in deletedUris }
         }
-        _duplicateGroups.value = allScannedGroups
+        _duplicateGroups.value = allScannedGroups.values
             .filter { it.size > 1 }
             .map { it.toList() }
     }

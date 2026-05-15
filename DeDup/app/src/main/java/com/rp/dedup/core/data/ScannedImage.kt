@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class ScannedImage(
     @PrimaryKey val uri: String,
     val dHash: Long,
-    val sizeInBytes: Long
+    val sizeInBytes: Long,
+    val dateModified: Long = 0L
 )

@@ -60,6 +60,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+        register("baselineProfile") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+        }
     }
 
     buildFeatures {
@@ -118,7 +122,7 @@ dependencies {
     implementation("com.google.mlkit:image-labeling:17.0.9")
 
     // Intro showcase / first-run tutorial
-    implementation("com.canopas.intro-showcase-view:introshowcaseview:2.0.1")
+    implementation(libs.introshowcaseview)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -138,6 +142,10 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.sqlcipher)
+    implementation(libs.play.integrity)
+    implementation(libs.androidx.profileinstaller)
 
     testImplementation(libs.junit)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")

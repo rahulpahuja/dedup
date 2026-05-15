@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.flowOn
 
 class FileScannerRepository(private val context: Context) {
 
-    fun scanFilesByExtension(extensions: List<String>): Flow<ScannedFile> = flow {
+    fun scanFilesByExtension(extensions: List<String>, deepScan: Boolean = false, excludedFolders: List<String> = emptyList()): Flow<ScannedFile> = flow {
         val collection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
         } else {
@@ -26,7 +26,6 @@ class FileScannerRepository(private val context: Context) {
             MediaStore.Files.FileColumns.DATA
         )
 
-        // Create selection string like: ( _data LIKE '%.pdf' OR _data LIKE '%.apk' )
         val selection = extensions.joinToString(separator = " OR ") { "${MediaStore.Files.FileColumns.DATA} LIKE ?" }
         val selectionArgs = extensions.map { "%.$it" }.toTypedArray()
 
@@ -43,14 +42,20 @@ class FileScannerRepository(private val context: Context) {
             val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
 
             while (cursor.moveToNext()) {
+                val path = cursor.getString(dataColumn) ?: ""
+                
+                // Skip if path starts with any excluded folder
+                if (excludedFolders.any { path.startsWith(it) }) continue
+                
                 val id = cursor.getLong(idColumn)
                 val name = cursor.getString(nameColumn) ?: "Unknown"
                 val size = cursor.getLong(sizeColumn)
-                val path = cursor.getString(dataColumn) ?: ""
                 val uri = ContentUris.withAppendedId(collection, id)
                 val ext = path.substringAfterLast('.', "")
 
-                emit(ScannedFile(uri, name, size, path, ext))
+                val checksum = if (deepScan) com.rp.dedup.core.utils.ChecksumUtils.calculateMD5(context, uri) else null
+
+                emit(ScannedFile(uri, name, size, path, ext, checksum))
             }
         }
     }.flowOn(Dispatchers.IO)

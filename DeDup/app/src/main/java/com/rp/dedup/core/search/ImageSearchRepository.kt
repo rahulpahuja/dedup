@@ -14,7 +14,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
 
-class ImageSearchRepository(private val context: Context) {
+class   ImageSearchRepository(private val context: Context) {
 
     private val labeler = ImageLabeling.getClient(
         ImageLabelerOptions.Builder()

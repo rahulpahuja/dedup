@@ -76,13 +76,20 @@ class FileScannerViewModel(
     }
 
     private fun findDuplicates(allFiles: List<ScannedFile>) {
-        val sizeGroups = allFiles.groupBy { it.size }.filter { it.value.size > 1 }
-
         val duplicates = mutableListOf<List<ScannedFile>>()
 
+        // First, group by size to find potential candidates
+        val sizeGroups = allFiles.groupBy { it.size }.filter { it.value.size > 1 }
+
         sizeGroups.forEach { (_, filesWithSameSize) ->
-            val nameGroups = filesWithSameSize.groupBy { it.name }.filter { it.value.size > 1 }
-            nameGroups.values.forEach { duplicates.add(it) }
+            // If checksum is present (Deep Scan), use it. Otherwise, fallback to name.
+            if (filesWithSameSize.firstOrNull()?.checksum != null) {
+                val checksumGroups = filesWithSameSize.groupBy { it.checksum }.filter { it.value.size > 1 }
+                checksumGroups.values.forEach { duplicates.add(it) }
+            } else {
+                val nameGroups = filesWithSameSize.groupBy { it.name }.filter { it.value.size > 1 }
+                nameGroups.values.forEach { duplicates.add(it) }
+            }
         }
 
         _duplicateGroups.value = duplicates

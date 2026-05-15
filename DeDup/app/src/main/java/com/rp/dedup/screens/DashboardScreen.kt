@@ -39,8 +39,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import com.canopas.introshowcaseview.IntroShowcase
-import com.canopas.introshowcaseview.ShowcaseStyle
+import com.canopas.lib.showcase.IntroShowcase
+import com.canopas.lib.showcase.component.ShowcaseStyle
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
@@ -135,7 +135,7 @@ fun DashboardScreenContent(
 
     IntroShowcase(
         showIntroShowCase = showTutorial,
-        dismissOnClickOutside = false,
+        dismissOnClickOutside = true,
         onShowCaseCompleted = onTutorialComplete
     ) {
 
