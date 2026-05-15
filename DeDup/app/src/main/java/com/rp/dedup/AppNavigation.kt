@@ -100,7 +100,7 @@ fun AppNavHost(navController: NavHostController) {
             ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = Screen.Login.route,
+                startDestination = Screen.Splash.route,
                 modifier = Modifier.padding(innerPadding),
                 enterTransition = {
                     slideIntoContainer(
