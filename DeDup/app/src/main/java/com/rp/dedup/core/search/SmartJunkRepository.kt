@@ -100,11 +100,13 @@ class SmartJunkRepository(private val context: Context) {
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             projection,
             null, null,
-            "${MediaStore.Images.Media.DATE_ADDED} DESC LIMIT $limit"
+            "${MediaStore.Images.Media.DATE_ADDED} DESC"
         )?.use { cursor ->
             val col = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-            while (cursor.moveToNext()) {
+            var count = 0
+            while (cursor.moveToNext() && count < limit) {
                 uris.add(ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cursor.getLong(col)))
+                count++
             }
         }
         return uris

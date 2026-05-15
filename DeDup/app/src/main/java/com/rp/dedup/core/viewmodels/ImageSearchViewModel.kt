@@ -33,6 +33,7 @@ class ImageSearchViewModel(
     fun search(query: String) {
         if (query.isBlank()) { clear(); return }
 
+        android.util.Log.d("ImageSearchVM", "Search requested for: '$query'")
         searchJob?.cancel()
         searchJob = viewModelScope.launch(Dispatchers.IO) {
             _isSearching.value = true
@@ -44,9 +45,11 @@ class ImageSearchViewModel(
                     _progress.value = labeled to total
                 }
                 _results.value = found
+                android.util.Log.d("ImageSearchVM", "Search results updated: ${found.size} items")
             } catch (_: kotlinx.coroutines.CancellationException) {
-                // expected on clear()
+                android.util.Log.d("ImageSearchVM", "Search cancelled")
             } catch (e: Exception) {
+                android.util.Log.e("ImageSearchVM", "Search failed: ${e.message}", e)
                 _error.value = "Search failed: ${e.message}"
             } finally {
                 _isSearching.value = false

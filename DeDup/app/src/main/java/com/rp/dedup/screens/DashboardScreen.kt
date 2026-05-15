@@ -213,7 +213,10 @@ fun DashboardScreenContent(
                         SearchBarDefaults.InputField(
                             query = searchQuery,
                             onQueryChange = { searchQuery = it },
-                            onSearch = { onSearch(it) },
+                            onSearch = { 
+                                onSearch(it)
+                                searchActive = true 
+                            },
                             expanded = searchActive,
                             onExpandedChange = { active ->
                                 searchActive = active
@@ -273,6 +276,7 @@ fun DashboardScreenContent(
                         if (searchQuery.isEmpty()) {
                             SearchSuggestionsRow { suggestion ->
                                 searchQuery = suggestion
+                                searchActive = true
                                 onSearch(suggestion)
                             }
                         }
