@@ -2,6 +2,8 @@ package com.rp.dedup.core.firebase.auth
 
 import android.app.Activity
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Base64
 import android.util.Log
 import androidx.credentials.ClearCredentialStateRequest
@@ -12,6 +14,8 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -25,6 +29,7 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.rp.dedup.core.security.NativeLib
 import com.rp.dedup.core.notifications.ToastManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
@@ -100,13 +105,32 @@ class FirebaseAuthManager(
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             signInWithCredential(credential, "Google")
         } catch (e: Exception) {
-            Log.e(TAG, "Google sign-in failed", e)
-            toastManager.showLong("Google sign-in failed: ${e.message}")
+            if (e is CancellationException) throw e
+            Log.e(TAG, "Google sign-in flow failed", e)
+            toastManager.showLong("Google sign-in failed: ${e.localizedMessage}")
             null
         }
     }
 
     private suspend fun fetchGoogleIdToken(activityContext: Context): String? {
+        if (!isNetworkAvailable(activityContext)) {
+            Log.e(TAG, "No internet connection available for Google sign-in")
+            toastManager.showLong("Please check your internet connection and try again.")
+            return null
+        }
+
+        val googleApiAvailability = GoogleApiAvailability.getInstance()
+        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(activityContext)
+        if (resultCode != ConnectionResult.SUCCESS) {
+            Log.e(TAG, "Google Play Services not available: $resultCode")
+            if ((activityContext is Activity) && googleApiAvailability.isUserResolvableError(resultCode)) {
+                googleApiAvailability.getErrorDialog(activityContext, resultCode, 9000)?.show()
+            } else {
+                toastManager.showLong("Google Play Services is not available.")
+            }
+            return null
+        }
+
         val credentialManager = CredentialManager.create(activityContext)
 
         return try {
@@ -117,7 +141,7 @@ class FirebaseAuthManager(
                 autoSelect = true
             )
         } catch (e: NoCredentialException) {
-            Log.d(TAG, "No authorised accounts; falling back to all-accounts flow")
+            Log.d(TAG, "No authorised accounts; falling back to all-accounts flow. Error: ${e.message}")
             try {
                 requestGoogleIdToken(
                     credentialManager = credentialManager,
@@ -126,23 +150,35 @@ class FirebaseAuthManager(
                     autoSelect = false
                 )
             } catch (e2: GetCredentialCancellationException) {
-                Log.d(TAG, "User cancelled Google sign-in")
+                Log.d(TAG, "User cancelled Google sign-in (all-accounts flow). Message: ${e2.message}")
                 toastManager.showShort("Sign-in cancelled")
                 null
             } catch (e2: GetCredentialException) {
-                Log.e(TAG, "Google sign-in failed (all-accounts flow)", e2)
-                toastManager.showLong("Google sign-in failed: ${e2.message}")
+                handleCredentialException(e2, "all-accounts")
                 null
             }
         } catch (e: GetCredentialCancellationException) {
-            Log.d(TAG, "User cancelled Google sign-in")
+            Log.d(TAG, "User cancelled Google sign-in (authorised flow). Message: ${e.message}")
             toastManager.showShort("Sign-in cancelled")
             null
         } catch (e: GetCredentialException) {
-            Log.e(TAG, "Google sign-in failed (authorised-accounts flow)", e)
-            toastManager.showLong("Google sign-in failed: ${e.message}")
+            handleCredentialException(e, "authorised-accounts")
             null
         }
+    }
+
+    private fun handleCredentialException(e: GetCredentialException, flow: String) {
+        val message = e.message ?: "Unknown error"
+        Log.e(TAG, "Google sign-in failed ($flow flow). Type: ${e::class.java.simpleName}, Message: $message", e)
+        
+        val userMessage = when {
+            message.contains("NETWORK_ERROR", ignoreCase = true) || message.contains("net::ERR", ignoreCase = true) ->
+                "Network error. Please check your connection and device clock settings."
+            message.contains("16") -> 
+                "Sign-in failed (Error 16). Please ensure your app is correctly registered in the Google Console."
+            else -> "Google sign-in failed: $message"
+        }
+        toastManager.showLong(userMessage)
     }
 
     private suspend fun requestGoogleIdToken(
@@ -151,9 +187,17 @@ class FirebaseAuthManager(
         filterByAuthorizedAccounts: Boolean,
         autoSelect: Boolean
     ): String? {
+        val serverClientId = NativeLib().getGoogleWebClientId()
+        if (serverClientId.isBlank()) {
+            Log.e(TAG, "Google Server Client ID is empty. Check NativeLib/local.properties")
+            return null
+        }
+
+        Log.d(TAG, "Requesting Google ID token with Client ID: $serverClientId (Filter: $filterByAuthorizedAccounts)")
+
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts)
-            .setServerClientId(NativeLib().getGoogleWebClientId())
+            .setServerClientId(serverClientId)
             .setAutoSelectEnabled(autoSelect)
             .setNonce(generateNonce())
             .build()
@@ -171,18 +215,22 @@ class FirebaseAuthManager(
 
     private fun extractGoogleIdToken(result: GetCredentialResponse): String? {
         val credential = result.credential
-        return if (
-            credential is CustomCredential &&
-            credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+        Log.d(TAG, "Extracting token from credential type: ${credential.type}")
+
+        return if (credential is CustomCredential &&
+            (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL ||
+             credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_SIWG_CREDENTIAL)
         ) {
             try {
-                GoogleIdTokenCredential.createFrom(credential.data).idToken
+                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                Log.d(TAG, "Successfully extracted ID token from GoogleIdTokenCredential")
+                googleIdTokenCredential.idToken
             } catch (e: GoogleIdTokenParsingException) {
                 Log.e(TAG, "Received an invalid Google ID token response", e)
                 null
             }
         } else {
-            Log.e(TAG, "Unexpected credential type: ${credential.type}")
+            Log.e(TAG, "Unexpected credential type: ${credential.type}. Data keys: ${credential.data.keySet()}")
             null
         }
     }
@@ -194,6 +242,13 @@ class FirebaseAuthManager(
             randomBytes,
             Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING
         )
+    }
+
+    private fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        val activeNetwork = connectivityManager?.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     // ── Other social providers ────────────────────────────────────────────────
@@ -321,8 +376,9 @@ class FirebaseAuthManager(
             toastManager.showShort("Signed in with $providerName")
             result.user
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e(TAG, "$providerName sign-in failed", e)
-            toastManager.showLong("$providerName sign-in failed: ${e.message}")
+            toastManager.showLong("$providerName sign-in failed: ${e.localizedMessage}")
             null
         }
     }

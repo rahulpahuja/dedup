@@ -30,6 +30,11 @@
 # Keep your data classes to prevent issues with JSON serialization or Room
 -keep class com.rp.dedup.core.data.** { *; }
 
+# --- Google Identity & Credential Manager ---
+-keep class androidx.credentials.** { *; }
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-dontwarn androidx.credentials.**
+
 # Preserve line numbers for better crash reporting
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile

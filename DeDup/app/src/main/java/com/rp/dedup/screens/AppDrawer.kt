@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -47,7 +48,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +62,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.viewmodels.ThemeMode
@@ -83,6 +87,7 @@ fun AppDrawerContent(
             scope = scope,
             userName = "User",
             userEmail = "user@example.com",
+            userImageUrl = "",
             currentThemeMode = ThemeMode.AUTO,
             onProfileUpdate = { _, _ -> },
             onThemeModeChange = {}
@@ -118,6 +123,7 @@ fun AppDrawerContent(
         scope = scope,
         userName = profileViewModel.name,
         userEmail = profileViewModel.email,
+        userImageUrl = profileViewModel.profileImageUrl,
         currentThemeMode = currentThemeMode,
         onProfileUpdate = { name, email -> profileViewModel.update(name, email) },
         onThemeModeChange = { themeViewModel.setThemeMode(it) }
@@ -131,6 +137,7 @@ private fun AppDrawerContentUI(
     scope: CoroutineScope,
     userName: String,
     userEmail: String,
+    userImageUrl: String,
     currentThemeMode: ThemeMode,
     onProfileUpdate: (String, String) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit
@@ -149,6 +156,7 @@ private fun AppDrawerContentUI(
         ProfileHeader(
             name = userName,
             email = userEmail,
+            imageUrl = userImageUrl,
             onEditClick = { showEditDialog = true }
         )
 
@@ -240,6 +248,7 @@ private fun AppDrawerContentUI(
 private fun ProfileHeader(
     name: String,
     email: String,
+    imageUrl: String,
     onEditClick: () -> Unit
 ) {
     Row(
@@ -254,13 +263,22 @@ private fun ProfileHeader(
             modifier = Modifier.size(52.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = name.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
+                if (imageUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        contentScale = ContentScale.Crop
                     )
-                )
+                } else {
+                    Text(
+                        text = name.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
             }
         }
         Spacer(Modifier.width(12.dp))
@@ -387,6 +405,7 @@ private fun AppDrawerContentPreview() {
             scope = rememberCoroutineScope(),
             userName = "John Doe",
             userEmail = "john@example.com",
+            userImageUrl = "",
             currentThemeMode = ThemeMode.AUTO,
             onProfileUpdate = { _, _ -> },
             onThemeModeChange = {}
