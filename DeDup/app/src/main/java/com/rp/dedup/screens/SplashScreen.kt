@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,18 +50,30 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
 import com.rp.dedup.Screen
+import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
+import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.PrimaryBlue
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val authManager = remember { FirebaseAuthManager(ToastManager(context)) }
     var triggered by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         triggered = true
         delay(3200)
-        navController.navigate(Screen.Dashboard.route) {
+        
+        // Persist login: if user is already authenticated, skip LoginScreen
+        val nextRoute = if (authManager.isUserLoggedIn) {
+            Screen.Dashboard.route
+        } else {
+            Screen.Login.route
+        }
+
+        navController.navigate(nextRoute) {
             popUpTo(Screen.Splash.route) { inclusive = true }
         }
     }

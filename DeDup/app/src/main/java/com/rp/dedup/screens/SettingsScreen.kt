@@ -1,5 +1,7 @@
 package com.rp.dedup.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,10 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -39,6 +43,9 @@ import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 import java.util.Date
+import android.provider.DocumentsContract
+import android.net.Uri
+import android.os.Environment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,8 +73,20 @@ fun SettingsScreen(navController: NavHostController) {
     
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
+    var showExcludedFoldersDialog by rememberSaveable { mutableStateOf(false) }
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
     var showFeatureRequestDialog by rememberSaveable { mutableStateOf(false) }
+
+    val folderPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            // Convert URI to path if possible, or just use URI string as unique identifier
+            // For MediaStore exclusion, we usually need the absolute path or a unique prefix
+            val path = it.path ?: it.toString()
+            settingsViewModel.addExcludedFolder(path)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -143,7 +162,7 @@ fun SettingsScreen(navController: NavHostController) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
-                    onClick = { /* Navigate to exclusion list screen or show dialog */ }
+                    onClick = { showExcludedFoldersDialog = true }
                 )
             }
 
@@ -234,6 +253,15 @@ fun SettingsScreen(navController: NavHostController) {
         )
     }
 
+    if (showExcludedFoldersDialog) {
+        ExcludedFoldersDialog(
+            folders = excludedFolders,
+            onDismiss = { showExcludedFoldersDialog = false },
+            onAdd = { folderPickerLauncher.launch(null) },
+            onRemove = { settingsViewModel.removeExcludedFolder(it) }
+        )
+    }
+
     if (showFeedbackDialog) {
         FeedbackDialog(
             title = "Share Feedback",
@@ -270,6 +298,126 @@ fun SettingsScreen(navController: NavHostController) {
                 showFeatureRequestDialog = false
             }
         )
+    }
+}
+
+@Composable
+private fun ExcludedFoldersDialog(
+    folders: List<String>,
+    onDismiss: () -> Unit,
+    onAdd: () -> Unit,
+    onRemove: (String) -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Excluded Folders",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    IconButton(onClick = onAdd) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Folder")
+                    }
+                }
+
+                Text(
+                    "Files in these folders will be skipped during scanning.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                if (folders.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No folders excluded",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 300.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        folders.forEach { path ->
+                            ExcludedFolderItem(path = path, onRemove = { onRemove(path) })
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExcludedFolderItem(path: String, onRemove: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Folder,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = path,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Remove",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
     }
 }
 
