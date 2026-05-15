@@ -104,7 +104,7 @@ fun AppNavHost(navController: NavHostController) {
                     LoginScreen(navController, profileViewModel)
                 }
                 composable(Screen.Dashboard.route) {
-                    DashboardScreen(navController)
+                    DashboardScreen(navController, profileViewModel)
                 }
                 composable(Screen.Cleanup.route) {
                     FileCleanupScreen(navController)

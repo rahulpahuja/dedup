@@ -51,6 +51,7 @@ import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
 import com.rp.dedup.core.viewmodels.ImageSearchViewModel
 import com.rp.dedup.core.viewmodels.StorageStats
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -59,7 +60,10 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(navController: NavHostController) {
+fun DashboardScreen(
+    navController: NavHostController,
+    profileViewModel: UserProfileViewModel
+) {
     val context = LocalContext.current
     val dashboardViewModel: DashboardViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
@@ -89,6 +93,8 @@ fun DashboardScreen(navController: NavHostController) {
 
     DashboardScreenContent(
         navController = navController,
+        userName = profileViewModel.name,
+        userImageUrl = profileViewModel.profileImageUrl,
         storageStats = storageStats,
         totalReclaimable = totalReclaimable,
         searchResults = searchResults,
@@ -110,6 +116,8 @@ fun DashboardScreen(navController: NavHostController) {
 @Composable
 fun DashboardScreenContent(
     navController: NavHostController,
+    userName: String,
+    userImageUrl: String,
     storageStats: StorageStats,
     totalReclaimable: Long,
     searchResults: List<ImageSearchRepository.SearchResult>,
@@ -167,13 +175,26 @@ fun DashboardScreenContent(
                                 Surface(
                                     shape = CircleShape,
                                     modifier = Modifier.size(32.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant
+                                    color = MaterialTheme.colorScheme.primaryContainer
                                 ) {
-                                    Icon(
-                                        Icons.Default.Person,
-                                        contentDescription = "Profile",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Box(contentAlignment = Alignment.Center) {
+                                        if (userImageUrl.isNotEmpty()) {
+                                            AsyncImage(
+                                                model = userImageUrl,
+                                                contentDescription = "Profile",
+                                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        } else {
+                                            Text(
+                                                text = userName.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
+                                                style = MaterialTheme.typography.labelMedium.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         },
@@ -981,6 +1002,8 @@ fun DashboardScreenPreview() {
         CompositionLocalProvider(LocalDrawerState provides rememberDrawerState(DrawerValue.Closed)) {
             DashboardScreenContent(
                 navController = rememberNavController(),
+                userName = "John Doe",
+                userImageUrl = "",
                 storageStats = StorageStats(
                     totalBytes = 128L * 1024 * 1024 * 1024,
                     usedBytes = 82L * 1024 * 1024 * 1024,
