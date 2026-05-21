@@ -5,6 +5,21 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# --- Aggressive Obfuscation & Optimization ---
+# Flatten the package hierarchy by moving all obfuscated classes into the root package
+-repackageclasses ''
+# Allow R8 to change the access modifiers of classes and members (e.g. make public classes private if possible)
+-allowaccessmodification
+# Overload method names with the same name if signatures differ
+-overloadaggressively
+
+# Remove debug and verbose log calls in release builds to prevent leaking info
+-assumenosideeffects class android.util.Log {
+    public static *** v(...);
+    public static *** d(...);
+    public static *** i(...);
+}
+
 # --- General Kotlin & Compose ---
 -keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod
 -dontwarn org.jetbrains.annotations.**
