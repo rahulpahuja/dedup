@@ -10,9 +10,19 @@ object ImageHasher {
     fun calculateDHash(bitmap: Bitmap): Long {
         // 1. Resize to 9x8 (72 pixels total) using a pooled bitmap if possible
         val resized = BitmapPool.acquire(9, 8, Bitmap.Config.ARGB_8888)
+        resized.eraseColor(Color.TRANSPARENT)
+        
+        // Ensure no density scaling during the draw
+        resized.density = bitmap.density
         val canvas = android.graphics.Canvas(resized)
         val rect = android.graphics.Rect(0, 0, 9, 8)
-        canvas.drawBitmap(bitmap, null, rect, null)
+        
+        // Use a paint with filtering for better quality downscaling
+        val paint = android.graphics.Paint().apply {
+            isFilterBitmap = true
+            isAntiAlias = true
+        }
+        canvas.drawBitmap(bitmap, null, rect, paint)
         
         var hash = 0L
 

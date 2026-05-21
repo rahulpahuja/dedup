@@ -1,13 +1,24 @@
 package com.rp.dedup.screens
 
+import android.app.Activity
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.text.format.Formatter.formatFileSize
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.SdCard
 import androidx.compose.material.icons.filled.Search
@@ -16,17 +27,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.FileScannerViewModel
 import com.rp.dedup.core.data.ScannedFile
@@ -58,6 +72,32 @@ fun FileScannerScreen(
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val allFiles by viewModel.files.collectAsState()
+    
+    val selectedUris = remember { mutableStateListOf<Uri>() }
+    var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    val deleteLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.removeDeletedFilesFromUI(pendingDeleteUris)
+            selectedUris.removeAll(pendingDeleteUris)
+            pendingDeleteUris = emptyList()
+        }
+    }
+
+    fun triggerDelete(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        pendingDeleteUris = uris
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val pi = MediaStore.createDeleteRequest(context.contentResolver, uris)
+            deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+        } else {
+            uris.forEach { context.contentResolver.delete(it, null, null) }
+            viewModel.removeDeletedFilesFromUI(uris)
+            selectedUris.removeAll(uris)
+        }
+    }
 
     FileScannerContent(
         navController = navController,
@@ -65,10 +105,19 @@ fun FileScannerScreen(
         isScanning = isScanning,
         allFiles = allFiles,
         duplicateGroups = duplicateGroups,
+        selectedUris = selectedUris,
         onScanClick = {
             if (isScanning) viewModel.cancelScanning()
-            else viewModel.startScanning(extensions)
-        }
+            else {
+                selectedUris.clear()
+                viewModel.startScanning(extensions)
+            }
+        },
+        onToggleSelect = { uri ->
+            if (selectedUris.contains(uri)) selectedUris.remove(uri)
+            else selectedUris.add(uri)
+        },
+        onDeleteSelected = { triggerDelete(selectedUris.toList()) }
     )
 }
 
@@ -80,7 +129,10 @@ fun FileScannerContent(
     isScanning: Boolean,
     allFiles: List<ScannedFile>,
     duplicateGroups: List<List<ScannedFile>>,
-    onScanClick: () -> Unit
+    selectedUris: List<Uri>,
+    onScanClick: () -> Unit,
+    onToggleSelect: (Uri) -> Unit,
+    onDeleteSelected: () -> Unit
 ) {
     val title = if (scanType == "pdf") "PDF Scanner" else "APK Scanner"
     val icon = if (scanType == "pdf") Icons.Default.Description else Icons.Default.SdCard
@@ -92,6 +144,13 @@ fun FileScannerContent(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (selectedUris.isNotEmpty()) {
+                        IconButton(onClick = onDeleteSelected) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Selected", tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             )
@@ -124,9 +183,36 @@ fun FileScannerContent(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    duplicateGroups.forEach { group ->
+                    if (duplicateGroups.isEmpty() && !isScanning) {
                         item {
-                            DuplicateGroupItem(group, icon)
+                            Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                    Spacer(Modifier.height(16.dp))
+                                    Text("No duplicate ${scanType.uppercase()} files found.")
+                                    Text(
+                                        "Total files scanned: ${allFiles.size}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        duplicateGroups.forEach { group ->
+                            item {
+                                DuplicateGroupItem(
+                                    group = group,
+                                    icon = icon,
+                                    selectedUris = selectedUris,
+                                    onToggleSelect = onToggleSelect
+                                )
+                            }
                         }
                     }
                 }
@@ -181,7 +267,12 @@ private fun ScannerHeader(
 }
 
 @Composable
-private fun DuplicateGroupItem(group: List<ScannedFile>, icon: ImageVector) {
+private fun DuplicateGroupItem(
+    group: List<ScannedFile>,
+    icon: ImageVector,
+    selectedUris: List<Uri>,
+    onToggleSelect: (Uri) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -195,36 +286,72 @@ private fun DuplicateGroupItem(group: List<ScannedFile>, icon: ImageVector) {
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(8.dp))
-            group.forEach { file ->
-                FileItem(file, icon)
+            group.forEachIndexed { index, file ->
+                FileItem(
+                    file = file,
+                    icon = icon,
+                    isSelected = selectedUris.contains(file.uri),
+                    isKeep = index == 0,
+                    onToggleSelect = { onToggleSelect(file.uri) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun FileItem(file: ScannedFile, icon: ImageVector) {
+private fun FileItem(
+    file: ScannedFile,
+    icon: ImageVector,
+    isSelected: Boolean,
+    isKeep: Boolean,
+    onToggleSelect: () -> Unit
+) {
     val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onToggleSelect() }
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Checkbox(
+            checked = isSelected,
+            onCheckedChange = { onToggleSelect() },
+            modifier = Modifier.size(36.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary,
+            tint = if (isKeep) Color(0xFF2E7D32) else MaterialTheme.colorScheme.secondary,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = file.path,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = file.path,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                if (isKeep) {
+                    Spacer(Modifier.width(8.dp))
+                    Surface(
+                        color = Color(0xFFE8F5E9),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            "KEEP",
+                            color = Color(0xFF2E7D32),
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
             Text(
                 text = formatFileSize(context, file.size),
                 style = MaterialTheme.typography.labelSmall,
@@ -248,7 +375,10 @@ fun FileScannerPreview() {
             isScanning = false,
             allFiles = mockFiles,
             duplicateGroups = listOf(mockFiles),
-            onScanClick = {}
+            selectedUris = emptyList(),
+            onScanClick = {},
+            onToggleSelect = {},
+            onDeleteSelected = {}
         )
     }
 }

@@ -1,6 +1,7 @@
 package com.rp.dedup.core.db
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -11,6 +12,7 @@ import com.rp.dedup.core.data.ScannedImage
 import com.rp.dedup.core.dao.ScannedImageDao
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.dao.ScanHistoryDao
+import com.rp.dedup.core.security.KeyManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 @Database(entities = [ScannedImage::class, ScanHistory::class], version = 2, exportSchema = false)
@@ -21,9 +23,6 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
-
-        // In a real app, this should be securely fetched from Android Keystore
-        private const val DB_PASSPHRASE = "secure_dedup_passphrase"
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
@@ -54,29 +53,31 @@ abstract class AppDatabase : RoomDatabase() {
                     // Native library already loaded or unavailable
                 }
                 
-                val factory = SupportOpenHelperFactory(DB_PASSPHRASE.toByteArray())
                 val builder = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     Constants.DATABASE_NAME
                 )
-                    .openHelperFactory(factory)
                     .addMigrations(MIGRATION_1_2)
                     .fallbackToDestructiveMigration(dropAllTables = true)
 
                 val instance = try {
+                    val key = KeyManager.getOrCreateDatabaseKey(context)
+                    builder.openHelperFactory(SupportOpenHelperFactory(key))
                     val db = builder.build()
                     // Force opening the database to catch encryption issues early
                     db.openHelper.writableDatabase
                     db
                 } catch (e: Exception) {
-                    if (e.message?.contains("file is not a database", ignoreCase = true) == true) {
-                        // This happens if the database was previously unencrypted or has a different password
-                        context.applicationContext.deleteDatabase(Constants.DATABASE_NAME)
-                        builder.build()
-                    } else {
-                        throw e
-                    }
+                    Log.e("AppDatabase", "Database initialization failed, attempting recovery", e)
+                    // This happens if KeyManager failed, the database was previously unencrypted, 
+                    // has a different password, or is corrupted.
+                    context.applicationContext.deleteDatabase(Constants.DATABASE_NAME)
+                    
+                    // Try one more time with a fresh key (KeyManager recovery should have happened)
+                    val key = KeyManager.getOrCreateDatabaseKey(context)
+                    builder.openHelperFactory(SupportOpenHelperFactory(key))
+                    builder.build()
                 }
 
                 INSTANCE = instance

@@ -6,6 +6,7 @@ import com.rp.dedup.core.repository.VideoScannerRepository
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.data.ScannedVideo
 import com.rp.dedup.core.repository.ScanHistoryRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -20,11 +21,15 @@ import java.util.concurrent.CancellationException
 
 class VideoScannerViewModel(
     private val repository: VideoScannerRepository,
-    private val historyRepository: ScanHistoryRepository? = null
+    private val historyRepository: ScanHistoryRepository? = null,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedVideo>>>(emptyList())
     val duplicateGroups: StateFlow<List<List<ScannedVideo>>> = _duplicateGroups.asStateFlow()
+
+    private val _videos = MutableStateFlow<List<ScannedVideo>>(emptyList())
+    val videos: StateFlow<List<ScannedVideo>> = _videos.asStateFlow()
 
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
@@ -40,24 +45,30 @@ class VideoScannerViewModel(
         var wasCancelled = false
         _isScanning.value = true
         _scannedCount.value = 0
+        _videos.value = emptyList()
         _duplicateGroups.value = emptyList()
 
-        scanJob = viewModelScope.launch(Dispatchers.Default) {
+        scanJob = viewModelScope.launch(defaultDispatcher) {
+            val allVideos = mutableListOf<ScannedVideo>()
             try {
-                val allVideos = mutableListOf<ScannedVideo>()
-
                 repository.scanVideos()
                     .buffer(capacity = Channel.BUFFERED)
                     .collect { video ->
                         allVideos.add(video)
                         _scannedCount.value = allVideos.size
+                        if (allVideos.size % 50 == 0) {
+                            _videos.value = allVideos.toList()
+                        }
                     }
 
+                _videos.value = allVideos.toList()
                 val duplicates = findDuplicates(allVideos)
                 _duplicateGroups.value = duplicates
 
             } catch (_: CancellationException) {
                 wasCancelled = true
+                _videos.value = allVideos.toList()
+                _duplicateGroups.value = findDuplicates(allVideos)
             } finally {
                 _isScanning.value = false
                 val totalCount = _scannedCount.value
@@ -83,26 +94,45 @@ class VideoScannerViewModel(
     }
 
     private fun findDuplicates(allVideos: List<ScannedVideo>): List<List<ScannedVideo>> {
-        // More robust grouping:
-        // 1. Group by size first.
-        // 2. Only consider groups where size > 0 and count > 1.
-        // 3. Within those groups, if duration is available (>0), verify it's similar (within 1 second).
-        
         return allVideos
             .filter { it.sizeInBytes > 0 }
             .groupBy { it.sizeInBytes }
             .filter { it.value.size > 1 }
             .flatMap { entry ->
                 val sizeGroup = entry.value
-                // If all have valid duration, sub-group by duration (within 1s tolerance)
-                // Otherwise, treat the size match as enough for a "potential duplicate" 
-                // (True duplicates will have identical size down to the byte)
-                if (sizeGroup.all { it.durationMs > 0 }) {
-                    sizeGroup.groupBy { it.durationMs / 1000 } // Group by seconds
-                        .filter { it.value.size > 1 }
-                        .values
+                val (validDurationVideos, invalidDurationVideos) = sizeGroup.partition { it.durationMs > 0 }
+                
+                val resultGroups = mutableListOf<List<ScannedVideo>>()
+                
+                if (validDurationVideos.isNotEmpty()) {
+                    val sorted = validDurationVideos.sortedBy { it.durationMs }
+                    val subgroups = mutableListOf<MutableList<ScannedVideo>>()
+                    for (video in sorted) {
+                        var added = false
+                        for (subgroup in subgroups) {
+                            if (Math.abs(video.durationMs - subgroup.first().durationMs) <= 1000) {
+                                subgroup.add(video)
+                                added = true
+                                break
+                            }
+                        }
+                        if (!added) {
+                            subgroups.add(mutableListOf(video))
+                        }
+                    }
+                    resultGroups.addAll(subgroups.filter { it.size > 1 })
+                }
+                
+                if (invalidDurationVideos.size > 1) {
+                    // If no duration, only group if size matches perfectly and is non-zero
+                    // We already filtered for count > 1 and size > 0
+                    resultGroups.add(invalidDurationVideos)
+                }
+                
+                if (validDurationVideos.isEmpty() && invalidDurationVideos.size > 1) {
+                    listOf(invalidDurationVideos)
                 } else {
-                    listOf(sizeGroup)
+                    resultGroups
                 }
             }
             .toList()
@@ -110,5 +140,14 @@ class VideoScannerViewModel(
 
     fun cancelScanning() {
         scanJob?.cancel()
+    }
+
+    fun removeDeletedVideosFromUI(deletedUris: List<android.net.Uri>) {
+        viewModelScope.launch {
+            val currentVideos = _videos.value.filterNot { it.uri in deletedUris }
+            _videos.value = currentVideos
+            _duplicateGroups.value = findDuplicates(currentVideos)
+            _scannedCount.value = currentVideos.size
+        }
     }
 }

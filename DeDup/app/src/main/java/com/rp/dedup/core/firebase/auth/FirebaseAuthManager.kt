@@ -57,7 +57,7 @@ class FirebaseAuthManager(
         return try {
             Log.d(TAG, "Attempting anonymous sign-in")
             val result = auth.signInAnonymously().await()
-            Log.d(TAG, "Anonymous sign-in successful: ${result.user?.uid}")
+            Log.d(TAG, "Anonymous sign-in successful")
             toastManager.showShort("Signed in anonymously")
             result.user
         } catch (e: Exception) {
@@ -69,13 +69,13 @@ class FirebaseAuthManager(
 
     suspend fun createUserWithEmail(email: String, password: String): FirebaseUser? {
         return try {
-            Log.d(TAG, "Attempting to create user with email: $email")
+            Log.d(TAG, "Attempting to create user") // Sanitized log
             val result = auth.createUserWithEmailAndPassword(email, password).await()
-            Log.d(TAG, "User creation successful for: ${result.user?.email}")
-            toastManager.showShort("User created: ${result.user?.email}")
+            Log.d(TAG, "User creation successful")
+            toastManager.showShort("User account created successfully")
             result.user
         } catch (e: Exception) {
-            Log.e(TAG, "User creation failed for $email", e)
+            Log.e(TAG, "User creation failed", e)
             toastManager.showLong("Registration failed: ${e.message}")
             null
         }
@@ -83,13 +83,13 @@ class FirebaseAuthManager(
 
     suspend fun signInWithEmail(email: String, password: String): FirebaseUser? {
         return try {
-            Log.d(TAG, "Attempting sign-in with email: $email")
+            Log.d(TAG, "Attempting sign-in") // Sanitized log
             val result = auth.signInWithEmailAndPassword(email, password).await()
-            Log.d(TAG, "Sign-in successful for: ${result.user?.email}")
-            toastManager.showShort("Signed in: ${result.user?.email}")
+            Log.d(TAG, "Sign-in successful")
+            toastManager.showShort("Signed in successfully")
             result.user
         } catch (e: Exception) {
-            Log.e(TAG, "Sign-in failed for $email", e)
+            Log.e(TAG, "Sign-in failed", e)
             toastManager.showLong("Login failed: ${e.message}")
             null
         }
@@ -322,7 +322,7 @@ class FirebaseAuthManager(
         callbacks: PhoneAuthProvider.OnVerificationStateChangedCallbacks
     ) {
         try {
-            Log.d(TAG, "Attempting to verify phone number: $phoneNumber")
+            Log.d(TAG, "Attempting to verify phone number")
             val options = PhoneAuthOptions.newBuilder(auth)
                 .setPhoneNumber(phoneNumber)
                 .setTimeout(60L, TimeUnit.SECONDS)
@@ -352,7 +352,7 @@ class FirebaseAuthManager(
 
     fun signOut() {
         try {
-            Log.d(TAG, "Signing out user: ${currentUser?.email ?: currentUser?.uid}")
+            Log.d(TAG, "Signing out user")
             auth.signOut()
             Log.d(TAG, "Sign-out successful")
             toastManager.showShort("Signed out successfully")
@@ -377,12 +377,12 @@ class FirebaseAuthManager(
 
     suspend fun sendPasswordResetEmail(email: String) {
         try {
-            Log.d(TAG, "Attempting to send password reset email to: $email")
+            Log.d(TAG, "Attempting to send password reset email")
             auth.sendPasswordResetEmail(email).await()
-            Log.d(TAG, "Password reset email sent to: $email")
-            toastManager.showShort("Password reset email sent to $email")
+            Log.d(TAG, "Password reset email sent")
+            toastManager.showShort("Password reset email sent")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send password reset email to $email", e)
+            Log.e(TAG, "Failed to send password reset email", e)
             toastManager.showLong("Failed to send reset email: ${e.message}")
         }
     }
@@ -390,7 +390,7 @@ class FirebaseAuthManager(
     suspend fun deleteUser() {
         try {
             val user = auth.currentUser
-            Log.d(TAG, "Attempting to delete user: ${user?.email ?: user?.uid}")
+            Log.d(TAG, "Attempting to delete user account")
             user?.delete()?.await()
             Log.d(TAG, "User account deleted successfully")
             toastManager.showShort("User account deleted")
@@ -409,7 +409,7 @@ class FirebaseAuthManager(
         return try {
             Log.d(TAG, "Signing in with credential from provider: $providerName")
             val result = auth.signInWithCredential(credential).await()
-            Log.d(TAG, "$providerName sign-in successful: ${result.user?.email ?: result.user?.uid}")
+            Log.d(TAG, "$providerName sign-in successful")
             toastManager.showShort("Signed in with $providerName")
             result.user
         } catch (e: Exception) {

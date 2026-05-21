@@ -69,15 +69,13 @@ class PermissionManager(private val context: Context) {
 
         /**
          * Read general files (PDFs, APKs, documents, etc.).
-         * - API 33+ : READ_MEDIA_IMAGES + READ_MEDIA_VIDEO (covers MediaStore-indexed files)
-         * - API 29–32: READ_EXTERNAL_STORAGE
-         * - API ≤28 : READ_EXTERNAL_STORAGE + WRITE_EXTERNAL_STORAGE
+         * 
+         * NOTE: On API 30+, for broad scanning of non-media files via MediaStore,
+         * the app really needs MANAGE_EXTERNAL_STORAGE (All Files Access).
+         * This group here represents the standard runtime permissions.
          */
         val FILES: List<String> = when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> listOf(
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO
-            )
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> emptyList() // No runtime permission for docs on 13+
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
                 listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
             else -> listOf(

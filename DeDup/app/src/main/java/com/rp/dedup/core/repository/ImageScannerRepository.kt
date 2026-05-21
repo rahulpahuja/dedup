@@ -15,11 +15,6 @@ import kotlinx.coroutines.flow.*
 
 class ImageScannerRepository(private val context: Context) {
 
-    private val bitmapOptions = BitmapFactory.Options().apply {
-        inSampleSize = 8
-        inMutable = true
-    }
-
     companion object {
         fun loadBitmapEfficiently(context: Context, uri: Uri, options: BitmapFactory.Options? = null): Bitmap? {
             return try {
@@ -75,7 +70,11 @@ class ImageScannerRepository(private val context: Context) {
         return imageQueue.asFlow()
             .flatMapMerge(concurrency = concurrencyLevel) { (uri, size, date) ->
                 flow {
-                    val bitmap = loadBitmapEfficiently(context, uri, bitmapOptions)
+                    val options = BitmapFactory.Options().apply {
+                        inSampleSize = 8
+                        inMutable = true
+                    }
+                    val bitmap = loadBitmapEfficiently(context, uri, options)
                     if (bitmap != null) {
                         val hash = ImageHasher.calculateDHash(bitmap)
                         bitmap.recycle() // Source bitmap still needs recycling as it's large/variable size

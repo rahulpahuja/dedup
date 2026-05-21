@@ -7,6 +7,7 @@ import com.rp.dedup.core.image.ImageHasher
 import com.rp.dedup.core.data.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -22,7 +23,8 @@ import java.util.concurrent.CancellationException
 class ScannerViewModel(
     private val repository: ImageScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
-    private val dataStoreManager: com.rp.dedup.core.caching.DataStoreManager? = null
+    private val dataStoreManager: com.rp.dedup.core.caching.DataStoreManager? = null,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedImage>>>(emptyList())
@@ -35,23 +37,24 @@ class ScannerViewModel(
 
     private var scanJob: Job? = null
     
-    private var similarityThreshold = 5
+    private var similarityThreshold = 3 // Reduced default for more accuracy
     private var excludedFolders = emptyList<String>()
 
     fun startScanning() {
+        if (_isScanning.value) return
         val startTime = System.currentTimeMillis()
         var wasCancelled = false
+        _isScanning.value = true
+        allScannedGroups.clear()
+        _duplicateGroups.value = emptyList()
 
-        scanJob = viewModelScope.launch(Dispatchers.Default) {
+        scanJob = viewModelScope.launch(defaultDispatcher) {
             try {
-                _isScanning.value = true
-                allScannedGroups.clear()
-                _duplicateGroups.value = emptyList()
-                
                 // Load settings before scanning
                 dataStoreManager?.let { manager ->
-                    similarityThreshold = manager.readData(com.rp.dedup.core.caching.DataStoreManager.SIMILARITY_THRESHOLD, "5")
-                        .map { it.toIntOrNull() ?: 5 }.first()
+                    val thresholdValue = manager.readData(com.rp.dedup.core.caching.DataStoreManager.SIMILARITY_THRESHOLD, "3")
+                        .map { it.toIntOrNull() ?: 3 }.first()
+                    similarityThreshold = thresholdValue.coerceIn(0, 10) // Cap to sane limit
                     excludedFolders = manager.readData(com.rp.dedup.core.caching.DataStoreManager.EXCLUDED_FOLDERS, "")
                         .map { if (it.isEmpty()) emptyList() else it.split(",") }.first()
                 }

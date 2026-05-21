@@ -166,19 +166,19 @@ fun FileCleanupScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.secondary,
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            "1.4 GB REDUNDANT FILES",
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            "SCAN TO FIND REDUNDANT FILES",
+                            color = MaterialTheme.colorScheme.onSecondary,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(Modifier.width(12.dp))
                     Text(
-                        "Ready to be reclaimed",
+                        "Manage documents & APKs",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -264,40 +264,7 @@ fun FileCleanupScreen(navController: NavHostController) {
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            // Redundant Downloads Section
             item {
-                Text(
-                    "Redundant Downloads",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
-                DownloadItem(
-                    name = "Invoice_2023_Final.pdf",
-                    info = "2.4 MB  •  Downloaded 3 times",
-                    badge = "HASH MATCH",
-                    badgeColor = Color(0xFFB2EBF2),
-                    badgeTextColor = Color(0xFF006064),
-                    selectionInfo = "SELECTED\n2 Copies",
-                    icon = Icons.Default.Description,
-                    iconTint = Color(0xFFE53935)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                DownloadItem(
-                    name = "Beta_Update_v2.4.apk",
-                    info = "158 MB  •  Stored in Downloads/Old",
-                    badge = "HASH MATCH",
-                    badgeColor = Color(0xFFB2EBF2),
-                    badgeTextColor = Color(0xFF006064),
-                    selectionInfo = "SELECTED\n1 Cop",
-                    icon = Icons.Default.Android,
-                    iconTint = Color(0xFF43A047)
-                )
                 Spacer(modifier = Modifier.height(100.dp))
             }
         }

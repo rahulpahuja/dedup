@@ -1,5 +1,5 @@
 [versions]
-agp = "9.1.0"
+agp = "9.2.1"
 coreKtx = "1.18.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -17,6 +17,7 @@ sqlcipher = "4.6.1"
 playIntegrity = "1.6.0"
 introshowcaseview = "2.0.1"
 work = "2.10.0"
+securityCrypto = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +47,7 @@ sqlcipher = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "
 play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 introshowcaseview = { group = "com.canopas.intro-showcase-view", name = "introshowcaseview", version.ref = "introshowcaseview" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

@@ -1,8 +1,16 @@
 package com.rp.dedup.screens
 
+import android.app.Activity
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.text.format.Formatter.formatFileSize
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,12 +26,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
@@ -46,6 +56,32 @@ fun VideoScannerScreen(navController: NavHostController) {
 
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
+    
+    val selectedUris = remember { mutableStateListOf<Uri>() }
+    var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
+    val deleteLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.removeDeletedVideosFromUI(pendingDeleteUris)
+            selectedUris.removeAll(pendingDeleteUris)
+            pendingDeleteUris = emptyList()
+        }
+    }
+
+    fun triggerDelete(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        pendingDeleteUris = uris
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val pi = MediaStore.createDeleteRequest(context.contentResolver, uris)
+            deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+        } else {
+            uris.forEach { context.contentResolver.delete(it, null, null) }
+            viewModel.removeDeletedVideosFromUI(uris)
+            selectedUris.removeAll(uris)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -69,17 +105,9 @@ fun VideoScannerScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
-                        Surface(
-                            shape = CircleShape,
-                            modifier = Modifier.size(32.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        ) {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = "Profile",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    if (selectedUris.isNotEmpty()) {
+                        IconButton(onClick = { triggerDelete(selectedUris.toList()) }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Selected", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 },
@@ -120,7 +148,10 @@ fun VideoScannerScreen(navController: NavHostController) {
                 Button(
                     onClick = {
                         if (isScanning) viewModel.cancelScanning()
-                        else viewModel.startScanning()
+                        else {
+                            selectedUris.clear()
+                            viewModel.startScanning()
+                        }
                     },
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -177,7 +208,14 @@ fun VideoScannerScreen(navController: NavHostController) {
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     items(duplicateGroups) { group ->
-                        DuplicateVideoGroup(group = group)
+                        DuplicateVideoGroup(
+                            group = group,
+                            selectedUris = selectedUris,
+                            onToggleSelect = { uri ->
+                                if (selectedUris.contains(uri)) selectedUris.remove(uri)
+                                else selectedUris.add(uri)
+                            }
+                        )
                     }
                 }
             }
@@ -186,7 +224,11 @@ fun VideoScannerScreen(navController: NavHostController) {
 }
 
 @Composable
-fun DuplicateVideoGroup(group: List<ScannedVideo>) {
+fun DuplicateVideoGroup(
+    group: List<ScannedVideo>,
+    selectedUris: List<Uri>,
+    onToggleSelect: (Uri) -> Unit
+) {
     Column {
         Text(
             text = "Duplicate Group (${group.size} items)",
@@ -200,9 +242,14 @@ fun DuplicateVideoGroup(group: List<ScannedVideo>) {
             val chunks = group.chunked(2)
             chunks.forEach { rowItems ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    rowItems.forEach { video ->
+                    rowItems.forEachIndexed { indexInRow, video ->
                         Box(modifier = Modifier.weight(1f)) {
-                            VideoGridItem(video = video)
+                            VideoGridItem(
+                                video = video,
+                                isSelected = selectedUris.contains(video.uri),
+                                isKeep = indexInRow == 0 && group.indexOf(video) == 0,
+                                onToggleSelect = { onToggleSelect(video.uri) }
+                            )
                         }
                     }
                     if (rowItems.size < 2) {
@@ -217,21 +264,28 @@ fun DuplicateVideoGroup(group: List<ScannedVideo>) {
 }
 
 @Composable
-private fun VideoGridItem(video: ScannedVideo) {
+private fun VideoGridItem(
+    video: ScannedVideo,
+    isSelected: Boolean,
+    isKeep: Boolean,
+    onToggleSelect: () -> Unit
+) {
     val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.8f)
-            .clickable {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(video.uri, "video/*")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                context.startActivity(intent)
-            },
+            .border(
+                width = if (isSelected) 3.dp else 0.dp,
+                color = if (isSelected) MaterialTheme.colorScheme.error else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable { onToggleSelect() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.surfaceVariant
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
@@ -249,20 +303,50 @@ private fun VideoGridItem(video: ScannedVideo) {
                     contentScale = ContentScale.Crop
                 )
                 
-                // Play Button Overlay
-                Surface(
-                    shape = CircleShape,
-                    color = Color.Black.copy(alpha = 0.5f),
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
+                // Selection Checkbox
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = { onToggleSelect() },
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.error,
+                        checkmarkColor = Color.White
+                    )
+                )
+
+                if (isKeep) {
+                    Surface(
+                        color = Color(0xFF2E7D32),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
+                    ) {
+                        Text(
+                            "KEEP",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
+                }
+
+                // Play Button Overlay
+                IconButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(video.uri, "video/*")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.size(40.dp).background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = "Play",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 // Duration Badge

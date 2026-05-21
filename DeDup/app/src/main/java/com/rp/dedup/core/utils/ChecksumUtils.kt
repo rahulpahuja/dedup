@@ -5,9 +5,13 @@ import android.net.Uri
 import java.security.MessageDigest
 
 object ChecksumUtils {
-    fun calculateMD5(context: Context, uri: Uri): String? {
+    /**
+     * Calculates the SHA-256 checksum of a file.
+     * SHA-256 is used instead of MD5 to provide better collision resistance.
+     */
+    fun calculateSHA256(context: Context, uri: Uri): String? {
         return try {
-            val digest = MessageDigest.getInstance("MD5")
+            val digest = MessageDigest.getInstance("SHA-256")
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val buffer = ByteArray(8192)
                 var bytesRead: Int

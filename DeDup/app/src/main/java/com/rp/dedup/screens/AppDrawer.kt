@@ -173,10 +173,10 @@ private fun AppDrawerContentUI(
         )
         DrawerNavItem(
             icon = Icons.AutoMirrored.Filled.List,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_RESULTS_CONTACTS),
-            selected = currentRoute == Screen.ResultsContacts.route
+            label = UIConstants.getScreenName(UIConstants.ROUTE_IMAGE_SCANNER),
+            selected = currentRoute == Screen.ImageScanner.route
                     || currentRoute == Screen.ResultsMedia.route,
-            onClick = { navigateTo(Screen.ResultsContacts.route) }
+            onClick = { navigateTo(Screen.ImageScanner.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.Videocam,

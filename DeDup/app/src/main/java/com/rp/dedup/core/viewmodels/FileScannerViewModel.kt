@@ -46,9 +46,12 @@ class FileScannerViewModel(
                 val allFiles = mutableListOf<ScannedFile>()
                 repository.scanFilesByExtension(extensions).collect { file ->
                     allFiles.add(file)
+                    if (allFiles.size % 10 == 0) {
+                        _files.value = allFiles.toList()
+                    }
                 }
 
-                _files.value = allFiles
+                _files.value = allFiles.toList()
                 findDuplicates(allFiles)
             } catch (_: CancellationException) {
                 wasCancelled = true
@@ -97,5 +100,13 @@ class FileScannerViewModel(
 
     fun cancelScanning() {
         scanJob?.cancel()
+    }
+
+    fun removeDeletedFilesFromUI(deletedUris: List<android.net.Uri>) {
+        viewModelScope.launch {
+            val currentFiles = _files.value.filterNot { it.uri in deletedUris }
+            _files.value = currentFiles
+            findDuplicates(currentFiles)
+        }
     }
 }

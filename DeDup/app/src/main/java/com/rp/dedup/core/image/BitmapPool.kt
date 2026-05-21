@@ -12,6 +12,7 @@ object BitmapPool {
     private val pool = ConcurrentLinkedQueue<Bitmap>()
     private const val MAX_POOL_SIZE = 20
 
+    @Synchronized
     fun acquire(width: Int, height: Int, config: Bitmap.Config): Bitmap {
         val iterator = pool.iterator()
         while (iterator.hasNext()) {
@@ -24,6 +25,7 @@ object BitmapPool {
         return Bitmap.createBitmap(width, height, config)
     }
 
+    @Synchronized
     fun release(bitmap: Bitmap) {
         if (pool.size < MAX_POOL_SIZE) {
             pool.offer(bitmap)

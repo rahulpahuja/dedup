@@ -41,10 +41,10 @@ import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 
-// ── Test credentials (pre-filled for quick manual testing) ───────────────────
-private const val TEST_GOOGLE_EMAIL    = "rahul.pahuja.dev@gmail.com"
-private const val TEST_EMAIL_PASSWORD  = "Test@123456"
-private const val TEST_PHONE_NUMBER    = "+919876543210"
+// ── Test credentials (removed for security) ───────────────────
+private const val TEST_GOOGLE_EMAIL    = ""
+private const val TEST_EMAIL_PASSWORD  = ""
+private const val TEST_PHONE_NUMBER    = ""
 
 class DemotestActivity : ComponentActivity() {
 

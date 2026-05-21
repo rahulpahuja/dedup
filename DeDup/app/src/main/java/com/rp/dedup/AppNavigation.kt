@@ -25,14 +25,15 @@ import com.rp.dedup.UIConstants.ROUTE_CLEANUP
 import com.rp.dedup.UIConstants.ROUTE_DASHBOARD
 import com.rp.dedup.UIConstants.ROUTE_FILE_BROWSER
 import com.rp.dedup.UIConstants.ROUTE_FILE_SCANNER
+import com.rp.dedup.UIConstants.ROUTE_IMAGE_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_LOGIN
-import com.rp.dedup.UIConstants.ROUTE_RESULTS_CONTACTS
 import com.rp.dedup.UIConstants.ROUTE_RESULTS_MEDIA
 import com.rp.dedup.UIConstants.ROUTE_SCAN_HISTORY
 import com.rp.dedup.UIConstants.ROUTE_SETTINGS
 import com.rp.dedup.UIConstants.ROUTE_SMART_JUNK
 import com.rp.dedup.UIConstants.ROUTE_SPLASH
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
+import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
 import com.rp.dedup.core.permissions.PermissionManager
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
@@ -47,7 +48,7 @@ sealed class Screen(val route: String) {
     object Login : Screen(ROUTE_LOGIN)
     object Dashboard : Screen(ROUTE_DASHBOARD)
     object Cleanup : Screen(ROUTE_CLEANUP)
-    object ResultsContacts : Screen(ROUTE_RESULTS_CONTACTS)
+    object ImageScanner : Screen(UIConstants.ROUTE_IMAGE_SCANNER)
     object ResultsMedia : Screen(ROUTE_RESULTS_MEDIA)
     object Activity : Screen(ROUTE_ACTIVITY)
     object VideoScanner : Screen(ROUTE_VIDEO_SCANNER)
@@ -143,7 +144,7 @@ fun AppNavHost(navController: NavHostController) {
                     FileCleanupScreen(navController)
                 }
                 // Image scanner — gated behind permission
-                composable(Screen.ResultsContacts.route) {
+                composable(Screen.ImageScanner.route) {
                     ImageScannerGatekeeper(navController)
                 }
                 composable(Screen.ResultsMedia.route) {
@@ -223,12 +224,21 @@ fun FileScannerGatekeeper(
     type: String,
     extensions: List<String>
 ) {
-    PermissionGate(
-        permissions      = PermissionManager.FILES,
-        rationaleTitle   = "Storage Access Needed",
-        rationaleMessage = "DeDup needs storage access to scan for duplicate ${type.uppercase()} files."
-    ) {
-        FileScannerScreen(navController, type, extensions)
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+        AllFilesPermissionGate(
+            rationaleTitle   = "Storage Access Needed",
+            rationaleMessage = "To scan for duplicate ${type.uppercase()} files across your device, DeDup needs 'All Files Access'."
+        ) {
+            FileScannerScreen(navController, type, extensions)
+        }
+    } else {
+        PermissionGate(
+            permissions      = PermissionManager.FILES,
+            rationaleTitle   = "Storage Access Needed",
+            rationaleMessage = "DeDup needs storage access to scan for duplicate ${type.uppercase()} files."
+        ) {
+            FileScannerScreen(navController, type, extensions)
+        }
     }
 }
 

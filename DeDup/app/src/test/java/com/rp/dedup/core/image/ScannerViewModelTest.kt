@@ -9,7 +9,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -25,7 +25,7 @@ class ScannerViewModelTest {
 
     @Before
     fun setUp() {
-        viewModel = ScannerViewModel(repository)
+        viewModel = ScannerViewModel(repository, defaultDispatcher = coroutineRule.testDispatcher)
     }
 
     // --- Initial state ---
@@ -48,55 +48,50 @@ class ScannerViewModelTest {
     // --- startScanning ---
 
     @Test
-    fun `startScanning sets isScanning to true while running`() {
+    fun `startScanning sets isScanning to true while running`() = runTest {
         coEvery { repository.scanImagesInParallel(any()) } returns flow { delay(Long.MAX_VALUE) }
         viewModel.startScanning()
-        // isScanning is set inside the Dispatchers.Default coroutine — give it time to start
-        Thread.sleep(300)
         assertTrue(viewModel.isScanning.value)
     }
 
     @Test
-    fun `startScanning clears previous duplicate groups`() {
+    fun `startScanning clears previous duplicate groups`() = runTest {
         coEvery { repository.scanImagesInParallel(any()) } returns flow { delay(Long.MAX_VALUE) }
         viewModel.startScanning()
         assertTrue(viewModel.duplicateGroups.value.isEmpty())
     }
 
     @Test
-    fun `startScanning groups near-identical images together`() = runBlocking {
+    fun `startScanning groups near-identical images together`() = runTest {
         // hamming distance between 0b0 and 0b1 is 1 — within threshold of 5
         val img1 = ScannedImage("content://1", 0b0L, 100L)
         val img2 = ScannedImage("content://2", 0b1L, 200L)
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf(img1, img2)
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         assertEquals(1, viewModel.duplicateGroups.value.size)
         assertEquals(2, viewModel.duplicateGroups.value[0].size)
     }
 
     @Test
-    fun `startScanning does not group perceptually different images`() = runBlocking {
+    fun `startScanning does not group perceptually different images`() = runTest {
         // hamming distance between 0 and Long.MAX_VALUE is 63 — far above threshold
         val img1 = ScannedImage("content://1", 0L, 100L)
         val img2 = ScannedImage("content://2", Long.MAX_VALUE, 200L)
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf(img1, img2)
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         // Both groups have size 1, so neither appears in duplicateGroups
         assertTrue(viewModel.duplicateGroups.value.isEmpty())
     }
 
     @Test
-    fun `isScanning returns to false after scan completes`() = runBlocking {
+    fun `isScanning returns to false after scan completes`() = runTest {
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf()
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         assertFalse(viewModel.isScanning.value)
     }
@@ -104,23 +99,21 @@ class ScannerViewModelTest {
     // --- cancelScanning ---
 
     @Test
-    fun `cancelScanning resets isScanning to false`() {
+    fun `cancelScanning resets isScanning to false`() = runTest {
         coEvery { repository.scanImagesInParallel(any()) } returns flow { delay(Long.MAX_VALUE) }
         viewModel.startScanning()
-        Thread.sleep(300) // wait for coroutine to start and set isScanning = true
+        assertTrue(viewModel.isScanning.value)
         viewModel.cancelScanning()
-        Thread.sleep(300) // wait for finally block to run isScanning = false
         assertFalse(viewModel.isScanning.value)
     }
 
     @Test
-    fun `cancelScanning preserves any groups found before cancel`() = runBlocking {
+    fun `cancelScanning preserves any groups found before cancel`() = runTest {
         val img1 = ScannedImage("content://1", 0b0L, 100L)
         val img2 = ScannedImage("content://2", 0b1L, 200L)
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf(img1, img2)
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         val groupsBefore = viewModel.duplicateGroups.value.size
         viewModel.cancelScanning()
@@ -131,13 +124,12 @@ class ScannerViewModelTest {
     // --- getAutoClearUris ---
 
     @Test
-    fun `getAutoClearUris excludes first image in each group`() = runBlocking {
+    fun `getAutoClearUris excludes first image in each group`() = runTest {
         val img1 = ScannedImage("content://keep", 0b0L, 100L)
         val img2 = ScannedImage("content://delete", 0b1L, 200L)
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf(img1, img2)
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         val uris = viewModel.getAutoClearUris()
         assertFalse(uris.contains("content://keep"))
@@ -145,13 +137,12 @@ class ScannerViewModelTest {
     }
 
     @Test
-    fun `getAutoClearUris returns empty when no duplicate groups exist`() = runBlocking {
+    fun `getAutoClearUris returns empty when no duplicate groups exist`() = runTest {
         val img1 = ScannedImage("content://1", 0L, 100L)
         val img2 = ScannedImage("content://2", Long.MAX_VALUE, 200L)
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf(img1, img2)
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         assertTrue(viewModel.getAutoClearUris().isEmpty())
     }
@@ -159,13 +150,12 @@ class ScannerViewModelTest {
     // --- removeDeletedImagesFromUI ---
 
     @Test
-    fun `removeDeletedImagesFromUI with empty list leaves groups unchanged`() = runBlocking {
+    fun `removeDeletedImagesFromUI with empty list leaves groups unchanged`() = runTest {
         val img1 = ScannedImage("content://1", 0b0L, 100L)
         val img2 = ScannedImage("content://2", 0b1L, 200L)
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf(img1, img2)
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         val sizeBefore = viewModel.duplicateGroups.value.size
         viewModel.removeDeletedImagesFromUI(emptyList())
@@ -173,13 +163,12 @@ class ScannerViewModelTest {
     }
 
     @Test
-    fun `removeDeletedImagesFromUI removes group when it shrinks to one image`() = runBlocking {
+    fun `removeDeletedImagesFromUI removes group when it shrinks to one image`() = runTest {
         val img1 = ScannedImage("content://1", 0b0L, 100L)
         val img2 = ScannedImage("content://2", 0b1L, 200L)
         coEvery { repository.scanImagesInParallel(any()) } returns flowOf(img1, img2)
 
         viewModel.startScanning()
-        waitForScanToFinish()
 
         viewModel.removeDeletedImagesFromUI(listOf("content://2"))
 
@@ -191,24 +180,5 @@ class ScannerViewModelTest {
     fun `removeDeletedImagesFromUI on empty state is safe`() {
         viewModel.removeDeletedImagesFromUI(listOf("content://nonexistent"))
         assertTrue(viewModel.duplicateGroups.value.isEmpty())
-    }
-
-    // --- Helpers ---
-
-    /**
-     * Polls until the scan job completes (max 2 s).
-     * Works around Dispatchers.Default in prod code — isScanning is set *inside* the
-     * launched coroutine, so we must first wait for it to flip true, then wait for false.
-     */
-    private suspend fun waitForScanToFinish(timeoutMs: Long = 2000L) {
-        val deadline = System.currentTimeMillis() + timeoutMs
-        // Phase 1: wait for the background coroutine to start and set isScanning = true
-        while (!viewModel.isScanning.value && System.currentTimeMillis() < deadline) {
-            delay(10)
-        }
-        // Phase 2: wait for it to finish and set isScanning = false
-        while (viewModel.isScanning.value && System.currentTimeMillis() < deadline) {
-            delay(10)
-        }
     }
 }

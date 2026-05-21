@@ -680,7 +680,7 @@ fun QuickScanGrid(navController: NavHostController, modifier: Modifier = Modifie
                 icon = Icons.Default.Image,
                 color = UIConstants.ColorImages,
                 modifier = Modifier.weight(1f),
-                onClick = { navController.navigate(Screen.ResultsContacts.route) }
+                onClick = { navController.navigate(Screen.ImageScanner.route) }
             )
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_VIDEOS,
@@ -694,11 +694,11 @@ fun QuickScanGrid(navController: NavHostController, modifier: Modifier = Modifie
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_DOCUMENTS,
-                count = "230",
+                count = "PDF",
                 icon = Icons.Default.Description,
                 color = UIConstants.ColorDocuments,
                 modifier = Modifier.weight(1f),
-                onClick = { navController.navigate(Screen.Cleanup.route) }
+                onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
             )
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_APKS,
