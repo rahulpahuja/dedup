@@ -27,6 +27,7 @@ import com.rp.dedup.UIConstants.ROUTE_FILE_BROWSER
 import com.rp.dedup.UIConstants.ROUTE_FILE_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_IMAGE_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_LOGIN
+import com.rp.dedup.UIConstants.ROUTE_PRIVACY_POLICY
 import com.rp.dedup.UIConstants.ROUTE_RESULTS_MEDIA
 import com.rp.dedup.UIConstants.ROUTE_SCAN_HISTORY
 import com.rp.dedup.UIConstants.ROUTE_SETTINGS
@@ -61,6 +62,7 @@ sealed class Screen(val route: String) {
         fun createRoute(type: String) = UIConstants.getFileScannerRoute(type)
     }
     object SmartJunk : Screen(ROUTE_SMART_JUNK)
+    object PrivacyPolicy : Screen(ROUTE_PRIVACY_POLICY)
 }
 
 @Composable
@@ -139,6 +141,9 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.SmartJunk.route) {
                     SmartJunkScreen(navController)
+                }
+                composable(Screen.PrivacyPolicy.route) {
+                    PrivacyPolicyScreen(navController)
                 }
                 composable(Screen.Cleanup.route) {
                     FileCleanupScreen(navController)

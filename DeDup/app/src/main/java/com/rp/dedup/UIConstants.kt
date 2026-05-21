@@ -20,6 +20,7 @@ object UIConstants {
     const val ROUTE_CACHE_CLEANER   = "cache_cleaner"
     const val ROUTE_FILE_SCANNER    = "file_scanner/{type}"
     const val ROUTE_SMART_JUNK      = "smart_junk"
+    const val ROUTE_PRIVACY_POLICY  = "privacy_policy"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -39,6 +40,7 @@ object UIConstants {
         if (route == ROUTE_FILE_BROWSER)    return "File Browser"
         if (route == ROUTE_CACHE_CLEANER)   return "Cache Cleaner"
         if (route == ROUTE_SMART_JUNK)      return "Smart Cleanup"
+        if (route == ROUTE_PRIVACY_POLICY)  return "Privacy Policy"
         return APP_NAME
     }
 

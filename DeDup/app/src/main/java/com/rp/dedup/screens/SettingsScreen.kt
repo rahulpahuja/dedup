@@ -204,6 +204,15 @@ fun SettingsScreen(navController: NavHostController) {
                     },
                     onClick = { navController.navigate(Screen.About.route) }
                 )
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                SettingsRow(
+                    icon = Icons.Default.Security,
+                    iconColor = MaterialTheme.colorScheme.primary,
+                    title = "Privacy Policy",
+                    onClick = { navController.navigate(Screen.PrivacyPolicy.route) }
+                )
             }
 
             Spacer(Modifier.height(8.dp))
