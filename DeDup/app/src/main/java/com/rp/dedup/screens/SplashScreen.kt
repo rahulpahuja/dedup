@@ -50,6 +50,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
 import com.rp.dedup.Screen
+import com.rp.dedup.pendingDeepLinkRoute
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -66,6 +67,9 @@ fun SplashScreen(navController: NavHostController) {
         triggered = true
         delay(3200)
         
+        // If a deep link is pending, DON'T navigate. MainActivity will handle it.
+        if (pendingDeepLinkRoute != null) return@LaunchedEffect
+
         // Persist login: if user is already authenticated, skip LoginScreen
         val nextRoute = if (authManager.isUserLoggedIn) {
             Screen.Dashboard.route

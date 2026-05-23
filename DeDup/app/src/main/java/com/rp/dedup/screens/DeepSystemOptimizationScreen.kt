@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.FolderDelete
+import androidx.compose.material.icons.filled.PermMedia
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -56,6 +57,16 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
                 OptimizationFeatureCard(
                     icon = Icons.Default.Chat,
                     iconTint = Color(0xFF25D366),
+                    title = "WhatsApp Cleaner",
+                    description = "Find duplicate forwards, stale statuses, duplicate documents, large files, and content sent & received multiple times.",
+                    ctaLabel = "Clean Now",
+                    onClick = { navController.navigate(UIConstants.ROUTE_WHATSAPP_CLEANER) }
+                )
+            }
+            item {
+                OptimizationFeatureCard(
+                    icon = Icons.Default.PermMedia,
+                    iconTint = Color(0xFF0088CC),
                     title = "Social Media Cleaner",
                     description = "Find and remove duplicate photos, videos, and files inside WhatsApp and Telegram media folders.",
                     ctaLabel = "Scan Now",

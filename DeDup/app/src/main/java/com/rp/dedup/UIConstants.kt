@@ -25,6 +25,7 @@ object UIConstants {
     const val ROUTE_SOCIAL_MEDIA_CLEANER    = "social_media_cleaner"
     const val ROUTE_EMPTY_FOLDER            = "empty_folder"
     const val ROUTE_BIG_FILE_MAP            = "big_file_map"
+    const val ROUTE_WHATSAPP_CLEANER        = "whatsapp_cleaner"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -49,6 +50,7 @@ object UIConstants {
         if (route == ROUTE_SOCIAL_MEDIA_CLEANER)    return "Social Media Cleaner"
         if (route == ROUTE_EMPTY_FOLDER)            return "Empty Folder Remover"
         if (route == ROUTE_BIG_FILE_MAP)            return "Big File Map"
+        if (route == ROUTE_WHATSAPP_CLEANER)        return "WhatsApp Cleaner"
         return APP_NAME
     }
 

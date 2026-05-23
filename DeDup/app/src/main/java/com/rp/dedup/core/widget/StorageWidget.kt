@@ -1,29 +1,11 @@
 package com.rp.dedup.core.widget
 
 import android.content.Context
-import android.content.Intent
 import android.os.Environment
 import android.os.StatFs
 import android.text.format.Formatter
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.height as composeHeight
-import androidx.compose.foundation.layout.padding as composePadding
-import androidx.compose.foundation.layout.fillMaxWidth as composeFillMaxWidth
-import androidx.compose.foundation.layout.size as composeSize
-import androidx.compose.foundation.layout.width as composeWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator as M3LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text as M3Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment as ComposeAlignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight as ComposeFontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -39,6 +21,7 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.LinearProgressIndicator
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
@@ -74,7 +57,7 @@ class StorageWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.surface)
+                .background(ColorProvider(day = Color(0xFF0D1B3E), night = Color(0xFF0D1B3E))) // Dark deep blue/purple base
                 .padding(12.dp)
                 .clickable(actionStartActivity<MainActivity>()),
             verticalAlignment = Alignment.CenterVertically,
@@ -96,7 +79,7 @@ class StorageWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GlanceTheme.colors.primary
+                        color = ColorProvider(day = Color(0xFF9C27B0), night = Color(0xFFCE93D8)) // Purple title
                     )
                 )
             }
@@ -112,7 +95,7 @@ class StorageWidget : GlanceAppWidget() {
                         text = "Used Space",
                         style = TextStyle(
                             fontSize = 11.sp,
-                            color = GlanceTheme.colors.onSurfaceVariant
+                            color = ColorProvider(day = Color(0xB3FFFFFF), night = Color(0xB3FFFFFF)) // White alpha
                         )
                     )
                     Text(
@@ -120,7 +103,7 @@ class StorageWidget : GlanceAppWidget() {
                         style = TextStyle(
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = GlanceTheme.colors.onSurface
+                            color = ColorProvider(day = Color.White, night = Color.White)
                         )
                     )
                 }
@@ -129,7 +112,7 @@ class StorageWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GlanceTheme.colors.primary
+                        color = ColorProvider(day = Color(0xFF9C27B0), night = Color(0xFFCE93D8)) // Purple
                     )
                 )
             }
@@ -139,8 +122,8 @@ class StorageWidget : GlanceAppWidget() {
             LinearProgressIndicator(
                 progress = stats.usedFraction,
                 modifier = GlanceModifier.fillMaxWidth(),
-                color = GlanceTheme.colors.primary,
-                backgroundColor = GlanceTheme.colors.surfaceVariant
+                color = ColorProvider(day = Color(0xFF9C27B0), night = Color(0xFFCE93D8)), // Purple progress
+                backgroundColor = ColorProvider(day = Color(0x339C27B0), night = Color(0x33CE93D8))
             )
 
             Spacer(modifier = GlanceModifier.height(8.dp))
@@ -154,7 +137,7 @@ class StorageWidget : GlanceAppWidget() {
                     text = "${stats.freeLabel} free",
                     style = TextStyle(
                         fontSize = 10.sp,
-                        color = GlanceTheme.colors.onSurfaceVariant
+                        color = ColorProvider(day = Color(0xB3FFFFFF), night = Color(0xB3FFFFFF))
                     ),
                     modifier = GlanceModifier.defaultWeight()
                 )
@@ -165,11 +148,11 @@ class StorageWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GlanceTheme.colors.secondary
+                        color = ColorProvider(day = Color.White, night = Color.White)
                     ),
                     modifier = GlanceModifier
                         .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .background(GlanceTheme.colors.secondaryContainer)
+                        .background(ColorProvider(day = Color(0xFF673AB7), night = Color(0xFF9575CD))) // Deep Purple Button
                         .clickable(actionStartActivity<MainActivity>(
                             actionParametersOf(
                                 androidx.glance.action.ActionParameters.Key<String>("target_route") to Screen.SmartJunk.route
@@ -209,102 +192,4 @@ data class WidgetStorageStats(
 
 class StorageWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = StorageWidget()
-}
-
-// ── Widget Preview (Standard Compose simulation) ──────────────────────────────
-
-@Preview(showBackground = true, widthDp = 180, heightDp = 150)
-@Composable
-fun StorageWidgetPreview() {
-    val stats = WidgetStorageStats(
-        usedLabel = "42.5 GB",
-        freeLabel = "21.5 GB",
-        usedPercent = 66,
-        usedFraction = 0.66f
-    )
-
-    MaterialTheme {
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.composePadding(8.dp)
-        ) {
-            androidx.compose.foundation.layout.Column(
-                modifier = Modifier
-                    .composePadding(12.dp)
-                    .composeFillMaxWidth(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = ComposeAlignment.CenterHorizontally
-            ) {
-                // Header Simulation
-                androidx.compose.foundation.layout.Row(
-                    modifier = Modifier.composeFillMaxWidth(),
-                    verticalAlignment = ComposeAlignment.CenterVertically
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_dedup_logo),
-                        contentDescription = null,
-                        modifier = Modifier.composeSize(20.dp)
-                    )
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.composeWidth(8.dp))
-                    M3Text(
-                        text = UIConstants.APP_NAME,
-                        fontSize = 13.sp,
-                        fontWeight = ComposeFontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                androidx.compose.foundation.layout.Spacer(modifier = Modifier.composeHeight(12.dp))
-
-                androidx.compose.foundation.layout.Row(
-                    modifier = Modifier.composeFillMaxWidth(),
-                    verticalAlignment = ComposeAlignment.CenterVertically
-                ) {
-                    androidx.compose.foundation.layout.Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        M3Text(
-                            text = "Used Space",
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        M3Text(
-                            text = stats.usedLabel,
-                            fontSize = 14.sp,
-                            fontWeight = ComposeFontWeight.Bold
-                        )
-                    }
-                    M3Text(
-                        text = "${stats.usedPercent}%",
-                        fontSize = 16.sp,
-                        fontWeight = ComposeFontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                androidx.compose.foundation.layout.Spacer(
-                    modifier = Modifier.composeHeight(8.dp)
-                )
-
-                M3LinearProgressIndicator(
-                    progress = { stats.usedFraction },
-                    modifier = Modifier.composeFillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    strokeCap = StrokeCap.Round
-                )
-
-                androidx.compose.foundation.layout.Spacer(
-                    modifier = Modifier.composeHeight(8.dp)
-                )
-
-                M3Text(
-                    text = "${stats.freeLabel} free",
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
 }

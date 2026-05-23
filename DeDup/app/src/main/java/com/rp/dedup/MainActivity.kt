@@ -27,6 +27,9 @@ import com.rp.dedup.core.security.RootDetectionManager
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
+// Global state to track deep link route across activity instances/recompositions
+var pendingDeepLinkRoute by mutableStateOf<String?>(null)
+
 class MainActivity : ComponentActivity() {
     private val themeViewModel: ThemeViewModel by viewModels {
         object : ViewModelProvider.Factory {
@@ -39,6 +42,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Handle initial intent
+        handleIntent(intent)
 
         // Root check runs once on the main thread before any UI is rendered.
         // It is intentionally synchronous so there is no window where the app
@@ -54,32 +60,33 @@ class MainActivity : ComponentActivity() {
                     val navController: NavHostController = rememberNavController()
                     
                     // Handle deep links from widget
-                    LaunchedEffect(intent) {
-                        // Glance actionStartActivity passes parameters as extras
-                        // The key in actionParametersOf is used as the extra name
-                        intent?.getStringExtra("target_route")?.let { route ->
-                            navController.navigate(route)
+                    LaunchedEffect(pendingDeepLinkRoute) {
+                        pendingDeepLinkRoute?.let { route ->
+                            navController.navigate(route) {
+                                // Clear splash if we're navigating from it
+                                popUpTo(Screen.Splash.route) { inclusive = true }
+                            }
+                            pendingDeepLinkRoute = null // Clear after use
                         }
                     }
 
                     Box(modifier = Modifier.fillMaxSize()) {
                         AppNavHost(navController = navController)
-
-//                        // Demo Activity Trigger Button
-//                        Button(
-//
-//                            onClick = {
-//                                startActivity(Intent(this@MainActivity, DemotestActivity::class.java))
-//                            },
-//                            modifier = Modifier
-//                                .align(Alignment.TopEnd)
-//                                .padding(top = 48.dp, end = 16.dp)
-//                        ) {
-//                            Text("D")
-//                        }
                     }
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        intent?.getStringExtra("target_route")?.let { route ->
+            pendingDeepLinkRoute = route
         }
     }
 }

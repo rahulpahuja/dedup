@@ -317,13 +317,14 @@ fun DashboardScreenContent(
                         StorageSummaryCard(
                             stats = storageStats,
                             reclaimableBytes = totalReclaimable,
+                            onClick = { navController.navigate(Screen.BigFileMap.route) },
                             modifier = Modifier.introShowCaseTarget(
                                 index = 1,
                                 style = tutorialStyle,
                                 content = {
                                     TutorialTooltip(
                                         title = "Storage Overview",
-                                        body = "See your total device usage and how much space DeDup can reclaim for you."
+                                        body = "See your total device usage. Tap here for a deep visual map of your storage."
                                     )
                                 }
                             )
@@ -585,6 +586,7 @@ fun SavingsCalculatorCard(reclaimableBytes: Long) {
 fun StorageSummaryCard(
     stats: StorageStats = StorageStats(),
     reclaimableBytes: Long = 0L,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -610,7 +612,7 @@ fun StorageSummaryCard(
     else "Calculating…"
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {

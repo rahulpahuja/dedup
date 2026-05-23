@@ -37,6 +37,7 @@ import com.rp.dedup.UIConstants.ROUTE_EMPTY_FOLDER
 import com.rp.dedup.UIConstants.ROUTE_SMART_JUNK
 import com.rp.dedup.UIConstants.ROUTE_SOCIAL_MEDIA_CLEANER
 import com.rp.dedup.UIConstants.ROUTE_SPLASH
+import com.rp.dedup.UIConstants.ROUTE_WHATSAPP_CLEANER
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
@@ -71,6 +72,7 @@ sealed class Screen(val route: String) {
     object SocialMediaCleaner : Screen(ROUTE_SOCIAL_MEDIA_CLEANER)
     object EmptyFolder : Screen(ROUTE_EMPTY_FOLDER)
     object BigFileMap : Screen(ROUTE_BIG_FILE_MAP)
+    object WhatsAppCleaner : Screen(ROUTE_WHATSAPP_CLEANER)
 }
 
 @Composable
@@ -209,6 +211,14 @@ fun AppNavHost(navController: NavHostController) {
                         rationaleMessage = "DeDup needs All Files Access to build the storage map."
                     ) {
                         BigFileMapScreen(navController)
+                    }
+                }
+                composable(Screen.WhatsAppCleaner.route) {
+                    AllFilesPermissionGatekeeper(
+                        rationaleTitle   = "Storage Access Needed",
+                        rationaleMessage = "DeDup needs All Files Access to scan WhatsApp media folders."
+                    ) {
+                        WhatsAppCleanerScreen(navController)
                     }
                 }
                 composable(
