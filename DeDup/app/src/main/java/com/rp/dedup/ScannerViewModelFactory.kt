@@ -13,6 +13,7 @@ class ScannerViewModelFactory(private val context: Context) : ViewModelProvider.
         if (modelClass.isAssignableFrom(ScannerViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return ScannerViewModel(
+                context = context.applicationContext,
                 repository = ImageScannerRepository(context),
                 historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
                 dataStoreManager = com.rp.dedup.core.caching.DataStoreManager(context)

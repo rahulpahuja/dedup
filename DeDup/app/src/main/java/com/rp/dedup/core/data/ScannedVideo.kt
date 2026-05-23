@@ -7,5 +7,6 @@ data class ScannedVideo(
     val name: String,
     val sizeInBytes: Long,
     val durationMs: Long,
-    val mimeType: String
+    val mimeType: String,
+    val frameHashes: List<Long> = emptyList()
 )

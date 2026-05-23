@@ -150,7 +150,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                         if (isScanning) viewModel.cancelScanning()
                         else {
                             selectedUris.clear()
-                            viewModel.startScanning()
+                            viewModel.startScanning(deepScan = true)
                         }
                     },
                     shape = RoundedCornerShape(12.dp)

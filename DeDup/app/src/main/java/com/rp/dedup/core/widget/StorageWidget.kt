@@ -1,6 +1,7 @@
 package com.rp.dedup.core.widget
 
 import android.content.Context
+import android.content.Intent
 import android.os.Environment
 import android.os.StatFs
 import android.text.format.Formatter
@@ -30,6 +31,7 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -52,6 +54,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.rp.dedup.MainActivity
 import com.rp.dedup.R
+import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 
 class StorageWidget : GlanceAppWidget() {
@@ -98,7 +101,7 @@ class StorageWidget : GlanceAppWidget() {
                 )
             }
 
-            Spacer(modifier = GlanceModifier.height(12.dp))
+            Spacer(modifier = GlanceModifier.height(10.dp))
 
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
@@ -142,13 +145,38 @@ class StorageWidget : GlanceAppWidget() {
 
             Spacer(modifier = GlanceModifier.height(8.dp))
 
-            Text(
-                text = "${stats.freeLabel} free",
-                style = TextStyle(
-                    fontSize = 10.sp,
-                    color = GlanceTheme.colors.onSurfaceVariant
+            Row(
+                modifier = GlanceModifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "${stats.freeLabel} free",
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        color = GlanceTheme.colors.onSurfaceVariant
+                    ),
+                    modifier = GlanceModifier.defaultWeight()
                 )
-            )
+                
+                // Deep link button to AI Cleanup
+                Text(
+                    text = "AI CLEANUP",
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GlanceTheme.colors.secondary
+                    ),
+                    modifier = GlanceModifier
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .background(GlanceTheme.colors.secondaryContainer)
+                        .clickable(actionStartActivity<MainActivity>(
+                            actionParametersOf(
+                                androidx.glance.action.ActionParameters.Key<String>("target_route") to Screen.SmartJunk.route
+                            )
+                        ))
+                )
+            }
         }
     }
 

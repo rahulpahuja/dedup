@@ -6,6 +6,7 @@ import com.rp.dedup.core.repository.VideoScannerRepository
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.data.ScannedVideo
 import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.image.ImageHasher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,7 +40,7 @@ class VideoScannerViewModel(
 
     private var scanJob: Job? = null
 
-    fun startScanning() {
+    fun startScanning(deepScan: Boolean = true) {
         if (_isScanning.value) return
         val startTime = System.currentTimeMillis()
         var wasCancelled = false
@@ -51,7 +52,7 @@ class VideoScannerViewModel(
         scanJob = viewModelScope.launch(defaultDispatcher) {
             val allVideos = mutableListOf<ScannedVideo>()
             try {
-                repository.scanVideos()
+                repository.scanVideos(deepScan = deepScan)
                     .buffer(capacity = Channel.BUFFERED)
                     .collect { video ->
                         allVideos.add(video)
@@ -94,48 +95,56 @@ class VideoScannerViewModel(
     }
 
     private fun findDuplicates(allVideos: List<ScannedVideo>): List<List<ScannedVideo>> {
-        return allVideos
-            .filter { it.sizeInBytes > 0 }
-            .groupBy { it.sizeInBytes }
-            .filter { it.value.size > 1 }
-            .flatMap { entry ->
-                val sizeGroup = entry.value
-                val (validDurationVideos, invalidDurationVideos) = sizeGroup.partition { it.durationMs > 0 }
+        val resultGroups = mutableListOf<MutableList<ScannedVideo>>()
+        val processed = mutableSetOf<Int>()
+
+        for (i in allVideos.indices) {
+            if (i in processed) continue
+            val group = mutableListOf(allVideos[i])
+            
+            for (j in i + 1 until allVideos.size) {
+                if (j in processed) continue
                 
-                val resultGroups = mutableListOf<List<ScannedVideo>>()
+                val v1 = allVideos[i]
+                val v2 = allVideos[j]
                 
-                if (validDurationVideos.isNotEmpty()) {
-                    val sorted = validDurationVideos.sortedBy { it.durationMs }
-                    val subgroups = mutableListOf<MutableList<ScannedVideo>>()
-                    for (video in sorted) {
-                        var added = false
-                        for (subgroup in subgroups) {
-                            if (Math.abs(video.durationMs - subgroup.first().durationMs) <= 1000) {
-                                subgroup.add(video)
-                                added = true
+                var isMatch = false
+                
+                // 1. Check exact size match
+                if (v1.sizeInBytes == v2.sizeInBytes && v1.sizeInBytes > 0) {
+                    isMatch = true
+                } 
+                // 2. Check content-based match (frame hashes)
+                else if (v1.frameHashes.isNotEmpty() && v2.frameHashes.isNotEmpty()) {
+                    // Compare hashes at 10%, 50%, 90%
+                    var matchCount = 0
+                    for (h1 in v1.frameHashes) {
+                        for (h2 in v2.frameHashes) {
+                            if (ImageHasher.calculateHammingDistance(h1, h2) <= 3) {
+                                matchCount++
                                 break
                             }
                         }
-                        if (!added) {
-                            subgroups.add(mutableListOf(video))
-                        }
                     }
-                    resultGroups.addAll(subgroups.filter { it.size > 1 })
+                    // If at least 2 out of 3 frames match, consider it a duplicate content
+                    if (matchCount >= 2) {
+                        isMatch = true
+                    }
                 }
                 
-                if (invalidDurationVideos.size > 1) {
-                    // If no duration, only group if size matches perfectly and is non-zero
-                    // We already filtered for count > 1 and size > 0
-                    resultGroups.add(invalidDurationVideos)
-                }
-                
-                if (validDurationVideos.isEmpty() && invalidDurationVideos.size > 1) {
-                    listOf(invalidDurationVideos)
-                } else {
-                    resultGroups
+                if (isMatch) {
+                    group.add(v2)
+                    processed.add(j)
                 }
             }
-            .toList()
+            
+            if (group.size > 1) {
+                resultGroups.add(group)
+            }
+            processed.add(i)
+        }
+        
+        return resultGroups
     }
 
     fun cancelScanning() {

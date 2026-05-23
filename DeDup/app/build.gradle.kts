@@ -148,6 +148,7 @@ dependencies {
 
     // ML Kit on-device image labeling
     implementation("com.google.mlkit:image-labeling:17.0.9")
+    implementation("com.google.mlkit:face-detection:16.1.7")
 
     // Intro showcase / first-run tutorial
     implementation(libs.introshowcaseview)

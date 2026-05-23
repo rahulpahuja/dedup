@@ -62,14 +62,33 @@ class SmartJunkRepository(private val context: Context) {
         if (labels.isEmpty()) return null
 
         val category = when {
-            // Logic for Screenshots (ML Kit often labels UI elements, text, or screenshots specifically)
-            labels.any { it.contains("screenshot", true) || it.contains("font", true) || it.contains("multimedia", true) } -> JunkCategory.SCREENSHOTS
+            // Logic for Screenshots: Check for specific labels and "text" dominance
+            labels.any { 
+                it.contains("screenshot", true) || 
+                it.contains("user interface", true) || 
+                it.contains("software", true) ||
+                it.contains("web page", true)
+            } -> JunkCategory.SCREENSHOTS
             
-            // Logic for Memes (cartoons, illustrations, posters)
-            labels.any { it.contains("cartoon", true) || it.contains("illustration", true) || it.contains("poster", true) || it.contains("clip art", true) } -> JunkCategory.MEMES
+            // Logic for Memes: Cartoons, illustrations, posters, and specific meme-related labels
+            labels.any { 
+                it.contains("meme", true) || 
+                it.contains("joke", true) || 
+                it.contains("cartoon", true) || 
+                it.contains("illustration", true) || 
+                it.contains("poster", true) || 
+                it.contains("comics", true)
+            } -> JunkCategory.MEMES
             
-            // Logic for Documents/Receipts
-            labels.any { it.contains("text", true) || it.contains("paper", true) || it.contains("document", true) || it.contains("receipt", true) } -> JunkCategory.DOCUMENTS
+            // Logic for Documents/Receipts: Text, paper, receipt, invoice
+            labels.any { 
+                it.contains("text", true) || 
+                it.contains("paper", true) || 
+                it.contains("document", true) || 
+                it.contains("receipt", true) ||
+                it.contains("invoice", true) ||
+                it.contains("bill", true)
+            } -> JunkCategory.DOCUMENTS
             
             else -> null
         }

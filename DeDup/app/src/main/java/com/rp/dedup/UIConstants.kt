@@ -19,8 +19,12 @@ object UIConstants {
     const val ROUTE_FILE_BROWSER    = "file_browser"
     const val ROUTE_CACHE_CLEANER   = "cache_cleaner"
     const val ROUTE_FILE_SCANNER    = "file_scanner/{type}"
-    const val ROUTE_SMART_JUNK      = "smart_junk"
-    const val ROUTE_PRIVACY_POLICY  = "privacy_policy"
+    const val ROUTE_SMART_JUNK              = "smart_junk"
+    const val ROUTE_PRIVACY_POLICY          = "privacy_policy"
+    const val ROUTE_DEEP_OPTIMIZATION       = "deep_optimization"
+    const val ROUTE_SOCIAL_MEDIA_CLEANER    = "social_media_cleaner"
+    const val ROUTE_EMPTY_FOLDER            = "empty_folder"
+    const val ROUTE_BIG_FILE_MAP            = "big_file_map"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -39,8 +43,12 @@ object UIConstants {
         if (route == ROUTE_SCAN_HISTORY)    return "Scan History"
         if (route == ROUTE_FILE_BROWSER)    return "File Browser"
         if (route == ROUTE_CACHE_CLEANER)   return "Cache Cleaner"
-        if (route == ROUTE_SMART_JUNK)      return "Smart Cleanup"
-        if (route == ROUTE_PRIVACY_POLICY)  return "Privacy Policy"
+        if (route == ROUTE_SMART_JUNK)              return "Smart Cleanup"
+        if (route == ROUTE_PRIVACY_POLICY)          return "Privacy Policy"
+        if (route == ROUTE_DEEP_OPTIMIZATION)       return "Deep Optimization"
+        if (route == ROUTE_SOCIAL_MEDIA_CLEANER)    return "Social Media Cleaner"
+        if (route == ROUTE_EMPTY_FOLDER)            return "Empty Folder Remover"
+        if (route == ROUTE_BIG_FILE_MAP)            return "Big File Map"
         return APP_NAME
     }
 

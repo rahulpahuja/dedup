@@ -1,9 +1,11 @@
 package com.rp.dedup.core.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.image.ImageHasher
+import com.rp.dedup.core.image.BestShotAnalyzer
 import com.rp.dedup.core.data.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
@@ -21,6 +23,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
 class ScannerViewModel(
+    private val context: Context,
     private val repository: ImageScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
     private val dataStoreManager: com.rp.dedup.core.caching.DataStoreManager? = null,
@@ -83,9 +86,14 @@ class ScannerViewModel(
                     processBatch(batchBuffer)
                 }
 
-                _duplicateGroups.value = allScannedGroups.values
+                // AI Post-processing: Best Shot Suggestion
+                val finalizedGroups = allScannedGroups.values
                     .filter { it.size > 1 }
-                    .map { it.toList() }
+                    .map { group ->
+                        BestShotAnalyzer.analyzeGroup(context, group)
+                    }
+
+                _duplicateGroups.value = finalizedGroups
 
             } catch (_: CancellationException) {
                 wasCancelled = true

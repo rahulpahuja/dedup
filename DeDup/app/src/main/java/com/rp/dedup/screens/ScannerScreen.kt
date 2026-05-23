@@ -304,14 +304,17 @@ private fun SelectableImageItem(
         // KEEP badge — bottom end (first image only)
         if (isKeep) {
             Text(
-                text = "KEEP",
+                text = if (item.isAiSuggestion) "ML BEST CHOICE" else "KEEP",
                 color = Color.White,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(6.dp)
-                    .background(Color(0xFF2E7D32).copy(alpha = 0.88f), RoundedCornerShape(4.dp))
+                    .background(
+                        if (item.isAiSuggestion) MaterialTheme.colorScheme.tertiary else Color(0xFF2E7D32).copy(alpha = 0.88f),
+                        RoundedCornerShape(4.dp)
+                    )
                     .padding(horizontal = 5.dp, vertical = 2.dp)
             )
         }

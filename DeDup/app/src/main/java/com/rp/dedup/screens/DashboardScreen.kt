@@ -155,57 +155,55 @@ fun DashboardScreenContent(
         topBar = {
             Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
                 if (!searchActive) {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                UIConstants.APP_NAME,
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(
+                                Icons.Default.Menu,
+                                contentDescription = "Menu",
+                                tint = MaterialTheme.colorScheme.primary
                             )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    contentDescription = "Menu",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = { }) {
-                                Surface(
-                                    shape = CircleShape,
-                                    modifier = Modifier.size(32.dp),
-                                    color = MaterialTheme.colorScheme.primaryContainer
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        if (userImageUrl.isNotEmpty()) {
-                                            AsyncImage(
-                                                model = userImageUrl,
-                                                contentDescription = "Profile",
-                                                modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                                contentScale = ContentScale.Crop
+                        }
+                        Text(
+                            UIConstants.APP_NAME,
+                            modifier = Modifier.weight(1f).padding(start = 4.dp),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                        IconButton(onClick = {}) {
+                            Surface(
+                                shape = CircleShape,
+                                modifier = Modifier.size(30.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    if (userImageUrl.isNotEmpty()) {
+                                        AsyncImage(
+                                            model = userImageUrl,
+                                            contentDescription = "Profile",
+                                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Text(
+                                            text = userName.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
+                                            style = MaterialTheme.typography.labelMedium.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
                                             )
-                                        } else {
-                                            Text(
-                                                text = userName.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                                )
-                                            )
-                                        }
+                                        )
                                     }
                                 }
                             }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
-                    )
+                        }
+                    }
                 }
 
                 SearchBar(
@@ -259,7 +257,7 @@ fun DashboardScreenContent(
                     } else {
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 2.dp)
+                            .padding(horizontal = 16.dp)
                             .introShowCaseTarget(
                                 index = 0,
                                 style = tutorialStyle,
@@ -380,6 +378,10 @@ fun DashboardScreenContent(
                         SmartAiCleanupCard(
                             onClick = { navController.navigate(Screen.SmartJunk.route) }
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        DeepOptimizationCard(
+                            onClick = { navController.navigate(Screen.DeepOptimization.route) }
+                        )
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
@@ -454,6 +456,55 @@ fun SmartAiCleanupCard(onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun DeepOptimizationCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = Color(0xFF1A73E8).copy(alpha = 0.15f),
+                modifier = Modifier.size(52.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.Tune,
+                        contentDescription = null,
+                        tint = Color(0xFF1A73E8),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Deep System Optimization",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    "WhatsApp cleaner · Empty folders · Storage map",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+            )
         }
     }
 }
@@ -563,7 +614,7 @@ fun StorageSummaryCard(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -577,19 +628,19 @@ fun StorageSummaryCard(
                     )
                     Text(
                         usedLabel,
-                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
                 Icon(
                     Icons.Default.Storage,
                     contentDescription = null,
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(28.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 "DEVICE STORAGE",
@@ -617,9 +668,9 @@ fun StorageSummaryCard(
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f)
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

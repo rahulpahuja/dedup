@@ -1,6 +1,7 @@
 package com.rp.dedup.core.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.search.SmartJunkRepository
@@ -12,7 +13,12 @@ import kotlinx.coroutines.launch
 sealed class SmartJunkState {
     object Idle : SmartJunkState()
     data class Scanning(val progress: Float) : SmartJunkState()
-    data class Results(val groups: Map<SmartJunkRepository.JunkCategory, List<SmartJunkRepository.JunkItem>>) : SmartJunkState()
+    data class Results(
+        val groups: Map<SmartJunkRepository.JunkCategory, List<SmartJunkRepository.JunkItem>>,
+        val selectedUris: Set<Uri> = emptySet(),
+        val isGridView: Boolean = false,
+        val expandedCategories: Set<SmartJunkRepository.JunkCategory> = emptySet()
+    ) : SmartJunkState()
     data class Error(val message: String) : SmartJunkState()
 }
 
@@ -33,6 +39,64 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
             } catch (e: Exception) {
                 _uiState.value = SmartJunkState.Error(e.localizedMessage ?: "Unknown error during scan")
             }
+        }
+    }
+
+    fun toggleCategoryExpansion(category: SmartJunkRepository.JunkCategory) {
+        val currentState = _uiState.value
+        if (currentState is SmartJunkState.Results) {
+            val currentExpanded = currentState.expandedCategories
+            val newExpanded = if (currentExpanded.contains(category)) {
+                currentExpanded - category
+            } else {
+                currentExpanded + category
+            }
+            _uiState.value = currentState.copy(expandedCategories = newExpanded)
+        }
+    }
+
+    fun toggleSelection(uri: Uri) {
+        val currentState = _uiState.value
+        if (currentState is SmartJunkState.Results) {
+            val currentSelected = currentState.selectedUris
+            val newSelected = if (currentSelected.contains(uri)) {
+                currentSelected - uri
+            } else {
+                currentSelected + uri
+            }
+            _uiState.value = currentState.copy(selectedUris = newSelected)
+        }
+    }
+
+    fun selectAllInCategory(category: SmartJunkRepository.JunkCategory) {
+        val currentState = _uiState.value
+        if (currentState is SmartJunkState.Results) {
+            val items = currentState.groups[category] ?: return
+            val categoryUris = items.map { it.uri }.toSet()
+            _uiState.value = currentState.copy(selectedUris = currentState.selectedUris + categoryUris)
+        }
+    }
+
+    fun deselectAllInCategory(category: SmartJunkRepository.JunkCategory) {
+        val currentState = _uiState.value
+        if (currentState is SmartJunkState.Results) {
+            val items = currentState.groups[category] ?: return
+            val categoryUris = items.map { it.uri }.toSet()
+            _uiState.value = currentState.copy(selectedUris = currentState.selectedUris - categoryUris)
+        }
+    }
+
+    fun removeDeletedItems(deletedUris: List<Uri>) {
+        val currentState = _uiState.value
+        if (currentState is SmartJunkState.Results) {
+            val newGroups = currentState.groups.mapValues { (_, items) ->
+                items.filterNot { it.uri in deletedUris }
+            }.filterValues { it.isNotEmpty() }
+            
+            _uiState.value = currentState.copy(
+                groups = newGroups,
+                selectedUris = currentState.selectedUris - deletedUris.toSet()
+            )
         }
     }
 

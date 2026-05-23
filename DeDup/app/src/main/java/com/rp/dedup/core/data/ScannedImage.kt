@@ -8,5 +8,7 @@ data class ScannedImage(
     @PrimaryKey val uri: String,
     val dHash: Long,
     val sizeInBytes: Long,
-    val dateModified: Long = 0L
+    val dateModified: Long = 0L,
+    val qualityScore: Float = 0f,
+    val isAiSuggestion: Boolean = false
 )

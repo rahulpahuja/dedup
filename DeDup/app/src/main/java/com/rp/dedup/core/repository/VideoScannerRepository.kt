@@ -6,6 +6,7 @@ import android.provider.MediaStore
 import com.rp.dedup.core.common.Constants.EMPTY_STRING
 import com.rp.dedup.core.data.ScannedVideo
 import com.rp.dedup.core.common.VideoExtensions
+import com.rp.dedup.core.video.VideoFrameHasher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.flowOn
 
 class VideoScannerRepository(private val context: Context) {
 
-    fun scanVideos(): Flow<ScannedVideo> = flow {
+    fun scanVideos(deepScan: Boolean = false): Flow<ScannedVideo> = flow {
         val projection = arrayOf(
             MediaStore.Video.Media._ID,
             MediaStore.Video.Media.DISPLAY_NAME,
@@ -48,13 +49,20 @@ class VideoScannerRepository(private val context: Context) {
                     MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id
                 )
 
+                val frameHashes = if (deepScan && duration > 0) {
+                    VideoFrameHasher.calculateFrameHashes(context, uri, duration)
+                } else {
+                    emptyList()
+                }
+
                 emit(
                     ScannedVideo(
                         uri = uri,
                         name = name,
                         sizeInBytes = size,
                         durationMs = duration,
-                        mimeType = mimeType
+                        mimeType = mimeType,
+                        frameHashes = frameHashes
                     )
                 )
             }

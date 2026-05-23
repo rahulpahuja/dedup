@@ -1,5 +1,6 @@
 package com.rp.dedup.core.image
 
+import android.content.Context
 import com.rp.dedup.core.data.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
 import com.rp.dedup.core.viewmodels.ScannerViewModel
@@ -20,12 +21,13 @@ class ScannerViewModelTest {
     @get:Rule
     val coroutineRule = MainDispatcherRule()
 
+    private val context = mockk<Context>(relaxed = true)
     private val repository = mockk<ImageScannerRepository>()
     private lateinit var viewModel: ScannerViewModel
 
     @Before
     fun setUp() {
-        viewModel = ScannerViewModel(repository, defaultDispatcher = coroutineRule.testDispatcher)
+        viewModel = ScannerViewModel(context, repository, defaultDispatcher = coroutineRule.testDispatcher)
     }
 
     // --- Initial state ---

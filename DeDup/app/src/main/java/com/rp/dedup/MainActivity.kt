@@ -52,6 +52,16 @@ class MainActivity : ComponentActivity() {
                     RootedDeviceScreen(triggeredChecks = rootResult.triggeredChecks)
                 } else {
                     val navController: NavHostController = rememberNavController()
+                    
+                    // Handle deep links from widget
+                    LaunchedEffect(intent) {
+                        // Glance actionStartActivity passes parameters as extras
+                        // The key in actionParametersOf is used as the extra name
+                        intent?.getStringExtra("target_route")?.let { route ->
+                            navController.navigate(route)
+                        }
+                    }
+
                     Box(modifier = Modifier.fillMaxSize()) {
                         AppNavHost(navController = navController)
 

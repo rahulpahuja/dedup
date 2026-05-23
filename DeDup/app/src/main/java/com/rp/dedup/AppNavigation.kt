@@ -31,7 +31,11 @@ import com.rp.dedup.UIConstants.ROUTE_PRIVACY_POLICY
 import com.rp.dedup.UIConstants.ROUTE_RESULTS_MEDIA
 import com.rp.dedup.UIConstants.ROUTE_SCAN_HISTORY
 import com.rp.dedup.UIConstants.ROUTE_SETTINGS
+import com.rp.dedup.UIConstants.ROUTE_BIG_FILE_MAP
+import com.rp.dedup.UIConstants.ROUTE_DEEP_OPTIMIZATION
+import com.rp.dedup.UIConstants.ROUTE_EMPTY_FOLDER
 import com.rp.dedup.UIConstants.ROUTE_SMART_JUNK
+import com.rp.dedup.UIConstants.ROUTE_SOCIAL_MEDIA_CLEANER
 import com.rp.dedup.UIConstants.ROUTE_SPLASH
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
@@ -63,6 +67,10 @@ sealed class Screen(val route: String) {
     }
     object SmartJunk : Screen(ROUTE_SMART_JUNK)
     object PrivacyPolicy : Screen(ROUTE_PRIVACY_POLICY)
+    object DeepOptimization : Screen(ROUTE_DEEP_OPTIMIZATION)
+    object SocialMediaCleaner : Screen(ROUTE_SOCIAL_MEDIA_CLEANER)
+    object EmptyFolder : Screen(ROUTE_EMPTY_FOLDER)
+    object BigFileMap : Screen(ROUTE_BIG_FILE_MAP)
 }
 
 @Composable
@@ -176,6 +184,33 @@ fun AppNavHost(navController: NavHostController) {
                 composable(Screen.CacheCleaner.route) {
                     CacheCleanerScreen(navController)
                 }
+                composable(Screen.DeepOptimization.route) {
+                    DeepSystemOptimizationScreen(navController)
+                }
+                composable(Screen.SocialMediaCleaner.route) {
+                    AllFilesPermissionGatekeeper(
+                        rationaleTitle = "Storage Access Needed",
+                        rationaleMessage = "DeDup needs All Files Access to scan WhatsApp and Telegram media folders for duplicates."
+                    ) {
+                        SocialMediaCleanerScreen(navController)
+                    }
+                }
+                composable(Screen.EmptyFolder.route) {
+                    AllFilesPermissionGatekeeper(
+                        rationaleTitle = "Storage Access Needed",
+                        rationaleMessage = "DeDup needs All Files Access to find and remove empty directory trees."
+                    ) {
+                        EmptyFolderScreen(navController)
+                    }
+                }
+                composable(Screen.BigFileMap.route) {
+                    AllFilesPermissionGatekeeper(
+                        rationaleTitle = "Storage Access Needed",
+                        rationaleMessage = "DeDup needs All Files Access to build the storage map."
+                    ) {
+                        BigFileMapScreen(navController)
+                    }
+                }
                 composable(
                     route = Screen.FileScanner.route,
                     arguments = listOf(navArgument("type") { type = NavType.StringType })
@@ -220,6 +255,28 @@ fun FileBrowserGatekeeper(navController: NavHostController) {
         rationaleMessage = "DeDup needs storage access to browse and manage files on your device."
     ) {
         FileBrowserScreen(navController = navController)
+    }
+}
+
+@Composable
+fun AllFilesPermissionGatekeeper(
+    rationaleTitle: String,
+    rationaleMessage: String,
+    content: @Composable () -> Unit
+) {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+        AllFilesPermissionGate(
+            rationaleTitle = rationaleTitle,
+            rationaleMessage = rationaleMessage,
+            content = content
+        )
+    } else {
+        PermissionGate(
+            permissions = PermissionManager.FILES,
+            rationaleTitle = rationaleTitle,
+            rationaleMessage = rationaleMessage,
+            content = content
+        )
     }
 }
 
