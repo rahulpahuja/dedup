@@ -52,7 +52,13 @@ fun PermissionGate(
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
-        allGranted = results.values.all { it }
+        // Fix for java.util.ConcurrentModificationException:
+        // Defer the state update to avoid registering/unregistering launchers 
+        // during the activity result delivery phase.
+        val granted = results.values.all { it }
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            allGranted = granted
+        }
     }
 
     // Auto-fire system dialog on first composition

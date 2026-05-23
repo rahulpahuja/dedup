@@ -39,6 +39,7 @@ class ScannerViewModel(
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
     private val allScannedGroups = mutableMapOf<Long, MutableList<ScannedImage>>()
+    private val groupsLock = Any()
 
     private var scanJob: Job? = null
     
@@ -50,7 +51,9 @@ class ScannerViewModel(
         val startTime = System.currentTimeMillis()
         var wasCancelled = false
         _isScanning.value = true
-        allScannedGroups.clear()
+        synchronized(groupsLock) {
+            allScannedGroups.clear()
+        }
         _duplicateGroups.value = emptyList()
 
         analyticsManager?.logScanStarted("IMAGE")
@@ -78,9 +81,11 @@ class ScannerViewModel(
 
                         val currentTime = System.currentTimeMillis()
                         if (currentTime - lastUiUpdateTime > 500) {
-                            _duplicateGroups.value = allScannedGroups.values
-                                .filter { it.size > 1 }
-                                .map { it.toList() }
+                            synchronized(groupsLock) {
+                                _duplicateGroups.value = allScannedGroups.values
+                                    .filter { it.size > 1 }
+                                    .map { it.toList() }
+                            }
                             lastUiUpdateTime = currentTime
                         }
                     }
@@ -91,26 +96,32 @@ class ScannerViewModel(
                 }
 
                 // AI Post-processing: Best Shot Suggestion
-                val finalizedGroups = allScannedGroups.values
-                    .filter { it.size > 1 }
-                    .map { group ->
-                        BestShotAnalyzer.analyzeGroup(context, group)
-                    }
+                val groupsToAnalyze = synchronized(groupsLock) {
+                    allScannedGroups.values
+                        .filter { it.size > 1 }
+                        .map { it.toList() }
+                }
+
+                val finalizedGroups = groupsToAnalyze.map { group ->
+                    BestShotAnalyzer.analyzeGroup(context, group)
+                }
 
                 _duplicateGroups.value = finalizedGroups
 
                 analyticsManager?.logScanCompleted(
                     scanType = "IMAGE",
-                    totalScanned = allScannedGroups.values.sumOf { it.size },
+                    totalScanned = synchronized(groupsLock) { allScannedGroups.values.sumOf { it.size } },
                     duplicatesFound = finalizedGroups.sumOf { it.size - 1 },
                     reclaimableBytes = finalizedGroups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
                 )
 
             } catch (_: CancellationException) {
                 wasCancelled = true
-                _duplicateGroups.value = allScannedGroups.values
-                    .filter { it.size > 1 }
-                    .map { it.toList() }
+                synchronized(groupsLock) {
+                    _duplicateGroups.value = allScannedGroups.values
+                        .filter { it.size > 1 }
+                        .map { it.toList() }
+                }
             } finally {
                 _isScanning.value = false
                 withContext(NonCancellable + Dispatchers.IO) {
@@ -125,40 +136,43 @@ class ScannerViewModel(
     }
 
     private fun processBatch(images: List<ScannedImage>) {
-        for (image in images) {
-            var foundGroup = false
-            // First try exact hash match for O(1)
-            val exactGroup = allScannedGroups[image.dHash]
-            if (exactGroup != null) {
-                exactGroup.add(image)
-                foundGroup = true
-            } else {
-                // If no exact match, try Hamming distance check for near-duplicates
-                // This is still O(Groups) but we only do it if O(1) fails
-                for (group in allScannedGroups.values) {
-                    val distance =
-                        ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
-                    if (distance <= similarityThreshold) {
-                        group.add(image)
-                        foundGroup = true
-                        break
+        synchronized(groupsLock) {
+            for (image in images) {
+                var foundGroup = false
+                // First try exact hash match for O(1)
+                val exactGroup = allScannedGroups[image.dHash]
+                if (exactGroup != null) {
+                    exactGroup.add(image)
+                    foundGroup = true
+                } else {
+                    // If no exact match, try Hamming distance check for near-duplicates
+                    // This is still O(Groups) but we only do it if O(1) fails
+                    for (group in allScannedGroups.values) {
+                        val distance =
+                            ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
+                        if (distance <= similarityThreshold) {
+                            group.add(image)
+                            foundGroup = true
+                            break
+                        }
                     }
                 }
-            }
-            if (!foundGroup) {
-                allScannedGroups[image.dHash] = mutableListOf(image)
+                if (!foundGroup) {
+                    allScannedGroups[image.dHash] = mutableListOf(image)
+                }
             }
         }
     }
 
     private suspend fun saveHistory(startTime: Long, status: String) {
         val groups = _duplicateGroups.value
+        val totalScanned = synchronized(groupsLock) { allScannedGroups.values.sumOf { it.size } }
         historyRepository?.insert(
             ScanHistory(
                 scanType = "IMAGE",
                 timestamp = startTime,
                 durationMs = System.currentTimeMillis() - startTime,
-                totalScanned = allScannedGroups.values.sumOf { it.size },
+                totalScanned = totalScanned,
                 duplicateGroups = groups.size,
                 totalDuplicates = groups.sumOf { it.size - 1 },
                 reclaimableBytes = groups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } },
@@ -181,15 +195,24 @@ class ScannerViewModel(
 
     fun removeDeletedImagesFromUI(deletedUris: List<String>) {
         var freedBytes = 0L
-        allScannedGroups.values.forEach { group ->
-            group.filter { it.uri in deletedUris }.forEach { freedBytes += it.sizeInBytes }
-            group.removeAll { it.uri in deletedUris }
+        synchronized(groupsLock) {
+            val iterator = allScannedGroups.values.iterator()
+            while (iterator.hasNext()) {
+                val group = iterator.next()
+                group.filter { it.uri in deletedUris }.forEach { freedBytes += it.sizeInBytes }
+                group.removeAll { it.uri in deletedUris }
+                if (group.isEmpty()) {
+                    iterator.remove()
+                }
+            }
         }
         
         analyticsManager?.logFilesDeleted("IMAGE", deletedUris.size, freedBytes)
 
-        _duplicateGroups.value = allScannedGroups.values
-            .filter { it.size > 1 }
-            .map { it.toList() }
+        synchronized(groupsLock) {
+            _duplicateGroups.value = allScannedGroups.values
+                .filter { it.size > 1 }
+                .map { it.toList() }
+        }
     }
 }
