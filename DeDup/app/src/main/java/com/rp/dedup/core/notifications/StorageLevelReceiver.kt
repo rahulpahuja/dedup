@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
+import com.rp.dedup.core.analytics.AnalyticsManager
 
 /**
  * Receiver that listens for low storage events and alerts the user
@@ -33,6 +34,7 @@ class StorageLevelReceiver : BroadcastReceiver() {
             Log.d("StorageLevelReceiver", "Storage check: ${usedPercentage.toInt()}% used")
 
             if (usedPercentage >= 90.0) {
+                AnalyticsManager(context).logFeedbackSubmitted("LOW_STORAGE_ALERT")
                 val notificationManager = AppNotificationManager(context)
                 notificationManager.showActionNotification(
                     id = 1001,

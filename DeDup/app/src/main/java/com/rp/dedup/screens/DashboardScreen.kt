@@ -48,6 +48,7 @@ import com.canopas.lib.showcase.component.ShowcaseStyle
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
@@ -81,6 +82,7 @@ fun DashboardScreen(
     val searchViewModel: ImageSearchViewModel = viewModel(
         factory = ImageSearchViewModel.Factory(context)
     )
+    val analyticsManager = remember { AnalyticsManager(context) }
 
     val storageStats by dashboardViewModel.storageStats.collectAsState()
     val totalReclaimable by dashboardViewModel.totalReclaimableBytes.collectAsState()
@@ -107,6 +109,7 @@ fun DashboardScreen(
         searchError = searchError,
         onSearch = { searchViewModel.search(it) },
         onClearSearch = { searchViewModel.clear() },
+        analyticsManager = analyticsManager,
         showTutorial = !tutorialShown,
         onTutorialComplete = {
             coroutineScope.launch {
@@ -130,6 +133,7 @@ fun DashboardScreenContent(
     searchError: String?,
     onSearch: (String) -> Unit,
     onClearSearch: () -> Unit,
+    analyticsManager: AnalyticsManager? = null,
     showTutorial: Boolean = false,
     onTutorialComplete: () -> Unit = {}
 ) {
@@ -317,7 +321,10 @@ fun DashboardScreenContent(
                         StorageSummaryCard(
                             stats = storageStats,
                             reclaimableBytes = totalReclaimable,
-                            onClick = { navController.navigate(Screen.BigFileMap.route) },
+                            onClick = { 
+                                analyticsManager?.logTreemapViewed()
+                                navController.navigate(Screen.BigFileMap.route) 
+                            },
                             modifier = Modifier.introShowCaseTarget(
                                 index = 1,
                                 style = tutorialStyle,
@@ -377,7 +384,10 @@ fun DashboardScreenContent(
                     }
                     item {
                         SmartAiCleanupCard(
-                            onClick = { navController.navigate(Screen.SmartJunk.route) }
+                            onClick = { 
+                                analyticsManager?.logSmartCleanupViewed()
+                                navController.navigate(Screen.SmartJunk.route) 
+                            }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         DeepOptimizationCard(

@@ -6,6 +6,7 @@ import com.rp.dedup.core.repository.VideoScannerRepository
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.data.ScannedVideo
 import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.image.ImageHasher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ import java.util.concurrent.CancellationException
 class VideoScannerViewModel(
     private val repository: VideoScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
+    private val analyticsManager: AnalyticsManager? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -49,6 +51,8 @@ class VideoScannerViewModel(
         _videos.value = emptyList()
         _duplicateGroups.value = emptyList()
 
+        analyticsManager?.logScanStarted("VIDEO")
+
         scanJob = viewModelScope.launch(defaultDispatcher) {
             val allVideos = mutableListOf<ScannedVideo>()
             try {
@@ -65,6 +69,13 @@ class VideoScannerViewModel(
                 _videos.value = allVideos.toList()
                 val duplicates = findDuplicates(allVideos)
                 _duplicateGroups.value = duplicates
+
+                analyticsManager?.logScanCompleted(
+                    scanType = "VIDEO",
+                    totalScanned = allVideos.size,
+                    duplicatesFound = duplicates.sumOf { it.size - 1 },
+                    reclaimableBytes = duplicates.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
+                )
 
             } catch (_: CancellationException) {
                 wasCancelled = true
@@ -153,10 +164,16 @@ class VideoScannerViewModel(
 
     fun removeDeletedVideosFromUI(deletedUris: List<android.net.Uri>) {
         viewModelScope.launch {
+            val toDelete = _videos.value.filter { it.uri in deletedUris }
+            val freedBytes = toDelete.sumOf { it.sizeInBytes }
+            
             val currentVideos = _videos.value.filterNot { it.uri in deletedUris }
             _videos.value = currentVideos
-            _duplicateGroups.value = findDuplicates(currentVideos)
+            val duplicates = findDuplicates(currentVideos)
+            _duplicateGroups.value = duplicates
             _scannedCount.value = currentVideos.size
+
+            analyticsManager?.logFilesDeleted("VIDEO", deletedUris.size, freedBytes)
         }
     }
 }

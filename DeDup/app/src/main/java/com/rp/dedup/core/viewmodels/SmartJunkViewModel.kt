@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.search.SmartJunkRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ sealed class SmartJunkState {
 
 class SmartJunkViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SmartJunkRepository(application)
+    private val analyticsManager = AnalyticsManager(application)
 
     private val _uiState = MutableStateFlow<SmartJunkState>(SmartJunkState.Idle)
     val uiState: StateFlow<SmartJunkState> = _uiState.asStateFlow()
@@ -31,11 +33,15 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
     fun startScan() {
         viewModelScope.launch {
             _uiState.value = SmartJunkState.Scanning(0f)
+            analyticsManager.logScanStarted("JUNK")
             try {
                 val results = repository.scanForJunk { scanned, total ->
                     _uiState.value = SmartJunkState.Scanning(scanned.toFloat() / total)
                 }
                 _uiState.value = SmartJunkState.Results(results)
+                
+                val totalFound = results.values.sumOf { it.size }
+                analyticsManager.logScanCompleted("JUNK", totalFound, totalFound, 0L) // reclaimable bytes not easily available here
             } catch (e: Exception) {
                 _uiState.value = SmartJunkState.Error(e.localizedMessage ?: "Unknown error during scan")
             }
@@ -97,6 +103,8 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
                 groups = newGroups,
                 selectedUris = currentState.selectedUris - deletedUris.toSet()
             )
+
+            analyticsManager.logFilesDeleted("JUNK", deletedUris.size, 0L)
         }
     }
 

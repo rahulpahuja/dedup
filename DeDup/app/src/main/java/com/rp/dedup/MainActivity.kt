@@ -22,6 +22,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.security.RootDetectionManager
 import com.rp.dedup.core.viewmodels.ThemeViewModel
@@ -46,10 +47,18 @@ class MainActivity : ComponentActivity() {
         // Handle initial intent
         handleIntent(intent)
 
-        // Root check runs once on the main thread before any UI is rendered.
-        // It is intentionally synchronous so there is no window where the app
+        // it is intentionally synchronous so there is no window where the app
         // UI could flash before the block screen appears.
         val rootResult = RootDetectionManager.check(applicationContext)
+        
+        val analyticsManager = AnalyticsManager(applicationContext)
+        if (rootResult.isRooted) {
+            val bundle = Bundle().apply {
+                putString("triggered_checks", rootResult.triggeredChecks.joinToString())
+            }
+            com.google.firebase.analytics.FirebaseAnalytics.getInstance(applicationContext)
+                .logEvent("security_rooted_device", bundle)
+        }
 
         setContent {
             DeDupTheme(darkTheme = themeViewModel.isDarkTheme()) {

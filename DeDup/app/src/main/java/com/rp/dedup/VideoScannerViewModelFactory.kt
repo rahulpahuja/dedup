@@ -14,7 +14,8 @@ class VideoScannerViewModelFactory(private val context: Context) : ViewModelProv
             @Suppress("UNCHECKED_CAST")
             return VideoScannerViewModel(
                 repository = VideoScannerRepository(context),
-                historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao())
+                historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
+                analyticsManager = com.rp.dedup.core.analytics.AnalyticsManager(context)
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

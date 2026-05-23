@@ -3,6 +3,7 @@ package com.rp.dedup.core.viewmodels
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.image.ImageHasher
 import com.rp.dedup.core.image.BestShotAnalyzer
@@ -27,6 +28,7 @@ class ScannerViewModel(
     private val repository: ImageScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
     private val dataStoreManager: com.rp.dedup.core.caching.DataStoreManager? = null,
+    private val analyticsManager: AnalyticsManager? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -50,6 +52,8 @@ class ScannerViewModel(
         _isScanning.value = true
         allScannedGroups.clear()
         _duplicateGroups.value = emptyList()
+
+        analyticsManager?.logScanStarted("IMAGE")
 
         scanJob = viewModelScope.launch(defaultDispatcher) {
             try {
@@ -94,6 +98,13 @@ class ScannerViewModel(
                     }
 
                 _duplicateGroups.value = finalizedGroups
+
+                analyticsManager?.logScanCompleted(
+                    scanType = "IMAGE",
+                    totalScanned = allScannedGroups.values.sumOf { it.size },
+                    duplicatesFound = finalizedGroups.sumOf { it.size - 1 },
+                    reclaimableBytes = finalizedGroups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
+                )
 
             } catch (_: CancellationException) {
                 wasCancelled = true
@@ -169,9 +180,14 @@ class ScannerViewModel(
     }
 
     fun removeDeletedImagesFromUI(deletedUris: List<String>) {
+        var freedBytes = 0L
         allScannedGroups.values.forEach { group ->
+            group.filter { it.uri in deletedUris }.forEach { freedBytes += it.sizeInBytes }
             group.removeAll { it.uri in deletedUris }
         }
+        
+        analyticsManager?.logFilesDeleted("IMAGE", deletedUris.size, freedBytes)
+
         _duplicateGroups.value = allScannedGroups.values
             .filter { it.size > 1 }
             .map { it.toList() }

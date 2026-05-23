@@ -34,6 +34,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.viewmodels.ThemeMode
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
@@ -54,6 +55,7 @@ fun SettingsScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val toastManager = remember { ToastManager(context) }
     val dbManager = remember { FirebaseDbManager() }
+    val analyticsManager = remember { AnalyticsManager(context) }
 
     val themeViewModel: ThemeViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
@@ -211,7 +213,10 @@ fun SettingsScreen(navController: NavHostController) {
                     icon = Icons.Default.Security,
                     iconColor = MaterialTheme.colorScheme.primary,
                     title = "Privacy Policy",
-                    onClick = { navController.navigate(Screen.PrivacyPolicy.route) }
+                    onClick = { 
+                        analyticsManager.logPrivacyPolicyViewed()
+                        navController.navigate(Screen.PrivacyPolicy.route) 
+                    }
                 )
             }
 
@@ -225,6 +230,7 @@ fun SettingsScreen(navController: NavHostController) {
                     iconColor = MaterialTheme.colorScheme.error,
                     title = "Logout",
                     onClick = {
+                        analyticsManager.logLogout()
                         scope.launch {
                             val authManager = FirebaseAuthManager(toastManager)
                             authManager.signOutWithCredentialClear(context)
@@ -277,6 +283,7 @@ fun SettingsScreen(navController: NavHostController) {
             placeholder = "Tell us what you think...",
             onDismiss = { showFeedbackDialog = false },
             onSubmit = { content ->
+                analyticsManager.logFeedbackSubmitted("FEEDBACK")
                 scope.launch {
                     val result = dbManager.submitFeedback("FEEDBACK", content)
                     if (result.isSuccess) {
@@ -296,6 +303,8 @@ fun SettingsScreen(navController: NavHostController) {
             placeholder = "What would you like to see in DeDup?",
             onDismiss = { showFeatureRequestDialog = false },
             onSubmit = { content ->
+                analyticsManager.logFeedbackSubmitted("FEATURE_REQUEST")
+                analyticsManager.logFeatureRequested()
                 scope.launch {
                     val result = dbManager.submitFeedback("FEATURE_REQUEST", content)
                     if (result.isSuccess) {

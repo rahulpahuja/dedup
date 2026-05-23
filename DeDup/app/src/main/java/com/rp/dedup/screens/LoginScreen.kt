@@ -49,6 +49,7 @@ import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.PrimaryBlue
@@ -66,7 +67,10 @@ fun LoginScreen(
     
     var isLoading by remember { mutableStateOf(false) }
 
-    val onLoginSuccess = {
+    val analyticsManager = remember { AnalyticsManager(context) }
+
+    val onLoginSuccess = { method: String ->
+        analyticsManager.logLogin(method)
         navController.navigate(Screen.Dashboard.route) {
             popUpTo(Screen.Login.route) { inclusive = true }
         }
@@ -149,7 +153,7 @@ fun LoginScreen(
                                         newEmail = user.email ?: "",
                                         newImageUrl = user.photoUrl?.toString()
                                     )
-                                    onLoginSuccess()
+                                    onLoginSuccess("GOOGLE")
                                 }
                             } catch (e: Exception) {
                                 if (e !is CancellationException) {
