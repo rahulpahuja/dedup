@@ -24,10 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -36,7 +34,6 @@ import com.rp.dedup.Screen
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.CleanupViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
-import com.rp.dedup.ui.theme.SelectionBarBackground
 import kotlinx.coroutines.launch
 
 private data class LargeFileItemLocal(
@@ -143,9 +140,6 @@ fun FileCleanupScreen(navController: NavHostController) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        bottomBar = {
-            DeleteSelectionBar()
-        }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -399,130 +393,6 @@ fun LargeFileCard(
     }
 }
 
-@Composable
-fun DownloadItem(
-    name: String,
-    info: String,
-    badge: String,
-    badgeColor: Color,
-    badgeTextColor: Color,
-    selectionInfo: String,
-    icon: ImageVector,
-    iconTint: Color
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.fillMaxWidth(),
-        shadowElevation = 1.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = iconTint)
-                }
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        name,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 1
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Surface(
-                        color = badgeColor,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            badge,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = badgeTextColor,
-                                fontSize = 8.sp
-                            ),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-                Text(
-                    info,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                selectionInfo,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                ),
-                textAlign = TextAlign.End
-            )
-        }
-    }
-}
-
-@Composable
-fun DeleteSelectionBar() {
-    Surface(
-        color = SelectionBarBackground,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    "RECLAIMING",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.LightGray,
-                        fontSize = 10.sp
-                    )
-                )
-                Text(
-                    "160.8 MB",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
-            Button(
-                onClick = { },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier
-                    .height(48.dp)
-                    .fillMaxWidth(0.6f)
-            ) {
-                Text(
-                    "DELETE SELECTED",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-            }
-        }
-    }
-}
 
 @Preview(showBackground = true, name = "Light Mode")
 @Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
