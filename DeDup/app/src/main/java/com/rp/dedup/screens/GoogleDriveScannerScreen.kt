@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -32,7 +34,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
@@ -196,19 +198,24 @@ fun GoogleDriveScannerContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
+                .padding(padding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when {
                 errorMessage != null -> {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(8.dp)
-                    )
-                    Button(onClick = onRetry) { Text("Retry") }
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(8.dp),
+                            textAlign = TextAlign.Center
+                        )
+                        Button(onClick = onRetry) { Text("Retry") }
+                    }
                 }
                 isScanning -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -218,20 +225,54 @@ fun GoogleDriveScannerContent(
                         }
                     }
                 }
-                duplicateGroups.isEmpty() -> EmptyDriveState(onConnect = onConnect)
+                duplicateGroups.isEmpty() -> {
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        EmptyDriveState(onConnect = onConnect)
+                    }
+                }
                 else -> {
-                    // Group by category, sorted by enum ordinal so order is deterministic
                     val byCategory = remember(duplicateGroups) {
                         duplicateGroups
                             .groupBy { mimeTypeToCategory(it.first().mimeType) }
                             .entries
                             .sortedBy { it.key.ordinal }
                     }
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        byCategory.forEach { (category, groups) ->
-                            stickyHeader(key = "header_${category.name}") {
-                                CategorySectionHeader(category = category, groupCount = groups.size)
-                            }
+                    
+                    val pagerState = rememberPagerState(pageCount = { byCategory.size })
+                    val scope = rememberCoroutineScope()
+
+                    ScrollableTabRow(
+                        selectedTabIndex = pagerState.currentPage,
+                        edgePadding = 16.dp,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        divider = {}
+                    ) {
+                        byCategory.forEachIndexed { index, (category, groups) ->
+                            Tab(
+                                selected = pagerState.currentPage == index,
+                                onClick = {
+                                    scope.launch { pagerState.animateScrollToPage(index) }
+                                },
+                                text = {
+                                    Text(
+                                        text = "${category.displayName} (${groups.size})",
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.Top
+                    ) { pageIndex ->
+                        val (_, groups) = byCategory[pageIndex]
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
                             items(
                                 items = groups,
                                 key = { it.first().md5Checksum ?: it.first().id ?: it.hashCode() }
@@ -405,7 +446,7 @@ private fun DuplicateGroupItem(group: List<File>, onDelete: (String) -> Unit) {
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium
                         )
-                        val sizeLabel = formatSize(file.size.toLong())
+                        val sizeLabel = formatSize(file.getSize())
                         if (sizeLabel.isNotEmpty()) {
                             Text(
                                 sizeLabel,
@@ -449,8 +490,8 @@ private fun FilePreviewThumbnail(
     category: FileCategory,
     modifier: Modifier = Modifier
 ) {
-    var loadFailed by remember { mutableStateOf(false) }
-    val showThumbnail = category == FileCategory.IMAGE && thumbnailUrl != null && !loadFailed
+    val showThumbnail = (category == FileCategory.IMAGE || category == FileCategory.VIDEO) 
+            && thumbnailUrl != null
 
     Box(
         modifier = modifier
@@ -459,12 +500,24 @@ private fun FilePreviewThumbnail(
         contentAlignment = Alignment.Center
     ) {
         if (showThumbnail) {
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = thumbnailUrl,
-                contentDescription = null,
+                contentDescription = "File preview",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                onError = { loadFailed = true }
+                loading = {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    }
+                },
+                error = {
+                    Icon(
+                        imageVector = category.icon,
+                        contentDescription = "Failed to load preview",
+                        tint = category.tint,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
             )
         } else {
             Icon(
@@ -535,6 +588,16 @@ private fun DeleteConfirmDialog(
         title = { Text("Delete this copy?") },
         text = {
             Column {
+                if (category == FileCategory.IMAGE || category == FileCategory.VIDEO) {
+                    FilePreviewThumbnail(
+                        thumbnailUrl = file.thumbnailLink,
+                        category = category,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .padding(bottom = 12.dp)
+                    )
+                }
                 Text(
                     text = file.name ?: "Unknown File",
                     style = MaterialTheme.typography.bodyMedium,
@@ -542,7 +605,7 @@ private fun DeleteConfirmDialog(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                val sizeLabel = formatSize(file.size.toLong())
+                val sizeLabel = formatSize(file.getSize())
                 if (sizeLabel.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
