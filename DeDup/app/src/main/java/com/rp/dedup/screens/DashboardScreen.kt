@@ -157,67 +157,76 @@ fun DashboardScreenContent(
 
     Scaffold(
         topBar = {
-            Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
-                if (!searchActive) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(
-                                Icons.Default.Menu,
-                                contentDescription = "Menu",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Text(
-                            UIConstants.APP_NAME,
-                            modifier = Modifier.weight(1f).padding(start = 4.dp),
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 4.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = MaterialTheme.colorScheme.primary
                         )
-                        IconButton(onClick = {}) {
-                            Surface(
-                                shape = CircleShape,
-                                modifier = Modifier.size(30.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    if (userImageUrl.isNotEmpty()) {
-                                        AsyncImage(
-                                            model = userImageUrl,
-                                            contentDescription = "Profile",
-                                            modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                            contentScale = ContentScale.Crop
+                    }
+                    Text(
+                        UIConstants.APP_NAME,
+                        modifier = Modifier.weight(1f).padding(start = 4.dp),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    IconButton(onClick = {}) {
+                        Surface(
+                            shape = CircleShape,
+                            modifier = Modifier.size(30.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                if (userImageUrl.isNotEmpty()) {
+                                    AsyncImage(
+                                        model = userImageUrl,
+                                        contentDescription = "Profile",
+                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Text(
+                                        text = userName.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
-                                    } else {
-                                        Text(
-                                            text = userName.firstOrNull()?.uppercaseChar()?.toString() ?: "U",
-                                            style = MaterialTheme.typography.labelMedium.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        )
-                                    }
+                                    )
                                 }
                             }
                         }
                     }
                 }
-
-                SearchBar(
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            SearchBar(
                     inputField = {
                         SearchBarDefaults.InputField(
                             query = searchQuery,
                             onQueryChange = { searchQuery = it },
-                            onSearch = { 
+                            onSearch = {
                                 onSearch(it)
-                                searchActive = true 
+                                searchActive = true
                             },
                             expanded = searchActive,
                             onExpandedChange = { active ->
@@ -256,6 +265,7 @@ fun DashboardScreenContent(
                         searchActive = active
                         if (!active) { searchQuery = ""; onClearSearch() }
                     },
+                    windowInsets = WindowInsets(0),
                     modifier = if (searchActive) {
                         Modifier.fillMaxWidth()
                     } else {
@@ -291,15 +301,6 @@ fun DashboardScreenContent(
                         )
                     }
                 }
-            }
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
             if (!searchActive) {
                 LazyColumn(
                     modifier = Modifier
