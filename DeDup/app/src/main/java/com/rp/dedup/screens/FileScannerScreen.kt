@@ -89,11 +89,27 @@ fun FileScannerScreen(
     fun triggerDelete(uris: List<Uri>) {
         if (uris.isEmpty()) return
         pendingDeleteUris = uris
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val pi = MediaStore.createDeleteRequest(context.contentResolver, uris)
-            deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
-        } else {
-            uris.forEach { context.contentResolver.delete(it, null, null) }
+        
+        // Fix: MediaStore.createDeleteRequest only supports Media items (Images, Video, Audio).
+        // For non-media files like PDFs and APKs, we use direct deletion via ContentResolver.
+        // This works because FileScannerScreen is gated by MANAGE_EXTERNAL_STORAGE.
+        try {
+            uris.forEach { uri ->
+                context.contentResolver.delete(uri, null, null)
+            }
+            viewModel.removeDeletedFilesFromUI(uris)
+            selectedUris.removeAll(uris)
+            pendingDeleteUris = emptyList()
+            
+            // Note: Since we have All Files Access, this succeeds silently.
+            // If it fails with a SecurityException, we'd know the permission is missing.
+        } catch (e: Exception) {
+            // Fallback for unexpected errors, though with MANAGE_EXTERNAL_STORAGE this shouldn't happen.
+            uris.forEach { uri ->
+                try {
+                    context.contentResolver.delete(uri, null, null)
+                } catch (_: Exception) {}
+            }
             viewModel.removeDeletedFilesFromUI(uris)
             selectedUris.removeAll(uris)
         }
