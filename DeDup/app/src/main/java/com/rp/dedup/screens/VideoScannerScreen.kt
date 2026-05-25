@@ -56,6 +56,7 @@ fun VideoScannerScreen(navController: NavHostController) {
 
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
+    val scannedCount by viewModel.scannedCount.collectAsState()
     
     val selectedUris = remember { mutableStateListOf<Uri>() }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
@@ -137,8 +138,13 @@ fun VideoScannerScreen(navController: NavHostController) {
                             fontWeight = FontWeight.Bold
                         )
                     )
-                    if (duplicateGroups.isNotEmpty()) {
-                        Text(
+                    when {
+                        isScanning -> Text(
+                            "Scanned $scannedCount videos · ${duplicateGroups.size} groups found",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        duplicateGroups.isNotEmpty() -> Text(
                             "${duplicateGroups.size} duplicate groups found",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

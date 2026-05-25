@@ -1,5 +1,6 @@
 package com.rp.dedup.core.viewmodels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.repository.VideoScannerRepository
@@ -55,32 +56,40 @@ class VideoScannerViewModel(
 
         scanJob = viewModelScope.launch(defaultDispatcher) {
             val allVideos = mutableListOf<ScannedVideo>()
+            // Incremental state
+            val sizeIndex = mutableMapOf<Long, MutableList<ScannedVideo>>()
+            val frameHashVideos = mutableListOf<ScannedVideo>()
+            val uriToGroupIdx = mutableMapOf<Uri, Int>()
+            val runningGroups = mutableListOf<MutableList<ScannedVideo>>()
+
             try {
                 repository.scanVideos(deepScan = deepScan)
                     .buffer(capacity = Channel.BUFFERED)
                     .collect { video ->
                         allVideos.add(video)
                         _scannedCount.value = allVideos.size
-                        if (allVideos.size % 50 == 0) {
+
+                        addVideoIncrementally(video, sizeIndex, frameHashVideos, uriToGroupIdx, runningGroups)
+                        _duplicateGroups.value = runningGroups.filter { it.size > 1 }.map { it.toList() }
+
+                        if (allVideos.size % 10 == 0) {
                             _videos.value = allVideos.toList()
                         }
                     }
 
                 _videos.value = allVideos.toList()
-                val duplicates = findDuplicates(allVideos)
-                _duplicateGroups.value = duplicates
 
+                val groups = _duplicateGroups.value
                 analyticsManager?.logScanCompleted(
                     scanType = "VIDEO",
                     totalScanned = allVideos.size,
-                    duplicatesFound = duplicates.sumOf { it.size - 1 },
-                    reclaimableBytes = duplicates.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
+                    duplicatesFound = groups.sumOf { it.size - 1 },
+                    reclaimableBytes = groups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
                 )
 
             } catch (_: CancellationException) {
                 wasCancelled = true
                 _videos.value = allVideos.toList()
-                _duplicateGroups.value = findDuplicates(allVideos)
             } finally {
                 _isScanning.value = false
                 val totalCount = _scannedCount.value
@@ -105,6 +114,85 @@ class VideoScannerViewModel(
         }
     }
 
+    // Checks the new video against already-seen videos and merges it into a group on match.
+    private fun addVideoIncrementally(
+        video: ScannedVideo,
+        sizeIndex: MutableMap<Long, MutableList<ScannedVideo>>,
+        frameHashVideos: MutableList<ScannedVideo>,
+        uriToGroupIdx: MutableMap<Uri, Int>,
+        groups: MutableList<MutableList<ScannedVideo>>
+    ) {
+        var joinedIdx: Int? = null
+
+        // Phase 1: exact size match
+        if (video.sizeInBytes > 0) {
+            sizeIndex[video.sizeInBytes]?.forEach { existing ->
+                val existIdx = uriToGroupIdx[existing.uri]
+                when {
+                    joinedIdx == null && existIdx == null -> {
+                        val g = mutableListOf(existing, video)
+                        groups.add(g)
+                        joinedIdx = groups.lastIndex
+                        uriToGroupIdx[existing.uri] = joinedIdx!!
+                        uriToGroupIdx[video.uri] = joinedIdx!!
+                    }
+                    joinedIdx == null -> {
+                        joinedIdx = existIdx!!
+                        groups[joinedIdx!!].add(video)
+                        uriToGroupIdx[video.uri] = joinedIdx!!
+                    }
+                    existIdx == null -> {
+                        groups[joinedIdx!!].add(existing)
+                        uriToGroupIdx[existing.uri] = joinedIdx!!
+                    }
+                }
+            }
+        }
+
+        // Phase 2: frame hash similarity match (only when no exact size match)
+        if (joinedIdx == null && video.frameHashes.isNotEmpty()) {
+            for (existing in frameHashVideos) {
+                if (!isFrameSimilar(video, existing)) continue
+                val existIdx = uriToGroupIdx[existing.uri]
+                when {
+                    joinedIdx == null && existIdx == null -> {
+                        val g = mutableListOf(existing, video)
+                        groups.add(g)
+                        joinedIdx = groups.lastIndex
+                        uriToGroupIdx[existing.uri] = joinedIdx!!
+                        uriToGroupIdx[video.uri] = joinedIdx!!
+                    }
+                    joinedIdx == null -> {
+                        joinedIdx = existIdx!!
+                        groups[joinedIdx!!].add(video)
+                        uriToGroupIdx[video.uri] = joinedIdx!!
+                    }
+                    existIdx == null -> {
+                        groups[joinedIdx!!].add(existing)
+                        uriToGroupIdx[existing.uri] = joinedIdx!!
+                    }
+                }
+            }
+        }
+
+        sizeIndex.getOrPut(video.sizeInBytes) { mutableListOf() }.add(video)
+        if (video.frameHashes.isNotEmpty()) frameHashVideos.add(video)
+    }
+
+    private fun isFrameSimilar(v1: ScannedVideo, v2: ScannedVideo): Boolean {
+        var matchCount = 0
+        for (h1 in v1.frameHashes) {
+            for (h2 in v2.frameHashes) {
+                if (ImageHasher.calculateHammingDistance(h1, h2) <= 3) {
+                    matchCount++
+                    break
+                }
+            }
+        }
+        return matchCount >= 2
+    }
+
+    // Used only by removeDeletedVideosFromUI — full re-check on the remaining set.
     private fun findDuplicates(allVideos: List<ScannedVideo>): List<List<ScannedVideo>> {
         val resultGroups = mutableListOf<MutableList<ScannedVideo>>()
         val processed = mutableSetOf<Int>()
@@ -112,49 +200,26 @@ class VideoScannerViewModel(
         for (i in allVideos.indices) {
             if (i in processed) continue
             val group = mutableListOf(allVideos[i])
-            
+
             for (j in i + 1 until allVideos.size) {
                 if (j in processed) continue
-                
                 val v1 = allVideos[i]
                 val v2 = allVideos[j]
-                
-                var isMatch = false
-                
-                // 1. Check exact size match
-                if (v1.sizeInBytes == v2.sizeInBytes && v1.sizeInBytes > 0) {
-                    isMatch = true
-                } 
-                // 2. Check content-based match (frame hashes)
-                else if (v1.frameHashes.isNotEmpty() && v2.frameHashes.isNotEmpty()) {
-                    // Compare hashes at 10%, 50%, 90%
-                    var matchCount = 0
-                    for (h1 in v1.frameHashes) {
-                        for (h2 in v2.frameHashes) {
-                            if (ImageHasher.calculateHammingDistance(h1, h2) <= 3) {
-                                matchCount++
-                                break
-                            }
-                        }
-                    }
-                    // If at least 2 out of 3 frames match, consider it a duplicate content
-                    if (matchCount >= 2) {
-                        isMatch = true
-                    }
+                val isMatch = when {
+                    v1.sizeInBytes == v2.sizeInBytes && v1.sizeInBytes > 0 -> true
+                    v1.frameHashes.isNotEmpty() && v2.frameHashes.isNotEmpty() -> isFrameSimilar(v1, v2)
+                    else -> false
                 }
-                
                 if (isMatch) {
                     group.add(v2)
                     processed.add(j)
                 }
             }
-            
-            if (group.size > 1) {
-                resultGroups.add(group)
-            }
+
+            if (group.size > 1) resultGroups.add(group)
             processed.add(i)
         }
-        
+
         return resultGroups
     }
 
@@ -162,15 +227,14 @@ class VideoScannerViewModel(
         scanJob?.cancel()
     }
 
-    fun removeDeletedVideosFromUI(deletedUris: List<android.net.Uri>) {
+    fun removeDeletedVideosFromUI(deletedUris: List<Uri>) {
         viewModelScope.launch {
             val toDelete = _videos.value.filter { it.uri in deletedUris }
             val freedBytes = toDelete.sumOf { it.sizeInBytes }
-            
+
             val currentVideos = _videos.value.filterNot { it.uri in deletedUris }
             _videos.value = currentVideos
-            val duplicates = findDuplicates(currentVideos)
-            _duplicateGroups.value = duplicates
+            _duplicateGroups.value = findDuplicates(currentVideos)
             _scannedCount.value = currentVideos.size
 
             analyticsManager?.logFilesDeleted("VIDEO", deletedUris.size, freedBytes)
