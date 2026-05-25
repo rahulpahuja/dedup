@@ -261,7 +261,7 @@ fun DashboardScreenContent(
                     } else {
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                             .introShowCaseTarget(
                                 index = 0,
                                 style = tutorialStyle,
