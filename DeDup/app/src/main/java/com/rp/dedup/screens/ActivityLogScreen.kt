@@ -1,5 +1,7 @@
 package com.rp.dedup.screens
 
+import android.content.Context
+import android.text.format.Formatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,19 +16,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.Dehaze
-import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Scanner
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -42,27 +42,54 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.db.AppDatabase
+import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.viewmodels.ScanHistoryViewModel
 import com.rp.dedup.ui.theme.DarkBlue
 import com.rp.dedup.ui.theme.DeDupTheme
-import com.rp.dedup.ui.theme.PrimaryBlue
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityLogScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val viewModel: ScanHistoryViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ScanHistoryViewModel(
+                    ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao())
+                ) as T
+            }
+        }
+    )
+
+    val history by viewModel.history.collectAsState()
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    val weekStart = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
+    val weeklyReclaimable = history.filter { it.timestamp >= weekStart }.sumOf { it.reclaimableBytes }
+    val weeklyScans = history.count { it.timestamp >= weekStart }
 
     Scaffold(
         topBar = {
@@ -77,7 +104,7 @@ fun ActivityLogScreen(navController: NavHostController) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -85,326 +112,181 @@ fun ActivityLogScreen(navController: NavHostController) {
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = { }) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
-        bottomBar = {
-            BottomNavigationBar(navController)
-        }
+        bottomBar = { BottomNavigationBar(navController) }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp)
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (isDark) {
-                    Text(
-                        "WEEKLY SUMMARY",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+        if (history.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.Scanner,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.outlineVariant
                     )
-                    Row(verticalAlignment = Alignment.Bottom) {
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "No activity yet",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "Run a scan to see results here.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 16.dp)
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (isDark) {
                         Text(
-                            "14.2 GB",
-                            style = MaterialTheme.typography.headlineLarge.copy(
+                            "WEEKLY SUMMARY",
+                            style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.primary
                             )
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                Formatter.formatShortFileSize(context, weeklyReclaimable),
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Reclaimable · $weeklyScans scans",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    } else {
                         Text(
-                            "Total Reclaimed",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-                } else {
-                    Text(
-                        "SYSTEM PULSE",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF00838F)
-                        )
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Recent Insights",
-                            style = MaterialTheme.typography.headlineMedium.copy(
+                            "RECENT ACTIVITY",
+                            style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = DarkBlue
+                                color = Color(0xFF00838F)
                             )
                         )
-                        Text(
-                            "12 New",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Scan History",
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = DarkBlue
+                                )
+                            )
+                            Text(
+                                "${history.size} Records",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
 
-            // Featured Card (Scan Complete / Smart Insight)
-            item {
-                if (isDark) {
-                    ActivityCardDark(
-                        icon = Icons.Default.AutoAwesome,
-                        title = "Smart Insight",
-                        time = "2H AGO",
-                        description = "You have 842MB of unused video assets. These files haven't been opened in 6 months and have lower resolution duplicates.",
-                        buttonText = "Optimize Now"
-                    )
-                } else {
-                    ScanCompleteCard()
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            // Summary Section for Day Mode
-            item {
-                if (!isDark) {
-                    StorageReclaimedCard()
-                    Spacer(modifier = Modifier.height(32.dp))
-                }
-            }
-
-            // List Items
-            item {
-                if (isDark) {
-                    CompactActivityItem(
-                        icon = Icons.Default.Scanner,
-                        title = "Scan Complete",
-                        description = "Found 128 redundant documents across your connected Cloud Drives. 94% match accuracy detected.",
-                        time = "5H AGO",
-                        iconColor = Color(0xFF80DEEA)
-                    )
+                items(history) { scan ->
+                    ScanActivityItem(scan = scan, isDark = isDark, context = context)
                     Spacer(modifier = Modifier.height(16.dp))
-                    CompactActivityItem(
-                        icon = Icons.Default.CloudDone,
-                        title = "Storage Reclaimed",
-                        description = "4.2 GB cleared. Successfully removed 1,402 temporary cache files and duplicate system backups.",
-                        time = "YESTERDAY",
-                        iconColor = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    EfficiencyBanner()
-                    Spacer(modifier = Modifier.height(24.dp))
-                    CompactActivityItem(
-                        icon = Icons.Default.Warning,
-                        title = "Storage Warning",
-                        description = "Your main SSD is 92% full. We recommend running a \"Deep Clean\" to free up approximately 12GB of system junk.",
-                        time = "2D AGO",
-                        iconColor = Color(0xFFFFB74D)
-                    )
-                } else {
-                    ActivityListItem(
-                        icon = Icons.Default.Lightbulb,
-                        title = "Smart Insight: Unused video assets found",
-                        description = "You have 842MB of video files that haven't been opened in over 18 months. Consider archiving.",
-                        time = "YESTERDAY",
-                        actions = listOf("Move to Cloud", "Dismiss")
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    ActivityListItem(
-                        icon = Icons.Default.CheckCircle,
-                        title = "Backup Synchronization Successful",
-                        description = "Your redundant-free manifest has been mirrored to the secure vault.",
-                        time = "OCT 24",
-                        iconTint = Color(0xFF00838F)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    ActivityListItem(
-                        icon = Icons.Default.Warning,
-                        title = "Low Storage Threshold",
-                        description = "Device storage is 92% full. Run a deep scan to free up space immediately.",
-                        time = "OCT 22",
-                        iconTint = Color(0xFFD32F2F),
-                        buttonText = "OPTIMIZE NOW",
-                        buttonColor = Color(0xFFD32F2F)
-                    )
                 }
 
-                Spacer(modifier = Modifier.height(100.dp))
+                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
     }
 }
 
 @Composable
-fun ScanCompleteCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFE8EAF6),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = PrimaryBlue)
-                }
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                "Scan Complete: Found 128 redundant documents.",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 28.sp
-                )
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                "High-confidence duplicates detected across your Cloud and Local storage volumes.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "2H AGO",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFF8DA9D4)
-                )
-                Button(
-                    onClick = { },
-                    colors = ButtonDefaults.buttonColors(containerColor = DarkBlue),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Review All", modifier = Modifier.padding(horizontal = 8.dp))
-                }
-            }
-        }
+private fun ScanActivityItem(scan: ScanHistory, isDark: Boolean, context: Context) {
+    val icon = scanTypeIcon(scan.scanType)
+    val label = scanTypeLabel(scan.scanType)
+    val timeAgo = formatTimeAgo(scan.timestamp)
+    val reclaimable = Formatter.formatShortFileSize(context, scan.reclaimableBytes)
+    val description = buildString {
+        append("Scanned ${scan.totalScanned} files · ${scan.totalDuplicates} duplicates found")
+        if (scan.reclaimableBytes > 0) append(" · $reclaimable reclaimable")
+        if (scan.status == "CANCELLED") append(" · Cancelled")
+    }
+    val iconColor = when (scan.scanType) {
+        "IMAGE"    -> Color(0xFF4285F4)
+        "VIDEO"    -> Color(0xFFEA4335)
+        "FILE_PDF" -> Color(0xFFFF5722)
+        "FILE_APK" -> Color(0xFF34A853)
+        else       -> Color(0xFF7986CB)
+    }
+
+    if (isDark) {
+        CompactActivityItem(
+            icon = icon,
+            title = label,
+            description = description,
+            time = timeAgo,
+            iconColor = iconColor
+        )
+    } else {
+        ActivityListItem(
+            icon = icon,
+            title = label,
+            description = description,
+            time = timeAgo,
+            iconTint = iconColor
+        )
     }
 }
 
-@Composable
-fun StorageReclaimedCard() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(140.dp),
-        shape = RoundedCornerShape(32.dp),
-        color = Color(0xFFE0F7FA).copy(alpha = 0.5f)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                Icons.Default.Dehaze,
-                contentDescription = null,
-                tint = Color(0xFF00838F),
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                "4.2 GB",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF00838F)
-                )
-            )
-            Text(
-                "STORAGE RECLAIMED",
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                color = Color(0xFF00838F)
-            )
-        }
-    }
+private fun scanTypeIcon(type: String): ImageVector = when (type) {
+    "IMAGE"    -> Icons.Default.PhotoLibrary
+    "VIDEO"    -> Icons.Default.Videocam
+    "FILE_PDF" -> Icons.Default.Description
+    "FILE_APK" -> Icons.Default.Android
+    else       -> Icons.Default.Scanner
 }
 
-@Composable
-fun ActivityCardDark(
-    icon: ImageVector,
-    title: String,
-    time: String,
-    description: String,
-    buttonText: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            icon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
-                Text(
-                    time,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(buttonText)
-            }
-        }
+private fun scanTypeLabel(type: String): String = when (type) {
+    "IMAGE"    -> "Photos Scan"
+    "VIDEO"    -> "Videos Scan"
+    "FILE_PDF" -> "Documents Scan"
+    "FILE_APK" -> "APKs Scan"
+    else       -> "File Scan"
+}
+
+private fun formatTimeAgo(timestamp: Long): String {
+    val diff = System.currentTimeMillis() - timestamp
+    val hours = TimeUnit.MILLISECONDS.toHours(diff)
+    val days = TimeUnit.MILLISECONDS.toDays(diff)
+    return when {
+        hours < 1  -> "JUST NOW"
+        hours < 24 -> "${hours}H AGO"
+        days == 1L -> "YESTERDAY"
+        days < 7   -> "${days}D AGO"
+        else       -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(timestamp))
     }
 }
 
@@ -433,7 +315,7 @@ fun CompactActivityItem(
                     title,
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
                     modifier = Modifier.weight(1f)
                 )
@@ -516,7 +398,8 @@ fun ActivityListItem(
                                 action,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = if (action == "Dismiss") MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
+                                    color = if (action == "Dismiss") MaterialTheme.colorScheme.onSurfaceVariant
+                                            else MaterialTheme.colorScheme.primary
                                 )
                             )
                         }
@@ -545,37 +428,6 @@ fun ActivityListItem(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun EfficiencyBanner() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp)
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1E1E1E), Color(0xFF0D1B2A))
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                "Efficiency is an art.",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            )
-            Text(
-                "Keep your workspace lean.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
