@@ -89,6 +89,14 @@
             android:label="Notification Demo"
             android:theme="@style/Theme.DeDup" />
 
+        <service
+            android:name=".core.firebase.notifications.FirebaseMessageService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".core.widget.StorageWidgetReceiver"
             android:exported="true"

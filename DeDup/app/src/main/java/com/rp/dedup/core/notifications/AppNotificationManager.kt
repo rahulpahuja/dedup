@@ -11,6 +11,9 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.rp.dedup.R
 
 class AppNotificationManager(private val context: Context) {
 
@@ -98,17 +101,15 @@ class AppNotificationManager(private val context: Context) {
             setPackage(context.packageName)
         }
 
-        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val flags =
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
-        }
 
         val positivePendingIntent = PendingIntent.getBroadcast(context, id * 2, positiveIntent, flags)
         val negativePendingIntent = PendingIntent.getBroadcast(context, id * 2 + 1, negativeIntent, flags)
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // Placeholder icon
+            .setSmallIcon(R.drawable.ic_dedup_logo)
+            .setColor(ContextCompat.getColor(context, R.color.purple_500)) // Replace with your app's primary color
             .setContentTitle(title)
             .setContentText(description)
             .setPriority(if (isUrgent) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
@@ -120,7 +121,44 @@ class AppNotificationManager(private val context: Context) {
             try {
                 notify(id, builder.build())
             } catch (e: SecurityException) {
-                // Should be caught by hasNotificationPermission() check, but safety first
+                // Already checked permission, but safety first
+                FirebaseCrashlytics.getInstance().recordException(e)
+            }
+        }
+    }
+
+    /**
+     * Shows a standard notification with a title and message.
+     *
+     * @param id Unique ID for the notification
+     * @param title Notification title
+     * @param message Notification body text
+     * @param isUrgent Whether to use the High Importance channel
+     */
+    fun showSimpleNotification(
+        id: Int,
+        title: String,
+        message: String,
+        isUrgent: Boolean = false
+    ) {
+        if (!hasNotificationPermission()) return
+
+        val channelId = if (isUrgent) CHANNEL_URGENT_ID else CHANNEL_DEFAULT_ID
+
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_dedup_logo)
+            .setColor(ContextCompat.getColor(context, R.color.purple_500)) // Replace with your app's primary color
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(if (isUrgent) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        with(NotificationManagerCompat.from(context)) {
+            try {
+                notify(id, builder.build())
+            } catch (e: SecurityException) {
+                // Already checked permission, but safety first
+                FirebaseCrashlytics.getInstance().recordException(e)
             }
         }
     }

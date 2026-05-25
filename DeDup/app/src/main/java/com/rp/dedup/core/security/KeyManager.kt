@@ -5,6 +5,7 @@ import android.util.Base64
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import java.io.File
 import java.security.KeyStore
 import java.security.SecureRandom
 import androidx.core.content.edit
@@ -33,11 +34,21 @@ object KeyManager {
                 val keyStore = KeyStore.getInstance("AndroidKeyStore")
                 keyStore.load(null)
                 keyStore.deleteEntry("_androidx_security_master_key_")
+                keyStore.deleteEntry(DB_KEY_ALIAS) // Just in case
             } catch (ex: Exception) {
                 Log.e("KeyManager", "Failed to delete master key from KeyStore", ex)
             }
             
-            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit { clear() }
+            try {
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+                // Manually delete the preferences file to be absolutely sure
+                val prefsFile = File(context.filesDir.parent, "shared_prefs/$PREFS_NAME.xml")
+                if (prefsFile.exists()) {
+                    prefsFile.delete()
+                }
+            } catch (ex: Exception) {
+                Log.e("KeyManager", "Failed to clear shared preferences", ex)
+            }
             
             // Try one last time. If it fails now, we let the exception bubble up.
             getOrGenerateKey(context)
@@ -45,17 +56,27 @@ object KeyManager {
     }
 
     private fun getOrGenerateKey(context: Context): ByteArray {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
+        val masterKey = try {
+            MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+        } catch (e: Exception) {
+            Log.e("KeyManager", "Failed to create MasterKey", e)
+            throw e
+        }
 
-        val sharedPreferences = EncryptedSharedPreferences.create(
-            context,
-            PREFS_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-        )
+        val sharedPreferences = try {
+            EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+            )
+        } catch (e: Exception) {
+            Log.e("KeyManager", "Failed to create EncryptedSharedPreferences", e)
+            throw e
+        }
 
         val encodedKey = sharedPreferences.getString(DB_KEY_ALIAS, null)
         return if (encodedKey != null) {

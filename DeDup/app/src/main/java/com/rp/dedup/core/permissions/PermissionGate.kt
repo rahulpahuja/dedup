@@ -61,11 +61,16 @@ fun PermissionGate(
         }
     }
 
+    // Use a reference to the launcher to safely call it from effects or callbacks
+    val latestLauncher = rememberUpdatedState(launcher)
+
     // Auto-fire system dialog on first composition
-    LaunchedEffect(Unit) {
+    LaunchedEffect(allGranted) {
         if (!allGranted) {
             val denied = manager.filterDenied(permissions)
-            if (denied.isNotEmpty()) launcher.launch(denied.toTypedArray())
+            if (denied.isNotEmpty()) {
+                latestLauncher.value.launch(denied.toTypedArray())
+            }
         }
     }
 
@@ -77,7 +82,36 @@ fun PermissionGate(
             message = rationaleMessage,
             onRetry = {
                 val denied = manager.filterDenied(permissions)
-                if (denied.isNotEmpty()) launcher.launch(denied.toTypedArray())
+                if (denied.isNotEmpty()) {
+                    // Check if it's notifications and if we should redirect to settings
+                    if (permissions.contains(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                        val activity = context as? android.app.Activity
+                        if (activity != null && !androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(activity, android.Manifest.permission.POST_NOTIFICATIONS)) {
+                            // User has denied permanently or "Don't ask again" 
+                            // OR it's the first time and we should try launcher first.
+                            // To be safe, try launcher first, then use a settings intent.
+                            latestLauncher.value.launch(denied.toTypedArray())
+                            
+                            // If they click again and it's still denied, they'll see this logic.
+                            // Better approach: use a helper to open settings.
+                            // Handle older versions vs newer versions for notification settings
+                            val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                    putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                }
+                            } else {
+                                android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = android.net.Uri.fromParts("package", context.packageName, null)
+                                }
+                            }
+                            context.startActivity(intent)
+                        } else {
+                            latestLauncher.value.launch(denied.toTypedArray())
+                        }
+                    } else {
+                        latestLauncher.value.launch(denied.toTypedArray())
+                    }
+                }
             }
         )
     }
@@ -148,7 +182,12 @@ private fun PermissionDeniedCard(
                     shape    = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Grant Access", fontWeight = FontWeight.SemiBold)
+                    val buttonText = if (title.contains("Notifications", ignoreCase = true)) {
+                        "Open Settings"
+                    } else {
+                        "Grant Access"
+                    }
+                    Text(buttonText, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

@@ -111,6 +111,11 @@ fun AppNavHost(navController: NavHostController) {
                     if (showBottomNav) BottomNavigationBar(navController)
                 }
             ) { innerPadding ->
+            PermissionGate(
+                permissions = PermissionManager.NOTIFICATIONS,
+                rationaleTitle = "Notifications Required",
+                rationaleMessage = "To keep your storage clean and alert you of large duplicates, DeDup requires notification access. If previously denied, please enable it in Settings."
+            ) {
             NavHost(
                 navController = navController,
                 startDestination = Screen.Splash.route,
@@ -230,6 +235,7 @@ fun AppNavHost(navController: NavHostController) {
                     FileScannerGatekeeper(navController, fileType, extensions)
                 }
             } // NavHost
+            } // PermissionGate
             } // Scaffold innerPadding
         } // ModalNavigationDrawer
     } // CompositionLocalProvider

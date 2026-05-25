@@ -14,6 +14,7 @@ import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.dao.ScanHistoryDao
 import com.rp.dedup.core.security.KeyManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
+import java.io.File
 
 @Database(entities = [ScannedImage::class, ScanHistory::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -46,42 +47,46 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                // Initialize SQLCipher libraries
-                try {
-                    System.loadLibrary("sqlcipher")
-                } catch (_: Exception) {
-                    // Native library already loaded or unavailable
-                }
+                INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
+            }
+        }
+
+        private fun buildDatabase(context: Context): AppDatabase {
+            val dbName = Constants.DATABASE_NAME
+            val builder = Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                dbName
+            )
+                .addMigrations(MIGRATION_1_2)
+                .fallbackToDestructiveMigration(dropAllTables = true)
+
+            return try {
+                val key = KeyManager.getOrCreateDatabaseKey(context)
+                builder.openHelperFactory(SupportOpenHelperFactory(key))
+                val db = builder.build()
+                // Force opening the database to catch encryption issues early
+                db.openHelper.writableDatabase
+                db
+            } catch (e: Exception) {
+                Log.e("AppDatabase", "Database initialization failed, attempting recovery", e)
                 
-                val builder = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    Constants.DATABASE_NAME
-                )
-                    .addMigrations(MIGRATION_1_2)
-                    .fallbackToDestructiveMigration(dropAllTables = true)
-
-                val instance = try {
-                    val key = KeyManager.getOrCreateDatabaseKey(context)
-                    builder.openHelperFactory(SupportOpenHelperFactory(key))
-                    val db = builder.build()
-                    // Force opening the database to catch encryption issues early
-                    db.openHelper.writableDatabase
-                    db
-                } catch (e: Exception) {
-                    Log.e("AppDatabase", "Database initialization failed, attempting recovery", e)
-                    // This happens if KeyManager failed, the database was previously unencrypted, 
-                    // has a different password, or is corrupted.
-                    context.applicationContext.deleteDatabase(Constants.DATABASE_NAME)
-                    
-                    // Try one more time with a fresh key (KeyManager recovery should have happened)
-                    val key = KeyManager.getOrCreateDatabaseKey(context)
-                    builder.openHelperFactory(SupportOpenHelperFactory(key))
-                    builder.build()
+                // Close any potential connections and delete the database file
+                try {
+                    context.applicationContext.deleteDatabase(dbName)
+                    // Also delete auxiliary files explicitly
+                    val dbFile = context.getDatabasePath(dbName)
+                    File("${dbFile.path}-wal").delete()
+                    File("${dbFile.path}-shm").delete()
+                    File("${dbFile.path}-journal").delete()
+                } catch (ex: Exception) {
+                    Log.e("AppDatabase", "Error deleting database files", ex)
                 }
 
-                INSTANCE = instance
-                instance
+                // Try one more time with a fresh start (KeyManager recovery should have happened)
+                val key = KeyManager.getOrCreateDatabaseKey(context)
+                builder.openHelperFactory(SupportOpenHelperFactory(key))
+                builder.build()
             }
         }
     }

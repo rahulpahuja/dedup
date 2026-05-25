@@ -131,7 +131,7 @@ fun ImageScannerScreen(navController: NavHostController) {
             TopAppBar(
                 title = {
                     Text(
-                        "DeDuplicator",
+                        "DeDup",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
