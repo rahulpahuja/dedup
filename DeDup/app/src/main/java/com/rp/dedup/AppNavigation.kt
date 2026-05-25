@@ -25,7 +25,6 @@ import com.rp.dedup.UIConstants.ROUTE_CLEANUP
 import com.rp.dedup.UIConstants.ROUTE_DASHBOARD
 import com.rp.dedup.UIConstants.ROUTE_FILE_BROWSER
 import com.rp.dedup.UIConstants.ROUTE_FILE_SCANNER
-import com.rp.dedup.UIConstants.ROUTE_IMAGE_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_LOGIN
 import com.rp.dedup.UIConstants.ROUTE_PRIVACY_POLICY
 import com.rp.dedup.UIConstants.ROUTE_RESULTS_MEDIA
@@ -73,6 +72,7 @@ sealed class Screen(val route: String) {
     object EmptyFolder : Screen(ROUTE_EMPTY_FOLDER)
     object BigFileMap : Screen(ROUTE_BIG_FILE_MAP)
     object WhatsAppCleaner : Screen(ROUTE_WHATSAPP_CLEANER)
+    object GoogleDriveScanner : Screen(UIConstants.ROUTE_GOOGLE_DRIVE_SCANNER)
 }
 
 @Composable
@@ -225,6 +225,9 @@ fun AppNavHost(navController: NavHostController) {
                     ) {
                         WhatsAppCleanerScreen(navController)
                     }
+                }
+                composable(Screen.GoogleDriveScanner.route) {
+                    GoogleDriveScannerScreen(navController)
                 }
                 composable(
                     route = Screen.FileScanner.route,

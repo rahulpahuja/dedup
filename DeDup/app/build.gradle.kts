@@ -65,6 +65,8 @@ android {
         create("dev") {
             dimension = "environment"
             versionNameSuffix = "-dev"
+            // Optimization: Only build English resources and xxhdpi images to speed up dev builds
+            androidResources.localeFilters += "en"
         }
         create("prod") {
             dimension = "environment"
@@ -108,6 +110,7 @@ android {
                 "META-INF/LICENSE.md",
                 "META-INF/LICENSE-notice.md",
                 "META-INF/NOTICE.md",
+                "META-INF/DEPENDENCIES",
                 "META-INF/*.kotlin_module",
                 "META-INF/versions/9/previous-compilation-data.bin",
                 "kotlin-tooling-metadata.json"
@@ -176,6 +179,12 @@ dependencies {
     implementation(libs.sqlcipher)
     implementation(libs.play.integrity)
     implementation(libs.androidx.profileinstaller)
+
+    // Google Drive REST API
+    implementation("com.google.api-client:google-api-client-android:2.6.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20230822-2.0.0")
+    implementation("com.google.http-client:google-http-client-gson:1.44.1")
+    implementation("com.google.http-client:google-http-client-android:1.44.1")
 
     testImplementation(libs.junit)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")

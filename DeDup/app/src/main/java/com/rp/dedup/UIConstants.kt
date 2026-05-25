@@ -26,6 +26,7 @@ object UIConstants {
     const val ROUTE_EMPTY_FOLDER            = "empty_folder"
     const val ROUTE_BIG_FILE_MAP            = "big_file_map"
     const val ROUTE_WHATSAPP_CLEANER        = "whatsapp_cleaner"
+    const val ROUTE_GOOGLE_DRIVE_SCANNER    = "google_drive_scanner"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -51,6 +52,7 @@ object UIConstants {
         if (route == ROUTE_EMPTY_FOLDER)            return "Empty Folder Remover"
         if (route == ROUTE_BIG_FILE_MAP)            return "Big File Map"
         if (route == ROUTE_WHATSAPP_CLEANER)        return "WhatsApp Cleaner"
+        if (route == ROUTE_GOOGLE_DRIVE_SCANNER)    return "Google Drive Scan"
         return APP_NAME
     }
 

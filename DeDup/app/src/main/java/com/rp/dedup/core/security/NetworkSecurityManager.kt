@@ -14,7 +14,7 @@ object NetworkSecurityManager {
     private const val TAG = "NetworkSecurityManager"
 
     // This should be your Google Cloud Project Number
-    private const val CLOUD_PROJECT_NUMBER = 0L 
+    private const val CLOUD_PROJECT_NUMBER = 300582514488L
 
     /**
      * Requests an integrity token from the Play Integrity API.

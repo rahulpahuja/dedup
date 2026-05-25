@@ -14,7 +14,6 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
-import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -148,10 +147,12 @@ class FirebaseAuthManager(
                 activity = activity,
                 filterByAuthorizedAccounts = true
             )
-        } catch (e: NoCredentialException) {
-            Log.d(TAG, "No authorised accounts; falling back to all-accounts flow.")
+        } catch (e: Exception) {
+            if (e is CancellationException || e is GetCredentialCancellationException) throw e
+            
+            Log.d(TAG, "Authorised accounts flow failed or no accounts found: ${e.message}. Falling back to all-accounts flow.")
             try {
-                // Second attempt: GetSignInWithGoogleOption (Standard "Sign in with Google" UI)
+                // Second attempt: Fallback to all-accounts flow
                 requestSignInWithGoogle(
                     credentialManager = credentialManager,
                     activity = activity
@@ -164,13 +165,6 @@ class FirebaseAuthManager(
                 handleCredentialException(e2, "all-accounts")
                 null
             }
-        } catch (e: GetCredentialCancellationException) {
-            Log.d(TAG, "User cancelled Google sign-in")
-            toastManager.showShort("Sign-in cancelled")
-            null
-        } catch (e: GetCredentialException) {
-            handleCredentialException(e, "authorised-accounts")
-            null
         }
     }
 
