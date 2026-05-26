@@ -8,9 +8,6 @@ Dedup helps users identify and remove duplicate and unnecessary files using inte
 
 ## Screenshots
 
-| Home | Smart Cleaner | Duplicate Scan |
-|---|---|---|
-| ![Home](screenshots/home.png) | ![Smart Cleaner](screenshots/smart_cleaner.png) | ![Duplicate Scan](screenshots/duplicate_scan.png) |
 
 | Media Analysis | Storage Insights | Cleanup Results |
 |---|---|---|
