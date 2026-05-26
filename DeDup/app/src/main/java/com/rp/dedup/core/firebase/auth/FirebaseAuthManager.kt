@@ -31,15 +31,23 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.rp.dedup.core.security.NativeLib
 import com.rp.dedup.core.notifications.ToastManager
+import com.rp.dedup.core.firebase.db.FirebaseDbManager
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
 
 class FirebaseAuthManager(
     private val toastManager: ToastManager,
+    private val dbManager: FirebaseDbManager = FirebaseDbManager(),
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
+
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     companion object {
         private const val TAG = "FirebaseAuthManager"
@@ -143,34 +151,57 @@ class FirebaseAuthManager(
 
         return try {
             // First attempt: GetGoogleIdOption (can use auto-select/One Tap if authorized)
+            // Note: On Android 14+, multiple accounts can cause TransactionTooLargeException
+            // if using GetGoogleIdOption. We catch and fallback in such cases.
             requestGoogleIdToken(
                 credentialManager = credentialManager,
                 activity = activity,
                 filterByAuthorizedAccounts = true
             )
-        } catch (e: NoCredentialException) {
-            Log.d(TAG, "No authorised accounts; falling back to all-accounts flow.")
-            try {
-                // Second attempt: GetSignInWithGoogleOption (Standard "Sign in with Google" UI)
-                requestSignInWithGoogle(
-                    credentialManager = credentialManager,
-                    activity = activity
-                )
-            } catch (e2: GetCredentialCancellationException) {
-                Log.d(TAG, "User cancelled Google sign-in")
-                toastManager.showShort("Sign-in cancelled")
-                null
-            } catch (e2: GetCredentialException) {
-                handleCredentialException(e2, "all-accounts")
-                null
+        } catch (e: Exception) {
+            val isTransactionTooLarge = e.message?.contains("TransactionTooLargeException", ignoreCase = true) == true
+            
+            when {
+                e is NoCredentialException || isTransactionTooLarge -> {
+                    if (isTransactionTooLarge) {
+                        Log.w(TAG, "TransactionTooLargeException hit (Android 14+ multiple accounts bug). Falling back.")
+                    } else {
+                        Log.d(TAG, "No authorised accounts; falling back to all-accounts flow.")
+                    }
+                    
+                    try {
+                        // Second attempt: GetSignInWithGoogleOption (Standard "Sign in with Google" UI)
+                        // This option is more resilient to the "multiple accounts" bug on Android 14+
+                        requestSignInWithGoogle(
+                            credentialManager = credentialManager,
+                            activity = activity
+                        )
+                    } catch (_: GetCredentialCancellationException) {
+                        Log.d(TAG, "User cancelled Google sign-in")
+                        scope.launch(Dispatchers.IO) {
+                            dbManager.logErrorReport("SIGNIN_CANCELLED", "User cancelled during all-accounts flow")
+                        }
+                        toastManager.showShort("Sign-in cancelled")
+                        null
+                    } catch (e2: GetCredentialException) {
+                        handleCredentialException(e2, "all-accounts")
+                        null
+                    }
+                }
+                e is GetCredentialCancellationException -> {
+                    Log.d(TAG, "User cancelled Google sign-in")
+                    scope.launch(Dispatchers.IO) {
+                        dbManager.logErrorReport("SIGNIN_CANCELLED", "User cancelled during authorised-accounts flow")
+                    }
+                    toastManager.showShort("Sign-in cancelled")
+                    null
+                }
+                e is GetCredentialException -> {
+                    handleCredentialException(e, "authorised-accounts")
+                    null
+                }
+                else -> throw e
             }
-        } catch (e: GetCredentialCancellationException) {
-            Log.d(TAG, "User cancelled Google sign-in")
-            toastManager.showShort("Sign-in cancelled")
-            null
-        } catch (e: GetCredentialException) {
-            handleCredentialException(e, "authorised-accounts")
-            null
         }
     }
 
@@ -187,6 +218,15 @@ class FirebaseAuthManager(
         val message = e.message ?: "Unknown error"
         Log.e(TAG, "Google sign-in failed ($flow flow). Type: ${e::class.java.simpleName}, Message: $message", e)
         
+        // Log to Firebase Database with Device Details (Non-blocking)
+        scope.launch(Dispatchers.IO) {
+            dbManager.logErrorReport(
+                errorType = "GOOGLE_SIGNIN_ERROR",
+                message = "Flow: $flow, Exception: ${e::class.java.simpleName}, Msg: $message",
+                exception = e
+            )
+        }
+
         val userMessage = when {
             message.contains("NETWORK_ERROR", ignoreCase = true) || message.contains("net::ERR", ignoreCase = true) ->
                 "Network error. Please check your connection and device clock settings."
