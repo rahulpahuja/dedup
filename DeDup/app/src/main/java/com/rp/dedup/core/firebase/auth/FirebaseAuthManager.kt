@@ -18,7 +18,6 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.AuthCredential
@@ -149,13 +148,18 @@ class FirebaseAuthManager(
 
         val credentialManager = CredentialManager.create(activity)
 
+        val serverClientId = NativeLib().getGoogleWebClientId()
+        
+        // Log basic configuration info to help debugging (Obfuscated Client ID)
+        val obfuscatedClientId = if (serverClientId.length > 10) 
+            "${serverClientId.take(5)}...${serverClientId.takeLast(5)}" else "invalid"
+            
         return try {
             // First attempt: GetGoogleIdOption (can use auto-select/One Tap if authorized)
-            // Note: On Android 14+, multiple accounts can cause TransactionTooLargeException
-            // if using GetGoogleIdOption. We catch and fallback in such cases.
             requestGoogleIdToken(
                 credentialManager = credentialManager,
                 activity = activity,
+                serverClientId = serverClientId,
                 filterByAuthorizedAccounts = true
             )
         } catch (e: Exception) {
@@ -170,16 +174,21 @@ class FirebaseAuthManager(
                     }
                     
                     try {
-                        // Second attempt: GetSignInWithGoogleOption (Standard "Sign in with Google" UI)
-                        // This option is more resilient to the "multiple accounts" bug on Android 14+
-                        requestSignInWithGoogle(
+                        // Second attempt: GetGoogleIdOption with filterByAuthorizedAccounts = false
+                        // This is more robust than GetSignInWithGoogleOption for programmatic flows
+                        requestGoogleIdToken(
                             credentialManager = credentialManager,
-                            activity = activity
+                            activity = activity,
+                            serverClientId = serverClientId,
+                            filterByAuthorizedAccounts = false
                         )
                     } catch (_: GetCredentialCancellationException) {
-                        Log.d(TAG, "User cancelled Google sign-in")
+                        Log.d(TAG, "User cancelled Google sign-in (all-accounts)")
                         scope.launch(Dispatchers.IO) {
-                            dbManager.logErrorReport("SIGNIN_CANCELLED", "User cancelled during all-accounts flow")
+                            dbManager.logErrorReport(
+                                errorType = "SIGNIN_CANCELLED",
+                                message = "User cancelled during all-accounts flow. ClientID: $obfuscatedClientId"
+                            )
                         }
                         toastManager.showShort("Sign-in cancelled")
                         null
@@ -189,9 +198,12 @@ class FirebaseAuthManager(
                     }
                 }
                 e is GetCredentialCancellationException -> {
-                    Log.d(TAG, "User cancelled Google sign-in")
+                    Log.d(TAG, "User cancelled Google sign-in (authorised)")
                     scope.launch(Dispatchers.IO) {
-                        dbManager.logErrorReport("SIGNIN_CANCELLED", "User cancelled during authorised-accounts flow")
+                        dbManager.logErrorReport(
+                            errorType = "SIGNIN_CANCELLED",
+                            message = "User cancelled during authorised-accounts flow. ClientID: $obfuscatedClientId"
+                        )
                     }
                     toastManager.showShort("Sign-in cancelled")
                     null
@@ -242,9 +254,9 @@ class FirebaseAuthManager(
     private suspend fun requestGoogleIdToken(
         credentialManager: CredentialManager,
         activity: Activity,
+        serverClientId: String,
         filterByAuthorizedAccounts: Boolean
     ): String? {
-        val serverClientId = NativeLib().getGoogleWebClientId()
         if (serverClientId.isBlank()) {
             Log.e(TAG, "Google Server Client ID is empty.")
             return null
@@ -259,28 +271,6 @@ class FirebaseAuthManager(
 
         val request = GetCredentialRequest.Builder()
             .addCredentialOption(googleIdOption)
-            .build()
-
-        val result = credentialManager.getCredential(
-            context = activity,
-            request = request
-        )
-        return extractGoogleIdToken(result)
-    }
-
-    private suspend fun requestSignInWithGoogle(
-        credentialManager: CredentialManager,
-        activity: Activity
-    ): String? {
-        val serverClientId = NativeLib().getGoogleWebClientId()
-        if (serverClientId.isBlank()) return null
-
-        val signInWithGoogleOption = GetSignInWithGoogleOption.Builder(serverClientId)
-            .setNonce(generateNonce())
-            .build()
-
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(signInWithGoogleOption)
             .build()
 
         val result = credentialManager.getCredential(
