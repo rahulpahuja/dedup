@@ -6,9 +6,23 @@ Dedup helps users identify and remove duplicate and unnecessary files using inte
 
 ---
 
+## Screenshots
+
+| Home | Smart Cleaner | Duplicate Scan |
+|---|---|---|
+| ![Home](screenshots/home.png) | ![Smart Cleaner](screenshots/smart_cleaner.png) | ![Duplicate Scan](screenshots/duplicate_scan.png) |
+
+| Media Analysis | Storage Insights | Cleanup Results |
+|---|---|---|
+| ![Dash](screenshots/1.png) | ![Files](screenshots/2.png) | ![Settings](screenshots/3.png) | ![Scan](screenshots/4.png) | ![Nav](screenshots/5.png) |
+
+> Create a `screenshots` folder in the repository root and place your Play Store images inside it.
+
+---
+
 ## Overview
 
-Modern smartphones accumulate large amounts of redundant content over time:
+Dedup helps clean:
 
 - Duplicate photos
 - Repeated videos
@@ -17,63 +31,41 @@ Modern smartphones accumulate large amounts of redundant content over time:
 - Re-downloaded documents
 - WhatsApp media clutter
 
-Dedup scans device storage and groups duplicate or similar files to help users recover space quickly and safely.
+It scans device storage and intelligently groups duplicate or similar files to recover storage safely and efficiently.
 
 ---
 
 ## Features
 
-### Media Deduplication
-
-- Duplicate image detection
-- Duplicate video detection
-- Duplicate PDF detection
-- Duplicate APK detection
-
-### Smart Cleaning
-
-- WhatsApp junk cleanup
-- Meme and forwarded media detection
-- Download folder cleanup
-- Unused APK identification
-
-### Intelligent Analysis
-
-- Exact duplicate detection
-- Similar image grouping
-- Metadata-based matching
-- Media fingerprinting
-
-### Privacy First
-
-- Local-first processing
-- No unnecessary cloud uploads
-- User-controlled deletion flow
+| Category | Capabilities |
+|---|---|
+| Media Deduplication | Duplicate image, video, PDF, and APK detection |
+| Smart Cleaning | WhatsApp junk cleanup, meme detection, download cleanup |
+| Intelligent Analysis | Exact duplicate detection, metadata matching, media fingerprinting |
+| Privacy First | Local-first processing, no unnecessary cloud uploads |
 
 ---
 
-## Platform
+## Platform Support
 
-Currently supported:
-
-- Android
-
-Planned support:
-
-- iOS
-- Desktop platforms
-- Cloud storage integrations
+| Current | Planned |
+|---|---|
+| Android | iOS |
+|  | Desktop platforms |
+|  | Cloud integrations |
 
 ---
 
 ## Technology Stack
 
-- Kotlin
-- Android SDK
-- Jetpack Components
-- Coroutines
-- Room Database
-- MediaStore APIs
+| Layer | Technologies |
+|---|---|
+| Language | Kotlin |
+| Framework | Android SDK |
+| Architecture | Jetpack Components |
+| Concurrency | Coroutines |
+| Storage | Room Database |
+| Media Access | MediaStore APIs |
 
 ---
 
@@ -81,7 +73,7 @@ Planned support:
 
 This repository is private and proprietary.
 
-Installation and access are currently limited to authorized testers and collaborators only.
+Access is currently limited to authorized testers and collaborators only.
 
 ---
 
@@ -93,9 +85,7 @@ For becoming a part of the early testing group, please fill out the registration
 
 ## Project Status
 
-Dedup is currently under active development.
-
-Features, APIs, and internal implementations may change during the preview phase.
+Dedup is under active development. Features, APIs, and internal implementations may change during the preview phase.
 
 ---
 
@@ -121,8 +111,9 @@ By contributing to this repository, you agree that all contributions become part
 
 ## Author
 
-Rahul Pahuja  
-Ex-Staff Software Engineer Cyberark (Now Palo Alto IDIRA) | Mobile Architect | Founder, Mobile1X
+| Name | Role |
+|---|---|
+| Rahul Pahuja | Staff Software Engineer · Mobile Architect · Founder, Mobile1X |
 
 ---
 
