@@ -34,12 +34,21 @@ fun EmptyFolderScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Empty Folder Remover", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Empty Folder Remover",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                ),
                 actions = {
                     val results = state as? EmptyFolderState.Results
                     if (results != null && results.folders.isNotEmpty()) {

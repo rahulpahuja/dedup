@@ -55,7 +55,10 @@ fun BigFileMapScreen(navController: NavHostController) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Big File Map", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Big File Map",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
                         if (navStack.isNotEmpty()) {
                             Text(
                                 navStack.last().name,
@@ -72,7 +75,11 @@ fun BigFileMapScreen(navController: NavHostController) {
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->

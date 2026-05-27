@@ -145,7 +145,7 @@ fun FileBrowserContent(
                                     if (currentDir.absolutePath == "/storage/emulated/0"
                                     ) UIConstants.FILE_BROWSER_ROOT_LABEL else name
                                 },
-                                style = MaterialTheme.typography.titleMedium.copy(
+                                style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
                                 maxLines = 1,
@@ -182,7 +182,8 @@ fun FileBrowserContent(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
 
