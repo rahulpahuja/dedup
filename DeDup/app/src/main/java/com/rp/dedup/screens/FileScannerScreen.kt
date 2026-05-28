@@ -157,12 +157,7 @@ fun FileScannerContent(
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = {
-                    Text(
-                        title,
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
+                title = title,
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

@@ -39,12 +39,7 @@ fun AboutScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = {
-                    Text(
-                        "About",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
+                title = "About",
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(

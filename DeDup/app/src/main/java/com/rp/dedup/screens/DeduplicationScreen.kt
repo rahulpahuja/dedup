@@ -64,12 +64,7 @@ fun DeduplicationScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = {
-                    Text(
-                        "DeDup",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
+                title = "DeDup",
                 navigationIcon = {
                     IconButton(onClick = { }) {
                         Icon(Icons.Default.Menu, contentDescription = "Menu")

@@ -93,12 +93,7 @@ fun ActivityLogScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = {
-                    Text(
-                        "Activity Log",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
+                title = "Activity Log",
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
