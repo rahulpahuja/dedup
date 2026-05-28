@@ -38,6 +38,7 @@ import com.rp.dedup.core.search.SmartJunkRepository
 import com.rp.dedup.core.viewmodels.SmartJunkState
 import com.rp.dedup.core.viewmodels.SmartJunkViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +72,7 @@ fun SmartJunkScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Smart AI Cleanup",
@@ -82,11 +83,7 @@ fun SmartJunkScreen(navController: NavHostController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
         bottomBar = {

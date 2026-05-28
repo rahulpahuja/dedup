@@ -47,6 +47,7 @@ import java.util.Date
 import android.provider.DocumentsContract
 import android.net.Uri
 import android.os.Environment
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +93,7 @@ fun SettingsScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Settings",
@@ -103,11 +104,7 @@ fun SettingsScreen(navController: NavHostController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->

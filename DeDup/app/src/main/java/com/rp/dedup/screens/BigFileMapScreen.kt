@@ -37,6 +37,7 @@ import com.rp.dedup.core.deepoptimization.TreemapLayoutCalculator.TreemapCell
 import com.rp.dedup.core.viewmodels.BigFileMapState
 import com.rp.dedup.core.viewmodels.BigFileMapViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 private val TREEMAP_PALETTE = listOf(
     Color(0xFF4285F4), Color(0xFFEA4335), Color(0xFF34A853), Color(0xFFFBBC05),
@@ -55,7 +56,7 @@ fun BigFileMapScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Column {
                         Text(
@@ -78,11 +79,7 @@ fun BigFileMapScreen(navController: NavHostController) {
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { padding ->

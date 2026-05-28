@@ -26,6 +26,7 @@ import com.rp.dedup.core.data.*
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerState
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 private val WaGreen = Color(0xFF25D366)
 
@@ -39,7 +40,7 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "WhatsApp Cleaner",
@@ -50,11 +51,7 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { padding ->

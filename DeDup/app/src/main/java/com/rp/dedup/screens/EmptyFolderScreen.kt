@@ -23,6 +23,7 @@ import com.rp.dedup.core.data.EmptyFolder
 import com.rp.dedup.core.viewmodels.EmptyFolderState
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +37,7 @@ fun EmptyFolderScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Empty Folder Remover",
@@ -48,10 +49,6 @@ fun EmptyFolderScreen(navController: NavHostController) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                ),
                 actions = {
                     val results = state as? EmptyFolderState.Results
                     if (results != null && results.folders.isNotEmpty()) {

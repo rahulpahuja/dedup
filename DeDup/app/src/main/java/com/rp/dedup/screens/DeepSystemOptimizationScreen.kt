@@ -25,13 +25,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.UIConstants
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeepSystemOptimizationScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Deep System Optimization",
@@ -42,11 +43,7 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { padding ->

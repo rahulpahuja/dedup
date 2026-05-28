@@ -38,8 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -58,6 +56,7 @@ import com.rp.dedup.ui.theme.RedBadge
 import com.rp.dedup.ui.theme.RedText
 import com.rp.dedup.ui.theme.SelectionBarBackground
 import kotlinx.coroutines.launch
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,10 +65,10 @@ fun DuplicateClustersScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
-                        "DeDuplicator",
+                        "DeDup",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 },
@@ -99,11 +98,7 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
         bottomBar = {

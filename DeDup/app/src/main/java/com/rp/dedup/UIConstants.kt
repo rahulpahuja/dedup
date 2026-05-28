@@ -55,7 +55,7 @@ object UIConstants {
     }
 
     // ── App-level strings ─────────────────────────────────────────────────────
-    const val APP_NAME    = "DeDuplicator"
+    const val APP_NAME    = "DeDup"
     const val APP_VERSION = "v1.0.0"
 
     // ── Scan type identifiers (must match DB values) ───────────────────────────

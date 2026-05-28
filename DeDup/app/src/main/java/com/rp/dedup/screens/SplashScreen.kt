@@ -279,7 +279,7 @@ fun SplashScreen(navController: NavHostController) {
 
             // App name — slides up
             Text(
-                text = "Deduplicator",
+                text = "DeDup",
                 modifier = Modifier.graphicsLayer {
                     translationY = nameTranslationY.dp.toPx()
                     alpha = nameAlpha

@@ -43,8 +43,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,6 +66,7 @@ import com.rp.dedup.core.ScannerContent
 import com.rp.dedup.core.viewmodels.ScannerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,10 +127,10 @@ fun ImageScannerScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
-                        "DeDuplicator",
+                        "DeDup",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 },
@@ -153,11 +152,7 @@ fun ImageScannerScreen(navController: NavHostController) {
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->

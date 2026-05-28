@@ -15,13 +15,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivacyPolicyScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Privacy Policy",
@@ -35,11 +36,7 @@ fun PrivacyPolicyScreen(navController: NavHostController) {
                             contentDescription = "Back"
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->

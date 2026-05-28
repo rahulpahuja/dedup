@@ -35,6 +35,7 @@ import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.CleanupViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
+import com.rp.dedup.core.ui.DeDupTopBar
 
 private data class LargeFileItemLocal(
     val title: String,
@@ -103,10 +104,10 @@ fun FileCleanupScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
-                        "DeDuplicator",
+                        "DeDup",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 },
@@ -129,11 +130,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
     ) { paddingValues ->

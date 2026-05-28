@@ -35,6 +35,7 @@ import com.rp.dedup.core.data.SocialMediaType
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerState
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +49,7 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Social Media Cleaner",
@@ -59,11 +60,7 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
         bottomBar = {

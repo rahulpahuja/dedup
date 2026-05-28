@@ -35,6 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import com.rp.dedup.core.ui.DeDupTopBar
 
 // Pre-define the date format to avoid repeated instantiation during list scrolling
 private val historyDateFormatter = SimpleDateFormat("MMM d, yyyy · HH:mm", Locale.getDefault())
@@ -58,7 +59,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Scan History",
@@ -80,11 +81,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->

@@ -122,7 +122,7 @@ fun LoginScreen(
 
             // Headline
             Text(
-                text = "Welcome back.",
+                text = "Welcome to DeDup",
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -131,7 +131,7 @@ fun LoginScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Sign in to continue cleaning your gallery",
+                text = "Sign in to continue cleaning your duplicate images,\n videos and more.",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color.White.copy(alpha = 0.45f)
                 )

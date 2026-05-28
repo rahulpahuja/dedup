@@ -47,6 +47,7 @@ import com.rp.dedup.core.data.ScannedFile
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.ui.theme.DeDupTheme
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,7 +156,7 @@ fun FileScannerContent(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         title,
@@ -173,11 +174,7 @@ fun FileScannerContent(
                             Icon(Icons.Default.Delete, contentDescription = "Delete Selected", tint = MaterialTheme.colorScheme.error)
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->

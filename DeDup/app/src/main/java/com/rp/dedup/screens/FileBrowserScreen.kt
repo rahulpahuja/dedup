@@ -41,6 +41,7 @@ import com.rp.dedup.core.viewmodels.SortMode
 import com.rp.dedup.ui.theme.DeDupTheme
 import java.io.File
 import java.util.Locale
+import com.rp.dedup.core.ui.DeDupTopBar
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
@@ -120,7 +121,7 @@ fun FileBrowserContent(
     Scaffold(
         topBar = {
             Column {
-                TopAppBar(
+                DeDupTopBar(
                     title = {
                         if (searchActive) {
                             OutlinedTextField(
@@ -180,11 +181,7 @@ fun FileBrowserContent(
                         IconButton(onClick = onRefresh) {
                             Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                         }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface
-                    )
+                    }
                 )
 
                 // Breadcrumb path bar

@@ -46,6 +46,7 @@ import com.rp.dedup.core.viewmodels.VideoScannerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +90,7 @@ fun VideoScannerScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            DeDupTopBar(
                 title = {
                     Text(
                         "Video Duplicates",
@@ -107,11 +108,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete Selected", tint = MaterialTheme.colorScheme.error)
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { paddingValues ->
