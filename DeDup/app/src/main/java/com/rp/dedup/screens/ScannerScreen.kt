@@ -43,12 +43,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.ui.theme.DeDupTheme
 
 /**
  * Pure list content — no Scaffold. Used inside [screens.ImageScannerScreen].
@@ -318,5 +320,21 @@ private fun SelectableImageItem(
                     .padding(horizontal = 5.dp, vertical = 2.dp)
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScannerContentPreview() {
+    DeDupTheme {
+        ScannerContent(
+            duplicateGroups = emptyList(),
+            selectedUris = emptyList(),
+            isScanning = false,
+            hasScannedAtLeastOnce = false,
+            contentPadding = PaddingValues(0.dp),
+            onImageSelected = { _, _ -> },
+            onDeleteImage = { }
+        )
     }
 }

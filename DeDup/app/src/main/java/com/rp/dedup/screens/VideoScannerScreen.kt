@@ -32,15 +32,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.VideoScannerViewModelFactory
 import com.rp.dedup.core.data.ScannedVideo
 import com.rp.dedup.core.viewmodels.VideoScannerViewModel
+import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -393,5 +396,14 @@ private fun formatDuration(durationMs: Long): String {
         "%d:%02d:%02d".format(hours, minutes, seconds)
     } else {
         "%d:%02d".format(minutes, seconds)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VideoScannerScreenPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        VideoScannerScreen(navController = navController)
     }
 }

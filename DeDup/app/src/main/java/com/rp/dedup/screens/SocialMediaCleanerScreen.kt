@@ -22,16 +22,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.rp.dedup.core.data.SocialApp
 import com.rp.dedup.core.data.SocialMediaFile
 import com.rp.dedup.core.data.SocialMediaType
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerState
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -397,4 +400,13 @@ private fun Long.toReadableSize(): String = when {
     this < 1_048_576 -> "${this / 1_024} KB"
     this < 1_073_741_824 -> "${this / 1_048_576} MB"
     else -> "${"%.1f".format(this.toDouble() / 1_073_741_824)} GB"
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SocialMediaCleanerScreenPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        SocialMediaCleanerScreen(navController = navController)
+    }
 }

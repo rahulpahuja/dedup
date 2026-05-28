@@ -16,13 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.core.data.*
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerState
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerViewModel
+import com.rp.dedup.ui.theme.DeDupTheme
 
 private val WaGreen = Color(0xFF25D366)
 
@@ -419,4 +422,13 @@ private fun formatSize(bytes: Long): String = when {
     bytes >= 1_048_576L     -> "%.1f MB".format(bytes / 1_048_576.0)
     bytes >= 1_024L         -> "%.1f KB".format(bytes / 1_024.0)
     else                    -> "$bytes B"
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WhatsAppCleanerScreenPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        WhatsAppCleanerScreen(navController = navController)
+    }
 }

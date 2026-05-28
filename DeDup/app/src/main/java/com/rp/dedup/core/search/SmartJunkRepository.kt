@@ -5,6 +5,13 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mood
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
@@ -22,11 +29,16 @@ class SmartJunkRepository(private val context: Context) {
             .build()
     )
 
-    enum class JunkCategory(val displayName: String, val description: String) {
-        SCREENSHOTS("Screenshots", "UI captures and system screens"),
-        MEMES("Memes & Graphics", "Internet memes and digital illustrations"),
-        DOCUMENTS("Receipts & Docs", "Text-heavy images and documents"),
-        BLURRY("Blurry Shots", "Low-quality or out-of-focus images")
+    enum class JunkCategory(
+        val displayName: String,
+        val description: String,
+        val icon: ImageVector,
+        val color: Color
+    ) {
+        SCREENSHOTS("Screenshots", "UI captures and system screens", Icons.Default.Image, Color(0xFF4285F4)),
+        MEMES("Memes & Graphics", "Internet memes and digital illustrations", Icons.Default.Mood, Color(0xFFEA4335)),
+        DOCUMENTS("Receipts & Docs", "Text-heavy images and documents", Icons.Default.Description, Color(0xFF34A853)),
+        BLURRY("Blurry Shots", "Low-quality or out-of-focus images", Icons.Default.PhotoCamera, Color(0xFFFBBC05))
     }
 
     data class JunkItem(

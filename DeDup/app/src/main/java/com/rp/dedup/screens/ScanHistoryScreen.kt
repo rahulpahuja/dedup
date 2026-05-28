@@ -17,17 +17,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.data.ScanHistory
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.viewmodels.ScanHistoryViewModel
+import com.rp.dedup.ui.theme.DeDupTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -397,5 +400,14 @@ private fun formatDuration(ms: Long): String {
         minutes > 0 -> "${minutes}m ${seconds % 60}s"
         seconds > 0 -> "${seconds}s"
         else        -> "${ms}ms"
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ScanHistoryScreenPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        ScanHistoryScreen(navController = navController)
     }
 }

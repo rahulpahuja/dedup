@@ -14,12 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.core.data.EmptyFolder
 import com.rp.dedup.core.viewmodels.EmptyFolderState
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -277,5 +280,14 @@ private fun EmptyFolderItem(folder: EmptyFolder, isSelected: Boolean, onToggle: 
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EmptyFolderScreenPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        EmptyFolderScreen(navController = navController)
     }
 }

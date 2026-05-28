@@ -25,15 +25,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.core.data.FolderNode
 import com.rp.dedup.core.deepoptimization.TreemapLayoutCalculator
 import com.rp.dedup.core.deepoptimization.TreemapLayoutCalculator.TreemapCell
 import com.rp.dedup.core.viewmodels.BigFileMapState
 import com.rp.dedup.core.viewmodels.BigFileMapViewModel
+import com.rp.dedup.ui.theme.DeDupTheme
 
 private val TREEMAP_PALETTE = listOf(
     Color(0xFF4285F4), Color(0xFFEA4335), Color(0xFF34A853), Color(0xFFFBBC05),
@@ -313,4 +316,13 @@ private fun Long.toReadableSize(): String = when {
     this < 1_048_576 -> "${this / 1_024} KB"
     this < 1_073_741_824 -> "${this / 1_048_576} MB"
     else -> "${"%.1f".format(this.toDouble() / 1_073_741_824)} GB"
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BigFileMapScreenPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        BigFileMapScreen(navController = navController)
+    }
 }

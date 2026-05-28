@@ -19,9 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.UIConstants
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -159,5 +162,14 @@ private fun OptimizationFeatureCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DeepSystemOptimizationScreenPreview() {
+    DeDupTheme {
+        val navController = rememberNavController()
+        DeepSystemOptimizationScreen(navController = navController)
     }
 }
