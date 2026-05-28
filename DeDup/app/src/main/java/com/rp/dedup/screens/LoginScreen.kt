@@ -131,7 +131,7 @@ fun LoginScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Sign in to continue cleaning your duplicate images,\n videos and more.",
+                text = "Sign in to continue cleaning your duplicate images, videos and more.",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color.White.copy(alpha = 0.45f)
                 )
