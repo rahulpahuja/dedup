@@ -143,6 +143,9 @@ dependencies {
     implementation("androidx.glance:glance-appwidget:1.1.1")
     implementation("androidx.glance:glance-material3:1.1.1")
 
+    // EXIF orientation correction
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
     // Coil for Jetpack Compose
     implementation("io.coil-kt:coil-compose:2.7.0")
 

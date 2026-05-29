@@ -38,7 +38,8 @@ class ScannerViewModel(
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
-    private val allScannedGroups = mutableMapOf<Long, MutableList<ScannedImage>>()
+    // Key format: "e:<crc32>" for exact-byte duplicates, "d:<dHash>" for near-duplicates.
+    private val allScannedGroups = mutableMapOf<String, MutableList<ScannedImage>>()
     private val groupsLock = Any()
 
     private var scanJob: Job? = null
@@ -138,27 +139,32 @@ class ScannerViewModel(
     private fun processBatch(images: List<ScannedImage>) {
         synchronized(groupsLock) {
             for (image in images) {
-                var foundGroup = false
-                // First try exact hash match for O(1)
-                val exactGroup = allScannedGroups[image.dHash]
-                if (exactGroup != null) {
-                    exactGroup.add(image)
-                    foundGroup = true
-                } else {
-                    // If no exact match, try Hamming distance check for near-duplicates
-                    // This is still O(Groups) but we only do it if O(1) fails
-                    for (group in allScannedGroups.values) {
-                        val distance =
-                            ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
-                        if (distance <= similarityThreshold) {
-                            group.add(image)
-                            foundGroup = true
+                var groupKey: String? = null
+
+                // Layer 1: exact-byte match via CRC32 — O(1), 100% deterministic.
+                if (image.exactHash != -1L) {
+                    val key = "e:${image.exactHash}"
+                    if (allScannedGroups.containsKey(key)) groupKey = key
+                }
+
+                // Layer 2: perceptual near-duplicate via Hamming distance — O(groups).
+                if (groupKey == null) {
+                    for ((key, group) in allScannedGroups) {
+                        if (ImageHasher.calculateHammingDistance(
+                                image.dHash, group.first().dHash
+                            ) <= similarityThreshold
+                        ) {
+                            groupKey = key
                             break
                         }
                     }
                 }
-                if (!foundGroup) {
-                    allScannedGroups[image.dHash] = mutableListOf(image)
+
+                if (groupKey != null) {
+                    allScannedGroups[groupKey]!!.add(image)
+                } else {
+                    val newKey = if (image.exactHash != -1L) "e:${image.exactHash}" else "d:${image.dHash}"
+                    allScannedGroups[newKey] = mutableListOf(image)
                 }
             }
         }

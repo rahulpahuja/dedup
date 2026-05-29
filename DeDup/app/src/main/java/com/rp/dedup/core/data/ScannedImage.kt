@@ -10,5 +10,7 @@ data class ScannedImage(
     val sizeInBytes: Long,
     val dateModified: Long = 0L,
     val qualityScore: Float = 0f,
-    val isAiSuggestion: Boolean = false
+    val isAiSuggestion: Boolean = false,
+    // CRC32 of first 64 KB of file; -1 = not computed. Used for O(1) exact-duplicate detection.
+    val exactHash: Long = -1L
 )
