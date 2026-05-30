@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.model.ScanHistory
 import kotlinx.coroutines.flow.Flow
 
 @Dao

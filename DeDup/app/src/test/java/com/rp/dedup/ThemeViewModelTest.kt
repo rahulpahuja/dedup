@@ -1,7 +1,7 @@
 package com.rp.dedup
 
 import com.rp.dedup.core.caching.DataStoreManager
-import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery

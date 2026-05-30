@@ -1,10 +1,10 @@
 package com.rp.dedup.core.deepoptimization
 
 import android.net.Uri
-import com.rp.dedup.core.data.SocialApp
-import com.rp.dedup.core.data.SocialMediaFile
-import com.rp.dedup.core.data.SocialMediaType
-import com.rp.dedup.core.viewmodels.SocialMediaCleanerState
+import com.rp.dedup.core.model.SocialApp
+import com.rp.dedup.core.model.SocialMediaFile
+import com.rp.dedup.core.model.SocialMediaType
+import com.rp.dedup.core.model.SocialMediaCleanerState
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery

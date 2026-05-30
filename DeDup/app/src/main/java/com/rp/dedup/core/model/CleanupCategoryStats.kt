@@ -1,6 +1,4 @@
-package com.rp.dedup.core.viewmodels
-
-import com.rp.dedup.core.data.ScannedFile
+package com.rp.dedup.core.model
 
 data class CleanupCategoryStats(
     val totalSize: Long = 0L,

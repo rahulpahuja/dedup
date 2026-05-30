@@ -1,7 +1,7 @@
 package com.rp.dedup.core.deepoptimization
 
 import androidx.compose.ui.geometry.Rect
-import com.rp.dedup.core.data.FolderNode
+import com.rp.dedup.core.model.FolderNode
 
 object TreemapLayoutCalculator {
 

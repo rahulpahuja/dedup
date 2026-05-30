@@ -1,7 +1,7 @@
 package com.rp.dedup.core.deepoptimization
 
-import com.rp.dedup.core.data.EmptyFolder
-import com.rp.dedup.core.viewmodels.EmptyFolderState
+import com.rp.dedup.core.model.EmptyFolder
+import com.rp.dedup.core.model.EmptyFolderState
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery

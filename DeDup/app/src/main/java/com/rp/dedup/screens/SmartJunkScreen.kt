@@ -35,7 +35,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.rp.dedup.core.search.SmartJunkRepository
-import com.rp.dedup.core.viewmodels.SmartJunkState
+import com.rp.dedup.core.model.SmartJunkState
 import com.rp.dedup.core.viewmodels.SmartJunkViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar

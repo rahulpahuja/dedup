@@ -5,7 +5,8 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.data.WhatsAppScanResult
+import com.rp.dedup.core.model.WhatsAppCleanerState
+import com.rp.dedup.core.model.WhatsAppScanResult
 import com.rp.dedup.core.deepoptimization.WhatsAppCleanerRepository
 import com.rp.dedup.core.deepoptimization.WhatsAppCleanerRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,13 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-sealed class WhatsAppCleanerState {
-    object Idle : WhatsAppCleanerState()
-    data class Scanning(val phase: String) : WhatsAppCleanerState()
-    data class Results(val data: WhatsAppScanResult) : WhatsAppCleanerState()
-    data class Error(val message: String) : WhatsAppCleanerState()
-}
 
 class WhatsAppCleanerViewModel(
     private val repository: WhatsAppCleanerRepository,

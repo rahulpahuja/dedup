@@ -3,7 +3,8 @@ package com.rp.dedup.core.viewmodels
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.browser.FileItem
+import com.rp.dedup.core.model.FileItem
+import com.rp.dedup.core.model.SortMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,12 +14,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
-
-enum class SortMode(val label: String) {
-    NAME("Name"),
-    SIZE("Size"),
-    DATE("Date")
-}
 
 class FileBrowserViewModel : ViewModel() {
 

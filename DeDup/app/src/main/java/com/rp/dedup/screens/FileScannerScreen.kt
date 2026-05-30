@@ -43,7 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.FileScannerViewModel
-import com.rp.dedup.core.data.ScannedFile
+import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.ui.theme.DeDupTheme

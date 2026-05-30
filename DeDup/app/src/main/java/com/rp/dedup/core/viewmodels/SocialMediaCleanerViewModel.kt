@@ -5,7 +5,8 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.data.SocialMediaFile
+import com.rp.dedup.core.model.SocialMediaCleanerState
+import com.rp.dedup.core.model.SocialMediaFile
 import com.rp.dedup.core.deepoptimization.SocialMediaCleanerRepository
 import com.rp.dedup.core.deepoptimization.SocialMediaCleanerRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
@@ -16,17 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
-
-sealed class SocialMediaCleanerState {
-    object Idle : SocialMediaCleanerState()
-    data class ScanningFiles(val found: Int) : SocialMediaCleanerState()
-    data class ComputingChecksums(val progress: Float) : SocialMediaCleanerState()
-    data class Results(
-        val duplicateGroups: List<List<SocialMediaFile>>,
-        val reclaimableBytes: Long
-    ) : SocialMediaCleanerState()
-    data class Error(val message: String) : SocialMediaCleanerState()
-}
 
 class SocialMediaCleanerViewModel(
     private val repository: SocialMediaCleanerRepository,

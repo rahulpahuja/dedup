@@ -22,8 +22,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.rp.dedup.core.data.*
-import com.rp.dedup.core.viewmodels.WhatsAppCleanerState
+import com.rp.dedup.core.model.*
+import com.rp.dedup.core.model.WhatsAppCleanerState
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar

@@ -36,7 +36,7 @@ import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
-import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.firebase.db.FirebaseDbManager
 import com.rp.dedup.core.notifications.ToastManager

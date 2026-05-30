@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.rp.dedup.core.data.EmptyFolder
-import com.rp.dedup.core.viewmodels.EmptyFolderState
+import com.rp.dedup.core.model.EmptyFolder
+import com.rp.dedup.core.model.EmptyFolderState
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar

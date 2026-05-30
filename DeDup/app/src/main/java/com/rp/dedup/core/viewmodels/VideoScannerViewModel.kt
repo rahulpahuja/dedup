@@ -4,8 +4,8 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.repository.VideoScannerRepository
-import com.rp.dedup.core.data.ScanHistory
-import com.rp.dedup.core.data.ScannedVideo
+import com.rp.dedup.core.model.ScanHistory
+import com.rp.dedup.core.model.ScannedVideo
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.image.ImageHasher

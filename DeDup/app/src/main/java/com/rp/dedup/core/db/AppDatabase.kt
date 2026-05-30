@@ -8,9 +8,9 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.rp.dedup.core.common.Constants
-import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.dao.ScannedImageDao
-import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.dao.ScanHistoryDao
 import com.rp.dedup.core.security.KeyManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory

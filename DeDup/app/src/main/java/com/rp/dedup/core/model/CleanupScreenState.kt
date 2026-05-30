@@ -1,4 +1,4 @@
-package com.rp.dedup.core.viewmodels
+package com.rp.dedup.core.model
 
 data class CleanupScreenState(
     val videoStats: CleanupCategoryStats = CleanupCategoryStats(),

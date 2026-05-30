@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.data.FolderNode
+import com.rp.dedup.core.model.BigFileMapState
+import com.rp.dedup.core.model.FolderNode
 import com.rp.dedup.core.deepoptimization.StorageTreeRepository
 import com.rp.dedup.core.deepoptimization.StorageTreeRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,13 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
-
-sealed class BigFileMapState {
-    object Idle : BigFileMapState()
-    object Scanning : BigFileMapState()
-    data class Results(val root: FolderNode) : BigFileMapState()
-    data class Error(val message: String) : BigFileMapState()
-}
 
 class BigFileMapViewModel(
     private val repository: StorageTreeRepository,

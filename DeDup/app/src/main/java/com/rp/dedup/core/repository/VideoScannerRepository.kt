@@ -4,7 +4,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
 import com.rp.dedup.core.common.Constants.EMPTY_STRING
-import com.rp.dedup.core.data.ScannedVideo
+import com.rp.dedup.core.model.ScannedVideo
 import com.rp.dedup.core.common.VideoExtensions
 import com.rp.dedup.core.video.VideoFrameHasher
 import kotlinx.coroutines.Dispatchers

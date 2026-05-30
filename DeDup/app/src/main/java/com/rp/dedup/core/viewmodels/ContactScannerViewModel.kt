@@ -2,7 +2,7 @@ package com.rp.dedup.core.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.data.ScannedContact
+import com.rp.dedup.core.model.ScannedContact
 import com.rp.dedup.core.repository.ContactScannerRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

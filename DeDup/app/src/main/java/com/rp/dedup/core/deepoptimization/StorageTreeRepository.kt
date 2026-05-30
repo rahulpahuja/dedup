@@ -3,7 +3,7 @@ package com.rp.dedup.core.deepoptimization
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
-import com.rp.dedup.core.data.FolderNode
+import com.rp.dedup.core.model.FolderNode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

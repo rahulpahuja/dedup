@@ -35,9 +35,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.UIConstants
-import com.rp.dedup.core.browser.FileItem
+import com.rp.dedup.core.model.FileItem
 import com.rp.dedup.core.viewmodels.FileBrowserViewModel
-import com.rp.dedup.core.viewmodels.SortMode
+import com.rp.dedup.core.model.SortMode
 import com.rp.dedup.ui.theme.DeDupTheme
 import java.io.File
 import java.util.Locale

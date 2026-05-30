@@ -6,15 +6,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.model.ThemeMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-enum class ThemeMode {
-    LIGHT, DARK, AUTO
-}
 
 class ThemeViewModel(private val dataStoreManager: DataStoreManager) : ViewModel() {
 

@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.data.EmptyFolder
+import com.rp.dedup.core.model.EmptyFolder
+import com.rp.dedup.core.model.EmptyFolderState
 import com.rp.dedup.core.deepoptimization.EmptyFolderRepository
 import com.rp.dedup.core.deepoptimization.EmptyFolderRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,13 +14,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-sealed class EmptyFolderState {
-    object Idle : EmptyFolderState()
-    object Scanning : EmptyFolderState()
-    data class Results(val folders: List<EmptyFolder>) : EmptyFolderState()
-    data class Error(val message: String) : EmptyFolderState()
-}
 
 class EmptyFolderViewModel(
     private val repository: EmptyFolderRepository,

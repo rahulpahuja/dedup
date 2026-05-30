@@ -1,7 +1,7 @@
 package com.rp.dedup.core.utils
 
 import android.content.Context
-import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.model.ScanHistory
 import java.io.File
 
 object ReportGenerator {

@@ -1,4 +1,4 @@
-package com.rp.dedup.core.data
+package com.rp.dedup.core.model
 
 import android.net.Uri
 

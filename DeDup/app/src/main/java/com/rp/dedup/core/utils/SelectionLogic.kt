@@ -1,7 +1,7 @@
 package com.rp.dedup.core.utils
 
-import com.rp.dedup.core.data.ScannedImage
-import com.rp.dedup.core.data.ScannedFile
+import com.rp.dedup.core.model.ScannedImage
+import com.rp.dedup.core.model.ScannedFile
 
 object SelectionLogic {
     

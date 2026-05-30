@@ -39,6 +39,7 @@ import com.rp.dedup.MainActivity
 import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
+import com.rp.dedup.core.model.WidgetStorageStats
 
 class StorageWidget : GlanceAppWidget() {
 
@@ -182,13 +183,6 @@ class StorageWidget : GlanceAppWidget() {
         }
     }
 }
-
-data class WidgetStorageStats(
-    val usedLabel: String,
-    val freeLabel: String,
-    val usedPercent: Int,
-    val usedFraction: Float
-)
 
 class StorageWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = StorageWidget()

@@ -66,7 +66,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
-import com.rp.dedup.core.viewmodels.ThemeMode
+import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.caching.DataStoreManager

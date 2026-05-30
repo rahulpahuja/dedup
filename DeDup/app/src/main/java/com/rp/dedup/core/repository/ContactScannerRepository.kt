@@ -2,7 +2,7 @@ package com.rp.dedup.core.repository
 
 import android.content.Context
 import android.provider.ContactsContract
-import com.rp.dedup.core.data.ScannedContact
+import com.rp.dedup.core.model.ScannedContact
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

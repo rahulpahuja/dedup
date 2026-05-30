@@ -6,7 +6,7 @@ import androidx.core.net.toUri
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
 import kotlinx.coroutines.tasks.await
 

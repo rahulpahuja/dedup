@@ -1,7 +1,7 @@
 package com.rp.dedup.core.deepoptimization
 
-import com.rp.dedup.core.data.FolderNode
-import com.rp.dedup.core.viewmodels.BigFileMapState
+import com.rp.dedup.core.model.FolderNode
+import com.rp.dedup.core.model.BigFileMapState
 import com.rp.dedup.core.viewmodels.BigFileMapViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery

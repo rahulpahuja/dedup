@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.model.ScannedImage
 import kotlinx.coroutines.flow.Flow
 
 @Dao

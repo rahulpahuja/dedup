@@ -1,7 +1,7 @@
 package com.rp.dedup.core.repository
 
 import com.rp.dedup.core.dao.ScannedImageDao
-import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.model.ScannedImage
 import kotlinx.coroutines.flow.Flow
 
 class ScannedImageRepository(private val dao: ScannedImageDao) {

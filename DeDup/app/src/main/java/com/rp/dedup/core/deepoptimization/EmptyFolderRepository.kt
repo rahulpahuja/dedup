@@ -2,7 +2,7 @@ package com.rp.dedup.core.deepoptimization
 
 import android.content.Context
 import android.os.Environment
-import com.rp.dedup.core.data.EmptyFolder
+import com.rp.dedup.core.model.EmptyFolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

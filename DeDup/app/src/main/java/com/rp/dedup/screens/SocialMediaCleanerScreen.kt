@@ -29,10 +29,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import com.rp.dedup.core.data.SocialApp
-import com.rp.dedup.core.data.SocialMediaFile
-import com.rp.dedup.core.data.SocialMediaType
-import com.rp.dedup.core.viewmodels.SocialMediaCleanerState
+import com.rp.dedup.core.model.SocialApp
+import com.rp.dedup.core.model.SocialMediaFile
+import com.rp.dedup.core.model.SocialMediaType
+import com.rp.dedup.core.model.SocialMediaCleanerState
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar

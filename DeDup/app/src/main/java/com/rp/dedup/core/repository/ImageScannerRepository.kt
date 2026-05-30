@@ -9,7 +9,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.exifinterface.media.ExifInterface
 import com.rp.dedup.core.image.ImageHasher
-import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.model.ScannedImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview

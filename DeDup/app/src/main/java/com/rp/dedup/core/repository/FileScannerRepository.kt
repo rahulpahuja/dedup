@@ -6,7 +6,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import android.os.Environment
-import com.rp.dedup.core.data.ScannedFile
+import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.core.permissions.PermissionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

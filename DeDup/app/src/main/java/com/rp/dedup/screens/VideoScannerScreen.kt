@@ -41,7 +41,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.VideoScannerViewModelFactory
-import com.rp.dedup.core.data.ScannedVideo
+import com.rp.dedup.core.model.ScannedVideo
 import com.rp.dedup.core.viewmodels.VideoScannerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch

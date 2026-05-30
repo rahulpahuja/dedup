@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
-import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.image.ImageHasher
 import com.rp.dedup.core.image.BestShotAnalyzer
-import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import kotlinx.coroutines.CoroutineDispatcher

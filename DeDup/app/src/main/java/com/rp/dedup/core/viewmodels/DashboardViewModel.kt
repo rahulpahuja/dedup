@@ -4,6 +4,7 @@ import android.os.Environment
 import android.os.StatFs
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.model.StorageStats
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,15 +14,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-data class StorageStats(
-    val totalBytes: Long = 0L,
-    val usedBytes: Long = 0L,
-    val freeBytes: Long = 0L
-) {
-    val usedFraction: Float
-        get() = if (totalBytes > 0) usedBytes.toFloat() / totalBytes else 0f
-}
 
 class DashboardViewModel(private val historyRepository: ScanHistoryRepository) : ViewModel() {
 

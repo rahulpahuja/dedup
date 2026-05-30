@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.rp.dedup.core.utils.CacheCleaner
-import com.rp.dedup.core.utils.CleaningProgress
+import com.rp.dedup.core.model.CleaningProgress
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.delay
 import com.rp.dedup.core.ui.DeDupTopBar

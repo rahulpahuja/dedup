@@ -1,8 +1,8 @@
 package com.rp.dedup.core.deepoptimization
 
 import android.net.Uri
-import com.rp.dedup.core.data.*
-import com.rp.dedup.core.viewmodels.WhatsAppCleanerState
+import com.rp.dedup.core.model.*
+import com.rp.dedup.core.model.WhatsAppCleanerState
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery

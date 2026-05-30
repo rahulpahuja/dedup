@@ -3,7 +3,7 @@ package com.rp.dedup.core.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.repository.ScanHistoryRepository
-import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.model.ScanHistory
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn

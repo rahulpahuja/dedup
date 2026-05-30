@@ -55,7 +55,7 @@ import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
 import com.rp.dedup.core.viewmodels.ImageSearchViewModel
-import com.rp.dedup.core.viewmodels.StorageStats
+import com.rp.dedup.core.model.StorageStats
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch

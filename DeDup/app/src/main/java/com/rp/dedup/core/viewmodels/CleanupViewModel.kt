@@ -3,7 +3,9 @@ package com.rp.dedup.core.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.data.ScannedFile
+import com.rp.dedup.core.model.CleanupCategoryStats
+import com.rp.dedup.core.model.CleanupScreenState
+import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.core.repository.FileScannerRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -2,10 +2,10 @@ package com.rp.dedup.core.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rp.dedup.core.data.ScannedFile
+import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
-import com.rp.dedup.core.data.ScanHistory
+import com.rp.dedup.core.model.ScanHistory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable

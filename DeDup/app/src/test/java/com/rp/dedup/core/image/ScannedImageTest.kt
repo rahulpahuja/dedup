@@ -1,6 +1,6 @@
 package com.rp.dedup.core.image
 
-import com.rp.dedup.core.data.ScannedImage
+import com.rp.dedup.core.model.ScannedImage
 import org.junit.Assert.*
 import org.junit.Test
 

@@ -1,4 +1,4 @@
-package com.rp.dedup.core.data
+package com.rp.dedup.core.model
 
 data class EmptyFolder(
     val path: String,

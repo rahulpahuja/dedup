@@ -4,9 +4,9 @@ import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
-import com.rp.dedup.core.data.SocialApp
-import com.rp.dedup.core.data.SocialMediaFile
-import com.rp.dedup.core.data.SocialMediaType
+import com.rp.dedup.core.model.SocialApp
+import com.rp.dedup.core.model.SocialMediaFile
+import com.rp.dedup.core.model.SocialMediaType
 import com.rp.dedup.core.utils.ChecksumUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
