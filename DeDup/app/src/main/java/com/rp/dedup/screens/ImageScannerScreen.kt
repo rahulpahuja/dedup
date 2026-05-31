@@ -10,6 +10,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -55,12 +56,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.canopas.lib.showcase.IntroShowcase
+import com.canopas.lib.showcase.component.ShowcaseStyle
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.ScannerViewModelFactory
 import com.rp.dedup.core.ScannerContent
@@ -142,107 +146,175 @@ fun ImageScannerScreen(navController: NavHostController) {
             .sumOf { it.sizeInBytes }
     }
 
-    Scaffold(
-        topBar = {
-            DeDupTopBar(
-                title = "DeDup",
-                navigationIcon = {
-                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Surface(
-                            shape = CircleShape,
-                            modifier = Modifier.size(32.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        ) {
-                            Icon(
-                                Icons.Default.Person, contentDescription = "Profile",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+    val tutorialShown by settingsViewModel.dataStoreManager.readData(
+        com.rp.dedup.core.caching.DataStoreManager.LONG_PRESS_TUTORIAL_SHOWN,
+        false
+    ).collectAsState(initial = true)
+
+    val tutorialStyle = ShowcaseStyle.Default.copy(
+        backgroundColor = Color.Black,
+        backgroundAlpha = 0.92f,
+        targetCircleColor = MaterialTheme.colorScheme.primary
+    )
+
+    IntroShowcase(
+        showIntroShowCase = !tutorialShown && hasResults && !isScanning,
+        dismissOnClickOutside = true,
+        onShowCaseCompleted = {
+            scope.launch {
+                settingsViewModel.dataStoreManager.writeData(
+                    com.rp.dedup.core.caching.DataStoreManager.LONG_PRESS_TUTORIAL_SHOWN,
+                    true
+                )
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                DeDupTopBar(
+                    title = "DeDup",
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {}) {
+                            Surface(
+                                shape = CircleShape,
+                                modifier = Modifier.size(32.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            ) {
+                                Icon(
+                                    Icons.Default.Person, contentDescription = "Profile",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
+                )
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                ScannerHeader(
+                    isScanning = isScanning,
+                    hasResults = hasResults,
+                    groupCount = duplicateGroups.size,
+                    autoClearSavings = autoClearSavingsBytes,
+                    selectedCount = selectedForDeletion.size,
+                    manualSavings = manualSavingsBytes,
+                    context = context,
+                    onScanClick = {
+                        if (isScanning) viewModel.cancelScanning()
+                        else viewModel.startScanning()
+                    },
+                    onAutoClear = { showAutoClearWarning = true },
+                    onDeleteSelected = { triggerOSDeletionPrompt(selectedForDeletion.toList()) }
+                )
+
+                if (isScanning) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+
+                if (isStale && !isScanning && hasResults) {
+                    StaleBanner(onRescan = { viewModel.startScanning() })
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    ScannerContent(
+                        duplicateGroups = duplicateGroups,
+                        selectedUris = selectedForDeletion,
+                        isScanning = isScanning,
+                        hasScannedAtLeastOnce = cacheLoaded || hasResults,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        onImageSelected = { uri, isSelected ->
+                            if (isSelected) selectedForDeletion.add(uri)
+                            else selectedForDeletion.remove(uri)
+                        },
+                        onDeleteImage = { triggerOSDeletionPrompt(listOf(it)) }
+                    )
+
+                    if (!isScanning && hasResults) {
+                        // Invisible target for the tutorial overlaying the first image result area
+                        Box(
+                            modifier = Modifier
+                                .size(150.dp)
+                                .padding(16.dp)
+                                .introShowCaseTarget(
+                                    index = 0,
+                                    style = tutorialStyle,
+                                    content = {
+                                        TutorialTooltip(
+                                            title = "Full Image Preview",
+                                            body = "Long press on any image to see it in full screen and view AI-detected labels."
+                                        )
+                                    }
+                                )
+                        )
+                    }
+                }
+            }
+        }
+
+        if (showAutoClearWarning) {
+            AlertDialog(
+                onDismissRequest = { showAutoClearWarning = false },
+                title = { Text("Auto Clear") },
+                text = {
+                    Text(
+                        "Auto clear keeps one copy from each group and deletes the rest. " +
+                                "This will free up ${
+                                    formatFileSize(
+                                        context,
+                                        autoClearSavingsBytes
+                                    )
+                                }.\n\n" +
+                                "Visual similarity detection can occasionally make mistakes. Proceed?"
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showAutoClearWarning = false
+                            triggerOSDeletionPrompt(viewModel.getAutoClearUris().map { Uri.parse(it) })
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) { Text("Yes, Auto Clear") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAutoClearWarning = false }) { Text("Cancel") }
                 }
             )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            ScannerHeader(
-                isScanning = isScanning,
-                hasResults = hasResults,
-                groupCount = duplicateGroups.size,
-                autoClearSavings = autoClearSavingsBytes,
-                selectedCount = selectedForDeletion.size,
-                manualSavings = manualSavingsBytes,
-                context = context,
-                onScanClick = {
-                    if (isScanning) viewModel.cancelScanning()
-                    else viewModel.startScanning()
-                },
-                onAutoClear = { showAutoClearWarning = true },
-                onDeleteSelected = { triggerOSDeletionPrompt(selectedForDeletion.toList()) }
-            )
-
-            if (isScanning) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-
-            if (isStale && !isScanning && hasResults) {
-                StaleBanner(onRescan = { viewModel.startScanning() })
-            }
-
-            ScannerContent(
-                duplicateGroups = duplicateGroups,
-                selectedUris = selectedForDeletion,
-                isScanning = isScanning,
-                hasScannedAtLeastOnce = cacheLoaded || hasResults,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                onImageSelected = { uri, isSelected ->
-                    if (isSelected) selectedForDeletion.add(uri)
-                    else selectedForDeletion.remove(uri)
-                },
-                onDeleteImage = { triggerOSDeletionPrompt(listOf(it)) }
-            )
-        }
     }
+}
 
-    if (showAutoClearWarning) {
-        AlertDialog(
-            onDismissRequest = { showAutoClearWarning = false },
-            title = { Text("Auto Clear") },
-            text = {
-                Text(
-                    "Auto clear keeps one copy from each group and deletes the rest. " +
-                            "This will free up ${
-                                formatFileSize(
-                                    context,
-                                    autoClearSavingsBytes
-                                )
-                            }.\n\n" +
-                            "Visual similarity detection can occasionally make mistakes. Proceed?"
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showAutoClearWarning = false
-                        triggerOSDeletionPrompt(viewModel.getAutoClearUris().map { Uri.parse(it) })
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) { Text("Yes, Auto Clear") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAutoClearWarning = false }) { Text("Cancel") }
-            }
+@Composable
+private fun TutorialTooltip(title: String, body: String) {
+    Column(modifier = Modifier.width(260.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.80f)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Tap anywhere to continue",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF5FA3FF)
         )
     }
 }

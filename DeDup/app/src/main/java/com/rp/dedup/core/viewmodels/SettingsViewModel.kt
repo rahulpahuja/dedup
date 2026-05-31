@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val dataStoreManager: DataStoreManager) : ViewModel() {
+class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
 
     val similarityThreshold: StateFlow<Int> = dataStoreManager.readData(DataStoreManager.SIMILARITY_THRESHOLD, "5")
         .map { it.toIntOrNull() ?: 5 }
