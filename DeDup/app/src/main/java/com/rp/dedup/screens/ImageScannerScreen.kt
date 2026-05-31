@@ -65,6 +65,7 @@ import com.rp.dedup.ScannerViewModelFactory
 import com.rp.dedup.core.ScannerContent
 import com.rp.dedup.core.viewmodels.ScannerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.rp.dedup.core.ui.DeDupTopBar
 
@@ -76,12 +77,23 @@ fun ImageScannerScreen(navController: NavHostController) {
     val context = LocalContext.current
     val viewModel: ScannerViewModel = viewModel(factory = ScannerViewModelFactory(context))
 
+    val settingsViewModel: com.rp.dedup.core.viewmodels.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = com.rp.dedup.core.viewmodels.SettingsViewModel.Factory(
+            com.rp.dedup.core.caching.DataStoreManager(context.applicationContext)
+        )
+    )
+
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val selectedForDeletion = remember { mutableStateListOf<Uri>() }
     var showAutoClearWarning by remember { mutableStateOf(false) }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var hasScannedAtLeastOnce by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val autoScan = settingsViewModel.autoScanOnStartup.first()
+        if (autoScan) viewModel.startScanning()
+    }
 
     LaunchedEffect(isScanning) {
         if (isScanning) {

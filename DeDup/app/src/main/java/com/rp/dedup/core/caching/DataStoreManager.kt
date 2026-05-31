@@ -24,6 +24,7 @@ class DataStoreManager(private val context: Context) {
         val TUTORIAL_SHOWN = booleanPreferencesKey("tutorial_shown")
         val SIMILARITY_THRESHOLD = stringPreferencesKey("similarity_threshold") // Stores int as string for simpler generic logic
         val EXCLUDED_FOLDERS = stringPreferencesKey("excluded_folders") // Stores comma-separated paths
+        val AUTO_SCAN_ON_STARTUP = booleanPreferencesKey("auto_scan_on_startup")
     }
 
     suspend fun <T> writeData(key: Preferences.Key<T>, value: T) {

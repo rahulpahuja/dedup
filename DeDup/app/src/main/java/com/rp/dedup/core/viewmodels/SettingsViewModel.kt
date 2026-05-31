@@ -20,9 +20,18 @@ class SettingsViewModel(private val dataStoreManager: DataStoreManager) : ViewMo
         .map { if (it.isEmpty()) emptyList() else it.split(",") }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val autoScanOnStartup: StateFlow<Boolean> = dataStoreManager.readData(DataStoreManager.AUTO_SCAN_ON_STARTUP, true)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
     fun setSimilarityThreshold(value: Int) {
         viewModelScope.launch {
             dataStoreManager.writeData(DataStoreManager.SIMILARITY_THRESHOLD, value.toString())
+        }
+    }
+
+    fun setAutoScanOnStartup(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.writeData(DataStoreManager.AUTO_SCAN_ON_STARTUP, enabled)
         }
     }
 

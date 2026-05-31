@@ -17,6 +17,7 @@ fun DeDupTopBar(
     title: String,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
+    height: androidx.compose.ui.unit.Dp = 48.dp,
 ) {
     DeDupTopBar(
         title = {
@@ -30,6 +31,7 @@ fun DeDupTopBar(
         },
         navigationIcon = navigationIcon,
         actions = actions,
+        height = height,
     )
 }
 
@@ -39,12 +41,13 @@ fun DeDupTopBar(
     title: @Composable () -> Unit,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
+    height: androidx.compose.ui.unit.Dp = 48.dp,
 ) {
     TopAppBar(
         title = title,
         navigationIcon = navigationIcon,
         actions = actions,
-        expandedHeight = 48.dp,
+        expandedHeight = height,
         windowInsets = WindowInsets(0),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,

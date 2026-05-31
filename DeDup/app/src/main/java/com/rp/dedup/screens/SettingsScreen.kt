@@ -73,6 +73,7 @@ fun SettingsScreen(navController: NavHostController) {
     val currentThemeMode by themeViewModel.themeMode.collectAsState()
     val similarityThreshold by settingsViewModel.similarityThreshold.collectAsState()
     val excludedFolders by settingsViewModel.excludedFolders.collectAsState()
+    val autoScanOnStartup by settingsViewModel.autoScanOnStartup.collectAsState()
     
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
@@ -158,6 +159,16 @@ fun SettingsScreen(navController: NavHostController) {
                         )
                     },
                     onClick = { showExcludedFoldersDialog = true }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                SettingsSwitchRow(
+                    icon = Icons.Default.PlayArrow,
+                    iconColor = UIConstants.ColorSavingsGreen,
+                    title = "Auto Scan on Startup",
+                    checked = autoScanOnStartup,
+                    onCheckedChange = { settingsViewModel.setAutoScanOnStartup(it) }
                 )
             }
 
@@ -559,6 +570,52 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(content = content)
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    icon: ImageVector,
+    iconColor: androidx.compose.ui.graphics.Color,
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = iconColor.copy(alpha = 0.15f),
+            modifier = Modifier.size(40.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.width(14.dp))
+
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
     }
 }
 
