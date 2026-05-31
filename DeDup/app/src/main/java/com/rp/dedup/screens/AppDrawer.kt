@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FilterChip
@@ -139,6 +141,7 @@ private fun AppDrawerContentUI(
 ) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     var showEditDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     fun navigateTo(route: String) {
         navController.navigate(route) {
@@ -231,18 +234,47 @@ private fun AppDrawerContentUI(
             icon = Icons.Default.Logout,
             label = "Logout",
             selected = false,
-            onClick = {
-                scope.launch {
-                    val context = navController.context
-                    val toastManager = ToastManager(context)
-                    val authManager = FirebaseAuthManager(toastManager)
-                    
-                    authManager.signOutWithCredentialClear(context)
-                    
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                    drawerState.close()
+            onClick = { showLogoutDialog = true }
+        )
+    }
+
+    if (showLogoutDialog) {
+        val context = LocalContext.current
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Logout,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Log out?") },
+            text = { Text("You'll need to sign in again to access your account.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        scope.launch {
+                            val toastManager = ToastManager(context)
+                            val authManager = FirebaseAuthManager(toastManager)
+                            authManager.signOutWithCredentialClear(context)
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                            drawerState.close()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Log out")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
                 }
             }
         )

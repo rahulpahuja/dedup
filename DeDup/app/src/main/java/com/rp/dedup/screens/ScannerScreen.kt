@@ -5,6 +5,7 @@ import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,6 +61,7 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.rp.dedup.core.model.ScannedImage
+import com.rp.dedup.core.ui.ImagePreviewDialog
 import com.rp.dedup.ui.theme.DeDupTheme
 
 private const val IMAGE_PAGE_SIZE = 10
@@ -368,6 +371,9 @@ private fun SelectableImageItem(
     onSelect: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val context = LocalContext.current
+    var showPreview by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .size(150.dp)
@@ -377,7 +383,12 @@ private fun SelectableImageItem(
                 color = if (isSelected) MaterialTheme.colorScheme.error else Color.Transparent,
                 shape = RoundedCornerShape(12.dp)
             )
-            .clickable { onSelect() }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onSelect() },
+                    onLongPress = { showPreview = true }
+                )
+            }
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -428,7 +439,7 @@ private fun SelectableImageItem(
         )
 
         Text(
-            text = formatFileSize(LocalContext.current, item.sizeInBytes),
+            text = formatFileSize(context, item.sizeInBytes),
             color = Color.White,
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
@@ -455,6 +466,19 @@ private fun SelectableImageItem(
                     .padding(horizontal = 5.dp, vertical = 2.dp)
             )
         }
+    }
+
+    if (showPreview) {
+        val labels = buildList {
+            add(formatFileSize(context, item.sizeInBytes))
+            if (item.isAiSuggestion) add("Best Shot")
+            else if (isKeep) add("Keep")
+        }
+        ImagePreviewDialog(
+            uri = item.uri.toUri(),
+            matchedLabels = labels,
+            onDismiss = { showPreview = false }
+        )
     }
 }
 

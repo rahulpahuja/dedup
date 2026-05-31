@@ -5,11 +5,11 @@ import android.net.Uri
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -1116,7 +1116,6 @@ fun ImageSearchContent(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
     var showPreview by remember { mutableStateOf(false) }
@@ -1125,10 +1124,9 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
-            .combinedClickable(
-                onClick = {},
-                onLongClick = { showPreview = true }
-            )
+            .pointerInput(Unit) {
+                detectTapGestures(onLongPress = { showPreview = true })
+            }
     ) {
         AsyncImage(
             model = result.uri,
