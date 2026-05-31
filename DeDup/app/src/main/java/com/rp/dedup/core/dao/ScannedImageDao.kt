@@ -12,6 +12,10 @@ interface ScannedImageDao {
     @Query("SELECT * FROM scanned_images")
     fun getAllImages(): Flow<List<ScannedImage>>
 
+    /** Returns only images that belong to a persisted duplicate group. */
+    @Query("SELECT * FROM scanned_images WHERE groupKey != ''")
+    suspend fun getCachedDuplicateImages(): List<ScannedImage>
+
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertImages(images: List<ScannedImage>)
 

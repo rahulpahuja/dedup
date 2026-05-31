@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.rp.dedup.core.PaginationBar
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -197,19 +199,49 @@ fun VideoScannerScreen(navController: NavHostController) {
                 if (isScanning) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    items(duplicateGroups) { group ->
-                        DuplicateVideoGroup(
-                            group = group,
-                            selectedUris = selectedUris,
-                            onToggleSelect = { uri ->
-                                if (selectedUris.contains(uri)) selectedUris.remove(uri)
-                                else selectedUris.add(uri)
-                            }
+
+                val videoPageSize = 5
+                var currentPage by remember { mutableStateOf(1) }
+                val totalPages = remember(duplicateGroups.size) {
+                    maxOf(1, (duplicateGroups.size + videoPageSize - 1) / videoPageSize)
+                }
+                LaunchedEffect(isScanning) { if (isScanning) currentPage = 1 }
+
+                val listState = rememberLazyListState()
+                LaunchedEffect(currentPage) { listState.scrollToItem(0) }
+
+                val pageStart = (currentPage - 1) * videoPageSize
+                val pageGroups = remember(currentPage, duplicateGroups) {
+                    duplicateGroups.subList(
+                        pageStart.coerceAtMost(duplicateGroups.size),
+                        (pageStart + videoPageSize).coerceAtMost(duplicateGroups.size)
+                    )
+                }
+
+                Column(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        items(pageGroups) { group ->
+                            DuplicateVideoGroup(
+                                group = group,
+                                selectedUris = selectedUris,
+                                onToggleSelect = { uri ->
+                                    if (selectedUris.contains(uri)) selectedUris.remove(uri)
+                                    else selectedUris.add(uri)
+                                }
+                            )
+                        }
+                    }
+
+                    if (totalPages > 1) {
+                        PaginationBar(
+                            currentPage = currentPage,
+                            totalPages = totalPages,
+                            onPageChange = { currentPage = it }
                         )
                     }
                 }

@@ -1,6 +1,7 @@
 package com.rp.dedup.core.viewmodels
 
 import android.content.Context
+import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
@@ -9,6 +10,7 @@ import com.rp.dedup.core.image.ImageHasher
 import com.rp.dedup.core.image.BestShotAnalyzer
 import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
+import com.rp.dedup.core.repository.ScannedImageRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +29,7 @@ class ScannerViewModel(
     private val context: Context,
     private val repository: ImageScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
+    private val scannedImageRepository: ScannedImageRepository? = null,
     private val dataStoreManager: com.rp.dedup.core.caching.DataStoreManager? = null,
     private val analyticsManager: AnalyticsManager? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -38,34 +41,80 @@ class ScannerViewModel(
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
+    private val _isStale = MutableStateFlow(false)
+    val isStale: StateFlow<Boolean> = _isStale.asStateFlow()
+
+    /** True once the initial cache load attempt has completed (whether results exist or not). */
+    private val _cacheLoaded = MutableStateFlow(false)
+    val cacheLoaded: StateFlow<Boolean> = _cacheLoaded.asStateFlow()
+
     // Key format: "e:<crc32>" for exact-byte duplicates, "d:<dHash>" for near-duplicates.
     private val allScannedGroups = mutableMapOf<String, MutableList<ScannedImage>>()
     private val groupsLock = Any()
 
     private var scanJob: Job? = null
-    
-    private var similarityThreshold = 3 // Reduced default for more accuracy
+
+    private var similarityThreshold = 3
     private var excludedFolders = emptyList<String>()
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            loadCachedResults()
+        }
+    }
+
+    private suspend fun loadCachedResults() {
+        val cached = scannedImageRepository?.getCachedDuplicateGroups() ?: run {
+            _cacheLoaded.value = true
+            return
+        }
+        if (cached.isNotEmpty()) {
+            _duplicateGroups.value = cached
+            checkStaleness()
+        }
+        _cacheLoaded.value = true
+    }
+
+    private suspend fun checkStaleness() {
+        val lastScanMs = dataStoreManager
+            ?.readData(com.rp.dedup.core.caching.DataStoreManager.LAST_IMAGE_SCAN_TIME, "0")
+            ?.map { it.toLongOrNull() ?: 0L }
+            ?.first() ?: return
+        if (lastScanMs == 0L) {
+            _isStale.value = true
+            return
+        }
+        // MediaStore DATE_MODIFIED is in seconds; lastScanMs is milliseconds.
+        val maxModifiedSec = queryMaxMediaStoreModified()
+        _isStale.value = maxModifiedSec * 1000L > lastScanMs
+    }
+
+    private fun queryMaxMediaStoreModified(): Long {
+        val projection = arrayOf("MAX(${MediaStore.Images.Media.DATE_MODIFIED})")
+        return context.contentResolver.query(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            projection, null, null, null
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getLong(0) else 0L
+        } ?: 0L
+    }
 
     fun startScanning() {
         if (_isScanning.value) return
         val startTime = System.currentTimeMillis()
         var wasCancelled = false
         _isScanning.value = true
-        synchronized(groupsLock) {
-            allScannedGroups.clear()
-        }
+        synchronized(groupsLock) { allScannedGroups.clear() }
         _duplicateGroups.value = emptyList()
 
         analyticsManager?.logScanStarted("IMAGE")
 
         scanJob = viewModelScope.launch(defaultDispatcher) {
             try {
-                // Load settings before scanning
                 dataStoreManager?.let { manager ->
                     val thresholdValue = manager.readData(com.rp.dedup.core.caching.DataStoreManager.SIMILARITY_THRESHOLD, "3")
                         .map { it.toIntOrNull() ?: 3 }.first()
-                    similarityThreshold = thresholdValue.coerceIn(0, 10) // Cap to sane limit
+                    similarityThreshold = thresholdValue.coerceIn(0, 10)
                     excludedFolders = manager.readData(com.rp.dedup.core.caching.DataStoreManager.EXCLUDED_FOLDERS, "")
                         .map { if (it.isEmpty()) emptyList() else it.split(",") }.first()
                 }
@@ -96,16 +145,13 @@ class ScannerViewModel(
                     processBatch(batchBuffer)
                 }
 
-                // AI Post-processing: Best Shot Suggestion
                 val groupsToAnalyze = synchronized(groupsLock) {
                     allScannedGroups.values
                         .filter { it.size > 1 }
                         .map { it.toList() }
                 }
 
-                val finalizedGroups = groupsToAnalyze.map { group ->
-                    BestShotAnalyzer.analyzeGroup(context, group)
-                }
+                val finalizedGroups = BestShotAnalyzer.analyzeGroups(context, groupsToAnalyze)
 
                 _duplicateGroups.value = finalizedGroups
 
@@ -115,6 +161,8 @@ class ScannerViewModel(
                     duplicatesFound = finalizedGroups.sumOf { it.size - 1 },
                     reclaimableBytes = finalizedGroups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
                 )
+
+                persistResults(finalizedGroups)
 
             } catch (_: CancellationException) {
                 wasCancelled = true
@@ -132,6 +180,27 @@ class ScannerViewModel(
         }
     }
 
+    private fun persistResults(finalizedGroups: List<List<ScannedImage>>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            scannedImageRepository?.clearAll()
+            val imagesToPersist = finalizedGroups.flatMap { group ->
+                // Derive the same stable key that the scanner uses so reloaded groups
+                // are compatible with any future delta-scan logic.
+                val key = if (group.first().exactHash != -1L)
+                    "e:${group.first().exactHash}"
+                else
+                    "d:${group.first().dHash}"
+                group.map { it.copy(groupKey = key) }
+            }
+            scannedImageRepository?.insertImages(imagesToPersist)
+            dataStoreManager?.writeData(
+                com.rp.dedup.core.caching.DataStoreManager.LAST_IMAGE_SCAN_TIME,
+                System.currentTimeMillis().toString()
+            )
+            _isStale.value = false
+        }
+    }
+
     fun cancelScanning() {
         scanJob?.cancel()
     }
@@ -141,13 +210,11 @@ class ScannerViewModel(
             for (image in images) {
                 var groupKey: String? = null
 
-                // Layer 1: exact-byte match via CRC32 — O(1), 100% deterministic.
                 if (image.exactHash != -1L) {
                     val key = "e:${image.exactHash}"
                     if (allScannedGroups.containsKey(key)) groupKey = key
                 }
 
-                // Layer 2: perceptual near-duplicate via Hamming distance — O(groups).
                 if (groupKey == null) {
                     for ((key, group) in allScannedGroups) {
                         if (ImageHasher.calculateHammingDistance(
@@ -207,18 +274,20 @@ class ScannerViewModel(
                 val group = iterator.next()
                 group.filter { it.uri in deletedUris }.forEach { freedBytes += it.sizeInBytes }
                 group.removeAll { it.uri in deletedUris }
-                if (group.isEmpty()) {
-                    iterator.remove()
-                }
+                if (group.isEmpty()) iterator.remove()
             }
         }
-        
+
         analyticsManager?.logFilesDeleted("IMAGE", deletedUris.size, freedBytes)
 
         synchronized(groupsLock) {
             _duplicateGroups.value = allScannedGroups.values
                 .filter { it.size > 1 }
                 .map { it.toList() }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            deletedUris.forEach { scannedImageRepository?.deleteByUri(it) }
         }
     }
 }

@@ -59,12 +59,18 @@ class ImageScannerRepository(private val context: Context) {
          * CRC32 of the first 64 KB of the file.
          * Sufficient to uniquely identify exact-duplicate files in practice without
          * reading entire multi-megabyte images. Returns -1 on error.
+         *
+         * The 64 KB read buffer is kept in a ThreadLocal so each IO thread reuses
+         * the same allocation across all images — eliminating the 75 MB+ of short-lived
+         * ByteArray objects (1,200 images × 64 KB) that previously caused GC jank.
          */
+        private val crc32Buffer = ThreadLocal.withInitial { ByteArray(65536) }
+
         fun computePartialCrc32(context: Context, uri: Uri): Long {
             return try {
                 context.contentResolver.openInputStream(uri)?.use { stream ->
                     val crc = CRC32()
-                    val buffer = ByteArray(65536)
+                    val buffer = crc32Buffer.get()!!
                     val read = stream.read(buffer)
                     if (read > 0) crc.update(buffer, 0, read)
                     crc.value
@@ -169,6 +175,9 @@ class ImageScannerRepository(private val context: Context) {
                     }
                 }
             }
-            .flowOn(Dispatchers.Default)
+            // Image loading is IO-bound (ContentResolver streams + BitmapFactory reads).
+            // Dispatchers.IO has a 64-thread pool, letting all concurrencyLevel slots run
+            // without blocking the CPU thread pool that Dispatchers.Default uses.
+            .flowOn(Dispatchers.IO)
     }
 }

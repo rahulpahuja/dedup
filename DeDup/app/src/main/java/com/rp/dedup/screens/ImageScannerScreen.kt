@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -85,21 +86,25 @@ fun ImageScannerScreen(navController: NavHostController) {
 
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
+    val isStale by viewModel.isStale.collectAsState()
+    val cacheLoaded by viewModel.cacheLoaded.collectAsState()
     val selectedForDeletion = remember { mutableStateListOf<Uri>() }
     var showAutoClearWarning by remember { mutableStateOf(false) }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    var hasScannedAtLeastOnce by remember { mutableStateOf(false) }
 
+    // True if we have anything to show — either from cache or a completed scan.
+    val hasResults = duplicateGroups.isNotEmpty()
+
+    // Auto-scan: wait for cache load to finish, then only scan if nothing was cached.
     LaunchedEffect(Unit) {
         val autoScan = settingsViewModel.autoScanOnStartup.first()
-        if (autoScan) viewModel.startScanning()
+        if (!autoScan) return@LaunchedEffect
+        viewModel.cacheLoaded.first { it }
+        if (duplicateGroups.isEmpty()) viewModel.startScanning()
     }
 
     LaunchedEffect(isScanning) {
-        if (isScanning) {
-            hasScannedAtLeastOnce = true
-            selectedForDeletion.clear()
-        }
+        if (isScanning) selectedForDeletion.clear()
     }
 
     val deleteLauncher = rememberLauncherForActivityResult(
@@ -171,7 +176,7 @@ fun ImageScannerScreen(navController: NavHostController) {
         ) {
             ScannerHeader(
                 isScanning = isScanning,
-                hasScannedAtLeastOnce = hasScannedAtLeastOnce,
+                hasResults = hasResults,
                 groupCount = duplicateGroups.size,
                 autoClearSavings = autoClearSavingsBytes,
                 selectedCount = selectedForDeletion.size,
@@ -189,11 +194,15 @@ fun ImageScannerScreen(navController: NavHostController) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
+            if (isStale && !isScanning && hasResults) {
+                StaleBanner(onRescan = { viewModel.startScanning() })
+            }
+
             ScannerContent(
                 duplicateGroups = duplicateGroups,
                 selectedUris = selectedForDeletion,
                 isScanning = isScanning,
-                hasScannedAtLeastOnce = hasScannedAtLeastOnce,
+                hasScannedAtLeastOnce = cacheLoaded || hasResults,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 onImageSelected = { uri, isSelected ->
                     if (isSelected) selectedForDeletion.add(uri)
@@ -239,9 +248,45 @@ fun ImageScannerScreen(navController: NavHostController) {
 }
 
 @Composable
+private fun StaleBanner(onRescan: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Results may be outdated — new photos detected",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onRescan, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                Text(
+                    "Re-scan",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ScannerHeader(
     isScanning: Boolean,
-    hasScannedAtLeastOnce: Boolean,
+    hasResults: Boolean,
     groupCount: Int,
     autoClearSavings: Long,
     selectedCount: Int,
@@ -265,10 +310,10 @@ private fun ScannerHeader(
                 Text(
                     text = when {
                         isScanning -> "Scanning gallery…"
-                        hasScannedAtLeastOnce && groupCount > 0 ->
+                        hasResults && groupCount > 0 ->
                             "$groupCount duplicate group${if (groupCount != 1) "s" else ""} found"
 
-                        hasScannedAtLeastOnce -> "Your gallery is clean"
+                        hasResults -> "Your gallery is clean"
                         else -> "Image Scanner"
                     },
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)

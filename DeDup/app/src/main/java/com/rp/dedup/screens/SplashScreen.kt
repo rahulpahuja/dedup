@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -269,7 +271,7 @@ fun SplashScreen(navController: NavHostController) {
                         Image(
                             painter = painterResource(R.drawable.ic_dedup_logo),
                             contentDescription = null,
-                            modifier = Modifier.size(80.dp)
+                            modifier = Modifier.size(96.dp)
                         )
                     }
                 }
@@ -291,61 +293,30 @@ fun SplashScreen(navController: NavHostController) {
                 )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Staggered loading dots
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.graphicsLayer { alpha = nameAlpha }
-            ) {
-                listOf(dot1, dot2, dot3).forEach { dotAlpha ->
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .graphicsLayer { alpha = dotAlpha }
-                            .background(PrimaryBlue, CircleShape)
-                    )
-                }
-            }
-        }
-
-        // Bottom section — fades in last
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 60.dp)
-                .graphicsLayer { alpha = bottomAlpha },
-            contentAlignment = Alignment.Center
-        ) {
+            // Tagline — fades in with the app name
             Text(
-                text = "V.24",
-                style = MaterialTheme.typography.displayLarge.copy(
-                    fontSize = 140.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.Black.copy(alpha = 0.03f)
+                text = "Clean phone. Private. Always.",
+                modifier = Modifier.graphicsLayer { alpha = nameAlpha * 0.75f },
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color.Gray,
+                    letterSpacing = 0.3.sp,
+                    fontWeight = FontWeight.Normal
                 )
             )
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "SURGICAL STORAGE MANAGEMENT.",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Gray,
-                        letterSpacing = 2.sp
-                    )
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    repeat(4) {
-                        Box(
-                            modifier = Modifier
-                                .size(3.dp)
-                                .background(Color.LightGray, CircleShape)
-                        )
-                    }
-                }
-            }
         }
+
+        // Bottom loading indicator — fades in last
+        LinearProgressIndicator(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(bottom = 0.dp)
+                .graphicsLayer { alpha = bottomAlpha },
+            color = PrimaryBlue,
+            trackColor = PrimaryBlue.copy(alpha = 0.12f)
+        )
     }
 }
 

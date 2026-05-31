@@ -16,13 +16,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Card
@@ -35,6 +39,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +60,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.ui.theme.DeDupTheme
+
+private const val IMAGE_PAGE_SIZE = 10
 
 /**
  * Pure list content — no Scaffold. Used inside [screens.ImageScannerScreen].
@@ -121,26 +132,155 @@ fun ScannerContent(
         }
 
         else -> {
-            LazyColumn(
-                contentPadding = contentPadding,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                itemsIndexed(
-                    items = duplicateGroups,
-                    key = { _, group -> group.first().uri },
-                    contentType = { _, _ -> "DuplicateGroupCard" }
-                ) { index, group ->
-                    DuplicateGroupCard(
-                        groupIndex = index + 1,
-                        group = group,
-                        selectedUris = selectedUris,
-                        onImageSelected = onImageSelected,
-                        onDeleteSingleImage = onDeleteImage
+            var currentPage by remember { mutableStateOf(1) }
+            val totalPages = remember(duplicateGroups.size) {
+                maxOf(1, (duplicateGroups.size + IMAGE_PAGE_SIZE - 1) / IMAGE_PAGE_SIZE)
+            }
+
+            // Reset to page 1 only when a new scan starts, not on every batch update.
+            LaunchedEffect(isScanning) { if (isScanning) currentPage = 1 }
+
+            val listState = rememberLazyListState()
+            LaunchedEffect(currentPage) { listState.scrollToItem(0) }
+
+            val pageStart = (currentPage - 1) * IMAGE_PAGE_SIZE
+            val pageGroups = remember(currentPage, duplicateGroups) {
+                duplicateGroups.subList(
+                    pageStart.coerceAtMost(duplicateGroups.size),
+                    (pageStart + IMAGE_PAGE_SIZE).coerceAtMost(duplicateGroups.size)
+                )
+            }
+
+            Column(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    contentPadding = contentPadding,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    itemsIndexed(
+                        items = pageGroups,
+                        key = { _, group -> group.first().uri },
+                        contentType = { _, _ -> "DuplicateGroupCard" }
+                    ) { index, group ->
+                        DuplicateGroupCard(
+                            groupIndex = pageStart + index + 1,
+                            group = group,
+                            selectedUris = selectedUris,
+                            onImageSelected = onImageSelected,
+                            onDeleteSingleImage = onDeleteImage
+                        )
+                    }
+                }
+
+                if (totalPages > 1) {
+                    PaginationBar(
+                        currentPage = currentPage,
+                        totalPages = totalPages,
+                        onPageChange = { currentPage = it }
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PaginationBar(
+    currentPage: Int,
+    totalPages: Int,
+    onPageChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val window = buildPaginationWindow(currentPage, totalPages)
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 4.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { onPageChange(currentPage - 1) },
+                enabled = currentPage > 1,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    Icons.Default.ChevronLeft,
+                    contentDescription = "Previous page",
+                    tint = if (currentPage > 1) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                )
+            }
+
+            Spacer(Modifier.width(2.dp))
+
+            window.forEach { page ->
+                if (page == null) {
+                    Text(
+                        "…",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 6.dp)
+                    )
+                } else {
+                    val selected = page == currentPage
+                    Surface(
+                        shape = CircleShape,
+                        color = if (selected) MaterialTheme.colorScheme.primary
+                        else Color.Transparent,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clickable { onPageChange(page) }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "$page",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                ),
+                                color = if (selected) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(2.dp))
+                }
+            }
+
+            Spacer(Modifier.width(2.dp))
+
+            IconButton(
+                onClick = { onPageChange(currentPage + 1) },
+                enabled = currentPage < totalPages,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = "Next page",
+                    tint = if (currentPage < totalPages) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                )
+            }
+        }
+    }
+}
+
+/** Returns the sequence of page numbers (null = ellipsis) to display in the bar. */
+private fun buildPaginationWindow(current: Int, total: Int): List<Int?> {
+    if (total <= 7) return (1..total).map { it }
+    return buildList {
+        add(1)
+        if (current > 3) add(null)
+        (maxOf(2, current - 1)..minOf(total - 1, current + 1)).forEach { add(it) }
+        if (current < total - 2) add(null)
+        add(total)
     }
 }
 
@@ -249,7 +389,6 @@ private fun SelectableImageItem(
             contentScale = ContentScale.Crop
         )
 
-        // Dim overlay when selected
         if (isSelected) {
             Box(
                 Modifier
@@ -258,7 +397,6 @@ private fun SelectableImageItem(
             )
         }
 
-        // Delete button — top start
         IconButton(
             onClick = onDelete,
             modifier = Modifier
@@ -275,7 +413,6 @@ private fun SelectableImageItem(
             )
         }
 
-        // Checkbox — top end
         Checkbox(
             checked = isSelected,
             onCheckedChange = { onSelect() },
@@ -290,7 +427,6 @@ private fun SelectableImageItem(
             )
         )
 
-        // File size — bottom start
         Text(
             text = formatFileSize(LocalContext.current, item.sizeInBytes),
             color = Color.White,
@@ -303,7 +439,6 @@ private fun SelectableImageItem(
                 .padding(horizontal = 5.dp, vertical = 2.dp)
         )
 
-        // KEEP badge — bottom end (first image only)
         if (isKeep) {
             Text(
                 text = if (item.isAiSuggestion) "ML BEST CHOICE" else "KEEP",

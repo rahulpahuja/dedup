@@ -11,5 +11,6 @@ data class ScannedImage(
     val dateModified: Long = 0L,
     val qualityScore: Float = 0f,
     val isAiSuggestion: Boolean = false,
-    val exactHash: Long = -1L
+    val exactHash: Long = -1L,
+    val groupKey: String = ""
 )

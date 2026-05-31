@@ -80,6 +80,7 @@ fun SettingsScreen(navController: NavHostController) {
     var showExcludedFoldersDialog by rememberSaveable { mutableStateOf(false) }
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
     var showFeatureRequestDialog by rememberSaveable { mutableStateOf(false) }
+    var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
@@ -233,7 +234,30 @@ fun SettingsScreen(navController: NavHostController) {
                     icon = Icons.AutoMirrored.Filled.Logout,
                     iconColor = MaterialTheme.colorScheme.error,
                     title = "Logout",
+                    onClick = { showLogoutDialog = true }
+                )
+            }
+
+            Spacer(Modifier.height(32.dp))
+        }
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = {
+                Icon(
+                    Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Log out?") },
+            text = { Text("You'll need to sign in again to access your account.") },
+            confirmButton = {
+                Button(
                     onClick = {
+                        showLogoutDialog = false
                         analyticsManager.logLogout()
                         scope.launch {
                             val authManager = FirebaseAuthManager(toastManager)
@@ -242,12 +266,20 @@ fun SettingsScreen(navController: NavHostController) {
                                 popUpTo(0) { inclusive = true }
                             }
                         }
-                    }
-                )
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Log out")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
             }
-
-            Spacer(Modifier.height(32.dp))
-        }
+        )
     }
 
     if (showThemeDialog) {

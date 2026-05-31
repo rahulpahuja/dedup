@@ -5,8 +5,10 @@ import android.net.Uri
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,8 +38,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -49,12 +54,14 @@ import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.analytics.AnalyticsManager
+import com.rp.dedup.core.ui.ImagePreviewDialog
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
 import com.rp.dedup.core.viewmodels.ImageSearchViewModel
+import com.rp.dedup.core.model.MediaCounts
 import com.rp.dedup.core.model.StorageStats
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -74,7 +81,8 @@ fun DashboardScreen(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return DashboardViewModel(
-                    ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao())
+                    ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
+                    context.applicationContext
                 ) as T
             }
         }
@@ -86,6 +94,7 @@ fun DashboardScreen(
 
     val storageStats by dashboardViewModel.storageStats.collectAsState()
     val totalReclaimable by dashboardViewModel.totalReclaimableBytes.collectAsState()
+    val mediaCounts by dashboardViewModel.mediaCounts.collectAsState()
     val searchResults by searchViewModel.results.collectAsState()
     val isSearching by searchViewModel.isSearching.collectAsState()
     val searchProgress by searchViewModel.progress.collectAsState()
@@ -97,12 +106,24 @@ fun DashboardScreen(
         .collectAsState(initial = true)
     val coroutineScope = rememberCoroutineScope()
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                dashboardViewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     DashboardScreenContent(
         navController = navController,
         userName = profileViewModel.name,
         userImageUrl = profileViewModel.profileImageUrl,
         storageStats = storageStats,
         totalReclaimable = totalReclaimable,
+        mediaCounts = mediaCounts,
         searchResults = searchResults,
         isSearching = isSearching,
         searchProgress = searchProgress,
@@ -127,6 +148,7 @@ fun DashboardScreenContent(
     userImageUrl: String,
     storageStats: StorageStats,
     totalReclaimable: Long,
+    mediaCounts: MediaCounts = MediaCounts(),
     searchResults: List<ImageSearchRepository.SearchResult>,
     isSearching: Boolean,
     searchProgress: Pair<Int, Int>,
@@ -354,6 +376,7 @@ fun DashboardScreenContent(
                         Spacer(modifier = Modifier.height(16.dp))
                         QuickScanGrid(
                             navController = navController,
+                            mediaCounts = mediaCounts,
                             modifier = Modifier.introShowCaseTarget(
                                 index = 2,
                                 style = tutorialStyle,
@@ -734,13 +757,24 @@ fun StorageSummaryCard(
     }
 }
 
+private fun formatCount(n: Int): String = when {
+    n <= 0 -> "–"
+    n >= 1_000_000 -> "${"%.1f".format(n / 1_000_000.0)}M"
+    n >= 1_000 -> "${"%.1f".format(n / 1_000.0)}k"
+    else -> n.toString()
+}
+
 @Composable
-fun QuickScanGrid(navController: NavHostController, modifier: Modifier = Modifier) {
+fun QuickScanGrid(
+    navController: NavHostController,
+    mediaCounts: MediaCounts = MediaCounts(),
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_IMAGES,
-                count = "1.2k",
+                count = formatCount(mediaCounts.images),
                 icon = Icons.Default.Image,
                 color = UIConstants.ColorImages,
                 modifier = Modifier.weight(1f),
@@ -748,7 +782,7 @@ fun QuickScanGrid(navController: NavHostController, modifier: Modifier = Modifie
             )
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_VIDEOS,
-                count = "45",
+                count = formatCount(mediaCounts.videos),
                 icon = Icons.Default.Videocam,
                 color = UIConstants.ColorVideos,
                 modifier = Modifier.weight(1f),
@@ -758,7 +792,7 @@ fun QuickScanGrid(navController: NavHostController, modifier: Modifier = Modifie
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_DOCUMENTS,
-                count = "PDF",
+                count = formatCount(mediaCounts.pdfs),
                 icon = Icons.Default.Description,
                 color = UIConstants.ColorDocuments,
                 modifier = Modifier.weight(1f),
@@ -766,7 +800,7 @@ fun QuickScanGrid(navController: NavHostController, modifier: Modifier = Modifie
             )
             ScanCategoryCard(
                 title = UIConstants.QUICK_SCAN_APKS,
-                count = "12",
+                count = formatCount(mediaCounts.apks),
                 icon = Icons.Default.Android,
                 color = UIConstants.ColorApks,
                 modifier = Modifier.weight(1f),
@@ -1082,12 +1116,19 @@ fun ImageSearchContent(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
+    var showPreview by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
+            .combinedClickable(
+                onClick = {},
+                onLongClick = { showPreview = true }
+            )
     ) {
         AsyncImage(
             model = result.uri,
@@ -1112,6 +1153,14 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
                 overflow = TextOverflow.Ellipsis
             )
         }
+    }
+
+    if (showPreview) {
+        ImagePreviewDialog(
+            uri = result.uri,
+            matchedLabels = result.matchedLabels,
+            onDismiss = { showPreview = false }
+        )
     }
 }
 

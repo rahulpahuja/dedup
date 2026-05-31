@@ -215,8 +215,8 @@ private fun AppDrawerContentUI(
         DrawerNavItem(
             icon = Icons.Default.Settings,
             label = UIConstants.getScreenName(UIConstants.ROUTE_SETTINGS),
-            selected = false,
-            onClick = { scope.launch { drawerState.close() } }
+            selected = currentRoute == Screen.Settings.route,
+            onClick = { navigateTo(Screen.Settings.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.Info,

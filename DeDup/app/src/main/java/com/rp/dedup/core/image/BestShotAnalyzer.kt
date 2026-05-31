@@ -8,6 +8,10 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
 
 object BestShotAnalyzer {
@@ -21,24 +25,26 @@ object BestShotAnalyzer {
     )
 
     /**
-     * Analyzes a group of similar images and suggests the "best" one.
-     * Factors: Sharpness (estimated), Number of faces, Smiles.
+     * Scores every image in every group concurrently, then marks the best shot.
+     * All groups are dispatched in parallel on Dispatchers.IO (bitmap loads + ML Kit);
+     * within each group, images are also scored in parallel.
      */
+    suspend fun analyzeGroups(context: Context, groups: List<List<ScannedImage>>): List<List<ScannedImage>> =
+        coroutineScope {
+            groups.map { group -> async(Dispatchers.IO) { analyzeGroup(context, group) } }
+                .awaitAll()
+        }
+
     suspend fun analyzeGroup(context: Context, group: List<ScannedImage>): List<ScannedImage> {
         if (group.size <= 1) return group
 
-        val scoredImages = group.map { scannedImage ->
-            val score = calculateQualityScore(context, scannedImage)
-            scannedImage.copy(qualityScore = score)
+        val scoredImages = coroutineScope {
+            group.map { image -> async(Dispatchers.IO) { image.copy(qualityScore = calculateQualityScore(context, image)) } }
+                .awaitAll()
         }
 
-        // Sort by score descending
         val sorted = scoredImages.sortedByDescending { it.qualityScore }
-        
-        // Mark the first one as AI suggestion
-        return sorted.mapIndexed { index, image ->
-            image.copy(isAiSuggestion = index == 0)
-        }
+        return sorted.mapIndexed { index, image -> image.copy(isAiSuggestion = index == 0) }
     }
 
     private suspend fun calculateQualityScore(context: Context, scannedImage: ScannedImage): Float {

@@ -16,7 +16,7 @@ import com.rp.dedup.core.security.KeyManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 
-@Database(entities = [ScannedImage::class, ScanHistory::class], version = 3, exportSchema = false)
+@Database(entities = [ScannedImage::class, ScanHistory::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun scannedImageDao(): ScannedImageDao
     abstract fun scanHistoryDao(): ScanHistoryDao
@@ -53,6 +53,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE scanned_images ADD COLUMN groupKey TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
@@ -66,7 +74,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 dbName
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .fallbackToDestructiveMigration(dropAllTables = true)
 
             return try {
