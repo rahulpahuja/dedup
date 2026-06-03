@@ -50,6 +50,10 @@ fun LoginScreen(
 
     val analyticsManager = remember { AnalyticsManager(context) }
 
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("Login")
+    }
+
     val onLoginSuccess = { method: String ->
         analyticsManager.logLogin(method)
         navController.navigate(Screen.Dashboard.route) {

@@ -76,6 +76,10 @@ fun SettingsScreen(navController: NavHostController) {
     val excludedFolders by settingsViewModel.excludedFolders.collectAsState()
     val autoScanOnStartup by settingsViewModel.autoScanOnStartup.collectAsState()
     val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
+
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("Settings")
+    }
     
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
@@ -305,6 +309,7 @@ fun SettingsScreen(navController: NavHostController) {
             currentMode = currentThemeMode,
             onDismiss = { showThemeDialog = false },
             onSelect = { mode ->
+                analyticsManager.logSettingChanged("THEME", mode.name)
                 themeViewModel.setThemeMode(mode)
                 showThemeDialog = false
             }
@@ -316,6 +321,7 @@ fun SettingsScreen(navController: NavHostController) {
             currentValue = similarityThreshold,
             onDismiss = { showThresholdDialog = false },
             onSelect = { value ->
+                analyticsManager.logSettingChanged("SIMILARITY_THRESHOLD", value.toString())
                 settingsViewModel.setSimilarityThreshold(value)
                 showThresholdDialog = false
             }
@@ -328,6 +334,7 @@ fun SettingsScreen(navController: NavHostController) {
             onDismiss = { showLanguageDialog = false },
             onSelect = { code ->
                 scope.launch {
+                    analyticsManager.logSettingChanged("LANGUAGE", code)
                     settingsViewModel.setLanguage(code)
                     LocaleManager.applyLocale(code)
                 }

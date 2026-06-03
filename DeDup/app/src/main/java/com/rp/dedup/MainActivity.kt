@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity() {
                     // Handle deep links from widget
                     LaunchedEffect(pendingDeepLinkRoute) {
                         pendingDeepLinkRoute?.let { route ->
+                            analyticsManager.logDeepLinkOpened(route)
                             navController.navigate(route) {
                                 // Clear splash if we're navigating from it
                                 popUpTo(Screen.Splash.route) { inclusive = true }

@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.model.SocialMediaCleanerState
 import com.rp.dedup.core.model.SocialMediaFile
 import com.rp.dedup.core.deepoptimization.SocialMediaCleanerRepository
@@ -20,6 +21,7 @@ import java.util.concurrent.CancellationException
 
 class SocialMediaCleanerViewModel(
     private val repository: SocialMediaCleanerRepository,
+    private val analyticsManager: AnalyticsManager? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
@@ -33,6 +35,7 @@ class SocialMediaCleanerViewModel(
         if (current is SocialMediaCleanerState.ScanningFiles ||
             current is SocialMediaCleanerState.ComputingChecksums) return
 
+        analyticsManager?.logScanStarted("SOCIAL_MEDIA")
         scanJob = viewModelScope.launch(ioDispatcher) {
             try {
                 val allFiles = mutableListOf<SocialMediaFile>()
@@ -44,6 +47,7 @@ class SocialMediaCleanerViewModel(
                 }
 
                 if (allFiles.isEmpty()) {
+                    analyticsManager?.logScanCompleted("SOCIAL_MEDIA", 0, 0, 0)
                     _state.value = SocialMediaCleanerState.Results(emptyList(), 0L)
                     return@launch
                 }
@@ -67,11 +71,20 @@ class SocialMediaCleanerViewModel(
                     .toList()
 
                 val reclaimableBytes = duplicateGroups.sumOf { group -> group.drop(1).sumOf { it.size } }
+                
+                analyticsManager?.logScanCompleted(
+                    "SOCIAL_MEDIA",
+                    allFiles.size,
+                    duplicateGroups.size,
+                    reclaimableBytes
+                )
+                
                 _state.value = SocialMediaCleanerState.Results(duplicateGroups, reclaimableBytes)
 
             } catch (_: CancellationException) {
                 _state.value = SocialMediaCleanerState.Idle
             } catch (e: Exception) {
+                analyticsManager?.logError("SOCIAL_MEDIA", e.message ?: "Unknown Error")
                 _state.value = SocialMediaCleanerState.Error(e.localizedMessage ?: "Scan failed")
             }
         }
@@ -84,8 +97,14 @@ class SocialMediaCleanerViewModel(
 
     fun deleteFiles(uris: List<Uri>) {
         viewModelScope.launch(ioDispatcher) {
-            repository.deleteFiles(uris)
             val current = _state.value as? SocialMediaCleanerState.Results ?: return@launch
+            val toDelete = current.duplicateGroups.flatten().filter { it.uri in uris }
+            val freedBytes = toDelete.sumOf { it.size }
+            
+            repository.deleteFiles(uris)
+            
+            analyticsManager?.logFilesDeleted("SOCIAL_MEDIA", uris.size, freedBytes)
+
             val remaining = current.duplicateGroups
                 .map { group -> group.filterNot { it.uri in uris } }
                 .filter { it.size > 1 }
@@ -98,7 +117,10 @@ class SocialMediaCleanerViewModel(
         fun factory(context: Context): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return SocialMediaCleanerViewModel(SocialMediaCleanerRepositoryImpl(context)) as T
+                return SocialMediaCleanerViewModel(
+                    SocialMediaCleanerRepositoryImpl(context),
+                    AnalyticsManager(context)
+                ) as T
             }
         }
     }

@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import androidx.core.graphics.get
 
 object ImageHasher {
 
@@ -29,8 +30,8 @@ object ImageHasher {
         var hash = 0L
         for (y in 0 until 8) {
             for (x in 0 until 8) {
-                val leftPixel = resized.getPixel(x, y)
-                val rightPixel = resized.getPixel(x + 1, y)
+                val leftPixel = resized[x, y]
+                val rightPixel = resized[x + 1, y]
                 if (getLuminance(leftPixel) > getLuminance(rightPixel)) {
                     hash = hash or (1L shl (y * 8 + x))
                 }

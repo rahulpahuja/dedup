@@ -2,6 +2,7 @@ package com.rp.dedup.core.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
@@ -19,7 +20,8 @@ import java.util.concurrent.CancellationException
 class FileScannerViewModel(
     private val repository: FileScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
-    private val scanTypeName: String = "FILE"
+    private val scanTypeName: String = "FILE",
+    private val analyticsManager: AnalyticsManager? = null
 ) : ViewModel() {
 
     private val _files = MutableStateFlow<List<ScannedFile>>(emptyList())
@@ -41,6 +43,8 @@ class FileScannerViewModel(
         _files.value = emptyList()
         _duplicateGroups.value = emptyList()
 
+        analyticsManager?.logScanStarted(scanTypeName)
+
         scanJob = viewModelScope.launch(Dispatchers.Default) {
             try {
                 val allFiles = mutableListOf<ScannedFile>()
@@ -53,8 +57,21 @@ class FileScannerViewModel(
 
                 _files.value = allFiles.toList()
                 findDuplicates(allFiles)
-            } catch (_: CancellationException) {
-                wasCancelled = true
+
+                val groups = _duplicateGroups.value
+                analyticsManager?.logScanCompleted(
+                    scanType = scanTypeName,
+                    totalScanned = allFiles.size,
+                    duplicatesFound = groups.sumOf { it.size - 1 },
+                    reclaimableBytes = groups.sumOf { group -> group.drop(1).sumOf { it.size } }
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) {
+                    wasCancelled = true
+                    analyticsManager?.logScanCancelled(scanTypeName)
+                } else {
+                    analyticsManager?.logError(scanTypeName, e.message ?: "Unknown error")
+                }
             } finally {
                 _isScanning.value = false
                 withContext(NonCancellable + Dispatchers.IO) {
@@ -104,9 +121,12 @@ class FileScannerViewModel(
 
     fun removeDeletedFilesFromUI(deletedUris: List<android.net.Uri>) {
         viewModelScope.launch {
+            val toDelete = _files.value.filter { it.uri in deletedUris }
+            val freedBytes = toDelete.sumOf { it.size }
             val currentFiles = _files.value.filterNot { it.uri in deletedUris }
             _files.value = currentFiles
             findDuplicates(currentFiles)
+            analyticsManager?.logFilesDeleted(scanTypeName, deletedUris.size, freedBytes)
         }
     }
 }

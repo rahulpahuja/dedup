@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
@@ -21,6 +23,10 @@ import com.rp.dedup.core.ui.DeDupTopBar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivacyPolicyScreen(navController: NavHostController) {
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(androidx.compose.ui.platform.LocalContext.current) }
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("PrivacyPolicy")
+    }
     Scaffold(
         topBar = {
             DeDupTopBar(

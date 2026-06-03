@@ -106,6 +106,17 @@ fun DashboardScreen(
     // Default true so tutorial doesn't flash before DataStore loads
     val tutorialShown by dataStoreManager.readData(DataStoreManager.TUTORIAL_SHOWN, false)
         .collectAsState(initial = true)
+    
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("Dashboard")
+    }
+
+    LaunchedEffect(tutorialShown) {
+        if (!tutorialShown) {
+            analyticsManager.logTutorialInteraction("DASHBOARD", "VIEWED")
+        }
+    }
+
     val coroutineScope = rememberCoroutineScope()
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -135,6 +146,7 @@ fun DashboardScreen(
         analyticsManager = analyticsManager,
         showTutorial = !tutorialShown,
         onTutorialComplete = {
+            analyticsManager.logTutorialInteraction("DASHBOARD", "COMPLETED")
             coroutineScope.launch {
                 dataStoreManager.writeData(DataStoreManager.TUTORIAL_SHOWN, true)
             }

@@ -1,6 +1,5 @@
 package com.rp.dedup.core.i18n
 
-import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 
@@ -24,4 +23,3 @@ object LocaleManager {
     }
 }
 
-data class LanguageOption(val name: String, val code: String)

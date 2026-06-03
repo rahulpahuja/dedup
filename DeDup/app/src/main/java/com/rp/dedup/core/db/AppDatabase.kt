@@ -13,6 +13,7 @@ import com.rp.dedup.core.dao.ScannedImageDao
 import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.dao.ScanHistoryDao
 import com.rp.dedup.core.security.KeyManager
+import com.rp.dedup.core.analytics.AnalyticsManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 

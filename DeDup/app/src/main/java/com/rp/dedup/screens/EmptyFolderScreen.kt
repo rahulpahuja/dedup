@@ -37,7 +37,12 @@ fun EmptyFolderScreen(navController: NavHostController) {
         factory = EmptyFolderViewModel.factory(context)
     )
     val state by viewModel.state.collectAsState()
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
     val selectedPaths = remember { mutableStateSetOf<String>() }
+
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("EmptyFolderRemover")
+    }
 
     Scaffold(
         topBar = {

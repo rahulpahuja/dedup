@@ -164,8 +164,13 @@ class ScannerViewModel(
 
                 persistResults(finalizedGroups)
 
-            } catch (_: CancellationException) {
-                wasCancelled = true
+            } catch (e: Exception) {
+                if (e is CancellationException) {
+                    wasCancelled = true
+                    analyticsManager?.logScanCancelled("IMAGE")
+                } else {
+                    analyticsManager?.logError("IMAGE", e.message ?: "Unknown Error")
+                }
                 synchronized(groupsLock) {
                     _duplicateGroups.value = allScannedGroups.values
                         .filter { it.size > 1 }

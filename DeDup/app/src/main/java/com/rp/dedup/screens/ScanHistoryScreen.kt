@@ -57,6 +57,12 @@ fun ScanHistoryScreen(navController: NavHostController) {
     )
 
     val history by viewModel.history.collectAsState()
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("ScanHistory")
+    }
+
     var showClearDialog by remember { mutableStateOf(false) }
 
     Scaffold(

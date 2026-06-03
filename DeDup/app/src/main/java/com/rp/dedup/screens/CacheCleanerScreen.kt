@@ -33,13 +33,25 @@ import com.rp.dedup.core.ui.DeDupTopBar
 @Composable
 fun CacheCleanerScreen(navController: NavHostController) {
     val context = LocalContext.current
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
     var progressState by remember { mutableStateOf<CleaningProgress>(CleaningProgress.Scanning(0)) }
     var startCleaning by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("CacheCleaner")
+    }
+
     LaunchedEffect(startCleaning) {
         if (startCleaning) {
+            analyticsManager.logScanStarted("CACHE")
             CacheCleaner.clearAllCacheFlow(context).collect {
                 progressState = it
+                if (it is CleaningProgress.Finished) {
+                    analyticsManager.logScanCompleted("CACHE", 0, 0, it.totalBytesCleared)
+                    analyticsManager.logFilesDeleted("CACHE", 0, it.totalBytesCleared)
+                } else if (it is CleaningProgress.Error) {
+                    analyticsManager.logError("CACHE", it.message)
+                }
             }
         } else {
             // Initially just show the size

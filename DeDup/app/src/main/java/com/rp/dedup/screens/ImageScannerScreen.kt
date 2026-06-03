@@ -94,6 +94,12 @@ fun ImageScannerScreen(navController: NavHostController) {
     val isScanning by viewModel.isScanning.collectAsState()
     val isStale by viewModel.isStale.collectAsState()
     val cacheLoaded by viewModel.cacheLoaded.collectAsState()
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("ImageScanner")
+    }
+
     val selectedForDeletion = remember { mutableStateListOf<Uri>() }
     var showAutoClearWarning by remember { mutableStateOf(false) }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
@@ -153,6 +159,12 @@ fun ImageScannerScreen(navController: NavHostController) {
         false
     ).collectAsState(initial = true)
 
+    LaunchedEffect(tutorialShown, hasResults, isScanning) {
+        if (!tutorialShown && hasResults && !isScanning) {
+            analyticsManager.logTutorialInteraction("LONG_PRESS_PREVIEW", "VIEWED")
+        }
+    }
+
     val tutorialStyle = ShowcaseStyle.Default.copy(
         backgroundColor = Color.Black,
         backgroundAlpha = 0.92f,
@@ -163,6 +175,7 @@ fun ImageScannerScreen(navController: NavHostController) {
         showIntroShowCase = !tutorialShown && hasResults && !isScanning,
         dismissOnClickOutside = true,
         onShowCaseCompleted = {
+            analyticsManager.logTutorialInteraction("LONG_PRESS_PREVIEW", "COMPLETED")
             scope.launch {
                 settingsViewModel.dataStoreManager.writeData(
                     com.rp.dedup.core.caching.DataStoreManager.LONG_PRESS_TUTORIAL_SHOWN,
@@ -279,6 +292,7 @@ fun ImageScannerScreen(navController: NavHostController) {
                     Button(
                         onClick = {
                             showAutoClearWarning = false
+                            analyticsManager.logAutoClearInitiated("IMAGE", autoClearSavingsBytes)
                             triggerOSDeletionPrompt(viewModel.getAutoClearUris().map { Uri.parse(it) })
                         },
                         colors = ButtonDefaults.buttonColors(

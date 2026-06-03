@@ -40,8 +40,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -86,7 +88,12 @@ fun ActivityLogScreen(navController: NavHostController) {
     )
 
     val history by viewModel.history.collectAsState()
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("ActivityLog")
+    }
 
     val weekStart = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)
     val weeklyReclaimable = history.filter { it.timestamp >= weekStart }.sumOf { it.reclaimableBytes }

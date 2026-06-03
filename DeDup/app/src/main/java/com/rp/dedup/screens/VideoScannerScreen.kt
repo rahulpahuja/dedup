@@ -62,7 +62,12 @@ fun VideoScannerScreen(navController: NavHostController) {
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val scannedCount by viewModel.scannedCount.collectAsState()
-    
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("VideoScanner")
+    }
+
     val selectedUris = remember { mutableStateListOf<Uri>() }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 

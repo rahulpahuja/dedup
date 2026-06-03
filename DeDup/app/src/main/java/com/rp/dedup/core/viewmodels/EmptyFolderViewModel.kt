@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.model.EmptyFolder
 import com.rp.dedup.core.model.EmptyFolderState
 import com.rp.dedup.core.deepoptimization.EmptyFolderRepository
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
 
 class EmptyFolderViewModel(
     private val repository: EmptyFolderRepository,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val analyticsManager: AnalyticsManager? = null
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<EmptyFolderState>(EmptyFolderState.Idle)
@@ -27,10 +29,18 @@ class EmptyFolderViewModel(
         if (_state.value is EmptyFolderState.Scanning) return
         viewModelScope.launch(ioDispatcher) {
             _state.value = EmptyFolderState.Scanning
+            analyticsManager?.logScanStarted("EMPTY_FOLDER")
             try {
                 val folders = repository.findEmptyFolders()
+                analyticsManager?.logScanCompleted(
+                    scanType = "EMPTY_FOLDER",
+                    totalScanned = folders.size,
+                    duplicatesFound = folders.size,
+                    reclaimableBytes = 0L
+                )
                 _state.value = EmptyFolderState.Results(folders)
             } catch (e: Exception) {
+                analyticsManager?.logError("EMPTY_FOLDER", e.localizedMessage ?: "Scan failed")
                 _state.value = EmptyFolderState.Error(e.localizedMessage ?: "Scan failed")
             }
         }
@@ -43,6 +53,7 @@ class EmptyFolderViewModel(
                 .filter { repository.deleteFolder(it) }
                 .map { it.path }
                 .toSet()
+            analyticsManager?.logFilesDeleted("EMPTY_FOLDER", deletedPaths.size, 0L)
             _state.value = EmptyFolderState.Results(
                 current.folders.filterNot { it.path in deletedPaths }
             )
@@ -53,7 +64,10 @@ class EmptyFolderViewModel(
         fun factory(context: Context): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return EmptyFolderViewModel(EmptyFolderRepositoryImpl(context)) as T
+                return EmptyFolderViewModel(
+                    repository = EmptyFolderRepositoryImpl(context),
+                    analyticsManager = AnalyticsManager(context)
+                ) as T
             }
         }
     }

@@ -89,6 +89,7 @@ class VideoScannerViewModel(
 
             } catch (_: CancellationException) {
                 wasCancelled = true
+                analyticsManager?.logScanCancelled("VIDEO")
                 _videos.value = allVideos.toList()
             } finally {
                 _isScanning.value = false
