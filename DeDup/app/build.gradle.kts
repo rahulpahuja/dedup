@@ -26,14 +26,14 @@ kotlin {
 
 android {
     namespace = "com.rp.dedup"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.rp.dedup"
         minSdk = 24
-        targetSdk = 36
-        versionCode = 10
-        versionName = "1.0.10"
+        targetSdk = 37
+        versionCode = 11
+        versionName = "1.0.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -129,29 +129,29 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.database)
-    implementation("com.google.firebase:firebase-analytics")
+    implementation(libs.firebase.analytics)
 
     // Credential Manager & Google ID
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     // Facebook Login
-    implementation("com.facebook.android:facebook-login:18.2.3")
+    implementation(libs.facebook.login)
 
     // Glance for App Widgets
-    implementation("androidx.glance:glance-appwidget:1.1.1")
-    implementation("androidx.glance:glance-material3:1.1.1")
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
 
     // EXIF orientation correction
-    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation(libs.androidx.exifinterface)
 
     // Coil for Jetpack Compose
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation(libs.coil.compose)
 
     // ML Kit on-device image labeling
-    implementation("com.google.mlkit:image-labeling:17.0.9")
-    implementation("com.google.mlkit:face-detection:16.1.7")
+    implementation(libs.image.labeling)
+    implementation(libs.face.detection)
 
     // Intro showcase / first-run tutorial
     implementation(libs.introshowcaseview)
@@ -184,10 +184,10 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
 
     testImplementation(libs.junit)
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
-    testImplementation("io.mockk:mockk:1.13.10")
-    testImplementation("org.robolectric:robolectric:4.12.2")
-    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.core.ktx)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(enforcedPlatform(libs.androidx.compose.bom))
