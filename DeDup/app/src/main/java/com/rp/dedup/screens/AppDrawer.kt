@@ -66,6 +66,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.model.ThemeMode
@@ -164,44 +166,44 @@ private fun AppDrawerContentUI(
 
         DrawerNavItem(
             icon = Icons.Default.GridView,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_DASHBOARD),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_DASHBOARD)),
             selected = currentRoute == Screen.Dashboard.route,
             onClick = { navigateTo(Screen.Dashboard.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.Search,
-            label = "Scan Files",
+            label = stringResource(R.string.drawer_scan_files),
             selected = currentRoute == Screen.Cleanup.route,
             onClick = { navigateTo(Screen.Cleanup.route) }
         )
         DrawerNavItem(
             icon = Icons.AutoMirrored.Filled.List,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_IMAGE_SCANNER),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_IMAGE_SCANNER)),
             selected = currentRoute == Screen.ImageScanner.route
                     || currentRoute == Screen.ResultsMedia.route,
             onClick = { navigateTo(Screen.ImageScanner.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.Videocam,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_VIDEO_SCANNER),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_VIDEO_SCANNER)),
             selected = currentRoute == Screen.VideoScanner.route,
             onClick = { navigateTo(Screen.VideoScanner.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.History,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_ACTIVITY),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_ACTIVITY)),
             selected = currentRoute == Screen.Activity.route,
             onClick = { navigateTo(Screen.Activity.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.ManageSearch,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_SCAN_HISTORY),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_SCAN_HISTORY)),
             selected = currentRoute == Screen.ScanHistory.route,
             onClick = { navigateTo(Screen.ScanHistory.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.FolderOpen,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_FILE_BROWSER),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_FILE_BROWSER)),
             selected = currentRoute == Screen.FileBrowser.route,
             onClick = { navigateTo(Screen.FileBrowser.route) }
         )
@@ -217,13 +219,13 @@ private fun AppDrawerContentUI(
 
         DrawerNavItem(
             icon = Icons.Default.Settings,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_SETTINGS),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_SETTINGS)),
             selected = currentRoute == Screen.Settings.route,
             onClick = { navigateTo(Screen.Settings.route) }
         )
         DrawerNavItem(
             icon = Icons.Default.Info,
-            label = UIConstants.getScreenName(UIConstants.ROUTE_ABOUT),
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_ABOUT)),
             selected = currentRoute == Screen.About.route,
             onClick = { navigateTo(Screen.About.route) }
         )
@@ -232,7 +234,7 @@ private fun AppDrawerContentUI(
 
         DrawerNavItem(
             icon = Icons.Default.Logout,
-            label = "Logout",
+            label = stringResource(R.string.logout),
             selected = false,
             onClick = { showLogoutDialog = true }
         )
@@ -249,8 +251,8 @@ private fun AppDrawerContentUI(
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Log out?") },
-            text = { Text("You'll need to sign in again to access your account.") },
+            title = { Text(stringResource(R.string.logout_confirm_title)) },
+            text = { Text(stringResource(R.string.logout_confirm_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -269,12 +271,12 @@ private fun AppDrawerContentUI(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Log out")
+                    Text(stringResource(R.string.logout))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -376,7 +378,7 @@ private fun ThemeSection(
     onModeChange: (ThemeMode) -> Unit
 ) {
     Text(
-        "THEME",
+        stringResource(R.string.drawer_theme),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 28.dp, top = 8.dp, bottom = 4.dp)
@@ -415,30 +417,30 @@ private fun ProfileEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Profile") },
+        title = { Text(stringResource(R.string.edit_profile)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    label = { Text(stringResource(R.string.email)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(name, email) }) { Text("Save") }
+            TextButton(onClick = { onSave(name, email) }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

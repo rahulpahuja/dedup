@@ -37,6 +37,8 @@ import com.rp.dedup.core.deepoptimization.TreemapLayoutCalculator.TreemapCell
 import com.rp.dedup.core.model.BigFileMapState
 import com.rp.dedup.core.viewmodels.BigFileMapViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import com.rp.dedup.core.ui.DeDupTopBar
 
 private val TREEMAP_PALETTE = listOf(
@@ -60,7 +62,7 @@ fun BigFileMapScreen(navController: NavHostController) {
                 title = {
                     Column {
                         Text(
-                            "Big File Map",
+                            stringResource(R.string.screen_big_file_map),
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                         )
                         if (navStack.isNotEmpty()) {
@@ -77,7 +79,7 @@ fun BigFileMapScreen(navController: NavHostController) {
                         if (navStack.isNotEmpty()) navStack = navStack.dropLast(1)
                         else navController.popBackStack()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -141,10 +143,10 @@ private fun BigFileMapIdleView(onScan: () -> Unit) {
             tint = Color(0xFF1A73E8)
         )
         Spacer(Modifier.height(24.dp))
-        Text("Storage Treemap", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.storage_treemap), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Visualize which folders are consuming your space.",
+            stringResource(R.string.big_file_map_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -152,7 +154,7 @@ private fun BigFileMapIdleView(onScan: () -> Unit) {
         Button(onClick = onScan, shape = RoundedCornerShape(12.dp)) {
             Icon(Icons.Default.Map, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Build Map")
+            Text(stringResource(R.string.build_map))
         }
     }
 }

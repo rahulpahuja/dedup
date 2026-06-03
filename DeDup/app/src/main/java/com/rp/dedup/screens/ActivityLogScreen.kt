@@ -67,6 +67,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,12 +95,12 @@ fun ActivityLogScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Activity Log",
+                title = stringResource(R.string.screen_activity_log),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }
@@ -122,12 +124,12 @@ fun ActivityLogScreen(navController: NavHostController) {
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        "No activity yet",
+                        stringResource(R.string.no_activity),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        "Run a scan to see results here.",
+                        stringResource(R.string.run_scan_activity_prompt),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -145,7 +147,7 @@ fun ActivityLogScreen(navController: NavHostController) {
                     Spacer(modifier = Modifier.height(8.dp))
                     if (isDark) {
                         Text(
-                            "WEEKLY SUMMARY",
+                            stringResource(R.string.weekly_summary),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -161,7 +163,7 @@ fun ActivityLogScreen(navController: NavHostController) {
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Reclaimable · $weeklyScans scans",
+                                stringResource(R.string.weekly_reclaimable_subtitle, weeklyScans),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 8.dp)
@@ -169,7 +171,7 @@ fun ActivityLogScreen(navController: NavHostController) {
                         }
                     } else {
                         Text(
-                            "RECENT ACTIVITY",
+                            stringResource(R.string.recent_activity),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF00838F)
@@ -181,14 +183,14 @@ fun ActivityLogScreen(navController: NavHostController) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Scan History",
+                                stringResource(R.string.screen_scan_history),
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = DarkBlue
                                 )
                             )
                             Text(
-                                "${history.size} Records",
+                                stringResource(R.string.records_count, history.size),
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),

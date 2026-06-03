@@ -13,6 +13,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar
 
@@ -22,12 +24,12 @@ fun PrivacyPolicyScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Privacy Policy",
+                title = stringResource(R.string.privacy_policy),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }

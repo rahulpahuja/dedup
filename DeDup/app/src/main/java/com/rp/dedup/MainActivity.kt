@@ -2,7 +2,6 @@ package com.rp.dedup
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -22,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import androidx.appcompat.app.AppCompatActivity
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.security.RootDetectionManager
@@ -31,7 +31,7 @@ import com.rp.dedup.ui.theme.DeDupTheme
 // Global state to track deep link route across activity instances/recompositions
 var pendingDeepLinkRoute by mutableStateOf<String?>(null)
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val themeViewModel: ThemeViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -42,6 +42,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Note: We don't call applyLocale here anymore because AppCompatDelegate
+        // automatically restores the persisted locale from its own storage.
+        
         enableEdgeToEdge()
 
         // Handle initial intent

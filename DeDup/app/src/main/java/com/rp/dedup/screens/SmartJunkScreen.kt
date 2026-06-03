@@ -8,16 +8,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,20 +24,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import com.rp.dedup.core.search.SmartJunkRepository
+import com.rp.dedup.R
 import com.rp.dedup.core.model.SmartJunkState
+import com.rp.dedup.core.search.SmartJunkRepository
+import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SmartJunkViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
-import com.rp.dedup.core.ui.DeDupTopBar
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SmartJunkScreen(navController: NavHostController) {
     val context = LocalContext.current
@@ -73,10 +73,10 @@ fun SmartJunkScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Smart AI Cleanup",
+                title = stringResource(R.string.screen_smart_cleanup),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -94,7 +94,7 @@ fun SmartJunkScreen(navController: NavHostController) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "${results.selectedUris.size} files selected",
+                            stringResource(R.string.delete_selected_btn, results.selectedUris.size, ""),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Button(
@@ -120,12 +120,12 @@ fun SmartJunkScreen(navController: NavHostController) {
                     ) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.height(16.dp))
-                        Text("AI Image Cleanup", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.ai_image_cleanup), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
-                        Text("Let AI find blurry, meme, and junk images for you.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.ai_image_cleanup_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(32.dp))
                         Button(onClick = { viewModel.startScan() }) {
-                            Text("Start Scanning")
+                            Text(stringResource(R.string.start_scanning))
                         }
                     }
                 }
@@ -146,7 +146,7 @@ fun SmartJunkScreen(navController: NavHostController) {
                     Spacer(Modifier.height(16.dp))
                     Text(s.message, style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.height(16.dp))
-                    Button(onClick = { viewModel.startScan() }) { Text("Retry") }
+                    Button(onClick = { viewModel.startScan() }) { Text(stringResource(R.string.retry)) }
                 }
             }
         }
@@ -160,16 +160,10 @@ private fun ScanningView(progress: Float) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(56.dp))
-        Spacer(Modifier.height(24.dp))
-        Text("AI is analyzing your gallery...", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier.fillMaxWidth(0.6f).clip(CircleShape)
-        )
-        Spacer(Modifier.height(8.dp))
-        Text("${(progress * 100).toInt()}% complete", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        CircularProgressIndicator(progress = { progress })
+        Spacer(Modifier.height(16.dp))
+        Text("AI is analyzing your images...", style = MaterialTheme.typography.bodyMedium)
+        Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -181,11 +175,7 @@ private fun ResultsView(
     onSelectAllInCategory: (SmartJunkRepository.JunkCategory) -> Unit,
     onDeselectAllInCategory: (SmartJunkRepository.JunkCategory) -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         results.groups.forEach { (category, items) ->
             item {
                 JunkCategorySection(
@@ -194,15 +184,17 @@ private fun ResultsView(
                     selectedUris = results.selectedUris,
                     isExpanded = results.expandedCategories.contains(category),
                     onToggleFile = onToggleFile,
-                    onToggleExpand = { onToggleCategory(category) },
+                    onToggleCategory = { onToggleCategory(category) },
                     onSelectAll = { onSelectAllInCategory(category) },
                     onDeselectAll = { onDeselectAllInCategory(category) }
                 )
             }
         }
+        item { Spacer(Modifier.height(80.dp)) }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun JunkCategorySection(
     category: SmartJunkRepository.JunkCategory,
@@ -210,60 +202,52 @@ private fun JunkCategorySection(
     selectedUris: Set<Uri>,
     isExpanded: Boolean,
     onToggleFile: (Uri) -> Unit,
-    onToggleExpand: () -> Unit,
+    onToggleCategory: () -> Unit,
     onSelectAll: () -> Unit,
     onDeselectAll: () -> Unit
 ) {
-    val selectedInCat = items.count { it.uri in selectedUris }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onToggleExpand() }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(category.color.copy(alpha = 0.1f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(category.icon, contentDescription = null, tint = category.color, modifier = Modifier.size(20.dp))
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(category.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${items.size} items · $selectedInCat selected", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                IconButton(onClick = { if (selectedInCat == items.size) onDeselectAll() else onSelectAll() }) {
-                    Icon(
-                        if (selectedInCat == items.size) Icons.Default.CheckCircle else Icons.Default.SelectAll,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Icon(
-                    if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null
-                )
+    val categorySelectedCount = items.count { selectedUris.contains(it.uri) }
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggleCategory() }
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                if (isExpanded) Icons.Default.ExpandMore else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null
+            )
+            Spacer(Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(category.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("${items.size} items · $categorySelectedCount selected", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-
             if (isExpanded) {
-                Spacer(Modifier.height(12.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    itemsIndexed(items) { _, item ->
-                        JunkItemThumbnail(
-                            item = item,
-                            isSelected = item.uri in selectedUris,
-                            onToggle = { onToggleFile(item.uri) }
-                        )
-                    }
+                TextButton(onClick = if (categorySelectedCount == items.size) onDeselectAll else onSelectAll) {
+                    Text(if (categorySelectedCount == items.size) "Deselect All" else "Select All")
                 }
             }
         }
+        
+        if (isExpanded) {
+            FlowRow(
+                modifier = Modifier.padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items.forEach { item ->
+                    JunkItemThumbnail(
+                        item = item,
+                        isSelected = selectedUris.contains(item.uri),
+                        onToggle = { onToggleFile(item.uri) }
+                    )
+                }
+            }
+        }
+        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }
 }
 
@@ -277,11 +261,6 @@ private fun JunkItemThumbnail(
         modifier = Modifier
             .size(100.dp)
             .clip(RoundedCornerShape(8.dp))
-            .border(
-                width = if (isSelected) 2.dp else 0.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.error else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
-            )
             .clickable { onToggle() }
     ) {
         AsyncImage(
@@ -291,14 +270,13 @@ private fun JunkItemThumbnail(
             contentScale = ContentScale.Crop
         )
         if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.error.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
-            }
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)))
+            Icon(
+                Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
+            )
         }
     }
 }
@@ -307,7 +285,6 @@ private fun JunkItemThumbnail(
 @Composable
 private fun SmartJunkScreenPreview() {
     DeDupTheme {
-        val navController = rememberNavController()
-        SmartJunkScreen(navController = navController)
+        SmartJunkScreen(navController = NavHostController(LocalContext.current))
     }
 }

@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
+import com.rp.dedup.R
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.FileScannerViewModel
 import com.rp.dedup.core.model.ScannedFile
@@ -91,9 +93,6 @@ fun FileScannerScreen(
         if (uris.isEmpty()) return
         pendingDeleteUris = uris
         
-        // Fix: MediaStore.createDeleteRequest only supports Media items (Images, Video, Audio).
-        // For non-media files like PDFs and APKs, we use direct deletion via ContentResolver.
-        // This works because FileScannerScreen is gated by MANAGE_EXTERNAL_STORAGE.
         try {
             uris.forEach { uri ->
                 context.contentResolver.delete(uri, null, null)
@@ -101,11 +100,7 @@ fun FileScannerScreen(
             viewModel.removeDeletedFilesFromUI(uris)
             selectedUris.removeAll(uris)
             pendingDeleteUris = emptyList()
-            
-            // Note: Since we have All Files Access, this succeeds silently.
-            // If it fails with a SecurityException, we'd know the permission is missing.
         } catch (e: Exception) {
-            // Fallback for unexpected errors, though with MANAGE_EXTERNAL_STORAGE this shouldn't happen.
             uris.forEach { uri ->
                 try {
                     context.contentResolver.delete(uri, null, null)
@@ -151,7 +146,7 @@ fun FileScannerContent(
     onToggleSelect: (Uri) -> Unit,
     onDeleteSelected: () -> Unit
 ) {
-    val title = if (scanType == "pdf") "PDF Scanner" else "APK Scanner"
+    val title = if (scanType == "pdf") stringResource(R.string.pdf_scanner_title) else stringResource(R.string.apk_scanner_title)
     val icon = if (scanType == "pdf") Icons.Default.Description else Icons.Default.SdCard
 
     Scaffold(
@@ -160,13 +155,13 @@ fun FileScannerContent(
                 title = title,
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     if (selectedUris.isNotEmpty()) {
                         IconButton(onClick = onDeleteSelected) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Selected", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_selected_btn, selectedUris.size, ""), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -192,7 +187,7 @@ fun FileScannerContent(
 
             if (!isScanning && allFiles.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No ${scanType.uppercase()} files found. Tap Scan to search.")
+                    Text(stringResource(R.string.no_files_found, scanType.uppercase()))
                 }
             } else {
                 LazyColumn(
@@ -211,9 +206,9 @@ fun FileScannerContent(
                                         modifier = Modifier.size(48.dp)
                                     )
                                     Spacer(Modifier.height(16.dp))
-                                    Text("No duplicate ${scanType.uppercase()} files found.")
+                                    Text(stringResource(R.string.no_duplicate_files_found, scanType.uppercase()))
                                     Text(
-                                        "Total files scanned: ${allFiles.size}",
+                                        stringResource(R.string.total_files_scanned, allFiles.size),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -248,19 +243,19 @@ private fun ScannerHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp), // Reduced vertical padding from 16.dp to 8.dp
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (isScanning) "Searching files..." else title,
-                style = MaterialTheme.typography.titleMedium, // Reduced from titleLarge
+                text = if (isScanning) stringResource(R.string.searching_files) else title,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             if (!isScanning) {
                 Text(
-                    text = "$groupCount duplicate groups found",
-                    style = MaterialTheme.typography.bodySmall, // Reduced from bodyMedium
+                    text = stringResource(R.string.duplicate_groups_found, groupCount),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -268,16 +263,16 @@ private fun ScannerHeader(
         Button(
             onClick = onScanClick,
             shape = RoundedCornerShape(12.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp), // Tighter button
-            modifier = Modifier.height(36.dp) // Fixed smaller height
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            modifier = Modifier.height(36.dp)
         ) {
             Icon(
                 imageVector = if (isScanning) Icons.Default.Stop else Icons.Default.Search,
                 contentDescription = null,
-                modifier = Modifier.size(16.dp) // Reduced icon size
+                modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(4.dp))
-            Text(if (isScanning) "Stop" else "Scan", style = MaterialTheme.typography.labelLarge)
+            Text(if (isScanning) stringResource(R.string.stop_btn) else stringResource(R.string.scan_btn), style = MaterialTheme.typography.labelLarge)
         }
     }
     HorizontalDivider()
@@ -296,7 +291,7 @@ private fun DuplicateGroupItem(
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
-                text = "Group: ${group.first().name}",
+                text = stringResource(R.string.group_name_label, group.first().name),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 1,
@@ -361,7 +356,7 @@ private fun FileItem(
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            "KEEP",
+                            stringResource(R.string.keep),
                             color = Color(0xFF2E7D32),
                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)

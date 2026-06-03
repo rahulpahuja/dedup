@@ -1,5 +1,6 @@
 package com.rp.dedup.screens
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -18,8 +19,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,22 +35,20 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
-import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.firebase.db.FirebaseDbManager
+import com.rp.dedup.core.i18n.LocaleManager
+import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.notifications.ToastManager
+import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
-import java.util.Date
-import android.provider.DocumentsContract
-import android.net.Uri
-import android.os.Environment
-import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,9 +75,11 @@ fun SettingsScreen(navController: NavHostController) {
     val similarityThreshold by settingsViewModel.similarityThreshold.collectAsState()
     val excludedFolders by settingsViewModel.excludedFolders.collectAsState()
     val autoScanOnStartup by settingsViewModel.autoScanOnStartup.collectAsState()
+    val selectedLanguage by settingsViewModel.selectedLanguage.collectAsState()
     
     var showThemeDialog by rememberSaveable { mutableStateOf(false) }
     var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
+    var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showExcludedFoldersDialog by rememberSaveable { mutableStateOf(false) }
     var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
     var showFeatureRequestDialog by rememberSaveable { mutableStateOf(false) }
@@ -86,8 +89,6 @@ fun SettingsScreen(navController: NavHostController) {
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         uri?.let {
-            // Convert URI to path if possible, or just use URI string as unique identifier
-            // For MediaStore exclusion, we usually need the absolute path or a unique prefix
             val path = it.path ?: it.toString()
             settingsViewModel.addExcludedFolder(path)
         }
@@ -96,10 +97,10 @@ fun SettingsScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Settings",
+                title = stringResource(R.string.settings_title),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
                     }
                 }
             )
@@ -115,30 +116,47 @@ fun SettingsScreen(navController: NavHostController) {
         ) {
             Spacer(Modifier.height(4.dp))
 
-            SettingsSectionHeader("Appearance")
+            SettingsSectionHeader(stringResource(R.string.appearance_section))
 
             SettingsCard {
                 SettingsRow(
                     icon = Icons.Default.Palette,
                     iconColor = UIConstants.ColorIconPalette,
-                    title = "Theme",
+                    title = stringResource(R.string.theme_setting),
                     trailing = { ThemeBadge(currentThemeMode) },
                     onClick = { showThemeDialog = true }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+                SettingsRow(
+                    icon = Icons.Default.Language,
+                    iconColor = MaterialTheme.colorScheme.secondary,
+                    title = stringResource(R.string.language_setting),
+                    trailing = {
+                        Text(
+                            text = LocaleManager.getSupportedLanguages()
+                                .find { it.code == selectedLanguage }?.name ?: selectedLanguage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = { showLanguageDialog = true }
                 )
             }
 
             Spacer(Modifier.height(8.dp))
 
-            SettingsSectionHeader("Scanning")
+            SettingsSectionHeader(stringResource(R.string.scanning_section))
 
             SettingsCard {
                 SettingsRow(
                     icon = Icons.Default.Tune,
                     iconColor = MaterialTheme.colorScheme.primary,
-                    title = "Similarity Sensitivity",
+                    title = stringResource(R.string.similarity_sensitivity),
                     trailing = {
                         Text(
-                            "$similarityThreshold bits",
+                            stringResource(R.string.bits, similarityThreshold),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -151,10 +169,10 @@ fun SettingsScreen(navController: NavHostController) {
                 SettingsRow(
                     icon = Icons.Default.FolderOff,
                     iconColor = MaterialTheme.colorScheme.error,
-                    title = "Excluded Folders",
+                    title = stringResource(R.string.excluded_folders),
                     trailing = {
                         Text(
-                            "${excludedFolders.size} excluded",
+                            stringResource(R.string.excluded_count, excludedFolders.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -167,19 +185,19 @@ fun SettingsScreen(navController: NavHostController) {
                 SettingsSwitchRow(
                     icon = Icons.Default.PlayArrow,
                     iconColor = UIConstants.ColorSavingsGreen,
-                    title = "Auto Scan on Startup",
+                    title = stringResource(R.string.auto_scan_on_startup),
                     checked = autoScanOnStartup,
                     onCheckedChange = { settingsViewModel.setAutoScanOnStartup(it) }
                 )
             }
 
-            SettingsSectionHeader("Support & Feedback")
+            SettingsSectionHeader(stringResource(R.string.support_feedback_section))
 
             SettingsCard {
                 SettingsRow(
                     icon = Icons.Default.ChatBubbleOutline,
                     iconColor = MaterialTheme.colorScheme.primary,
-                    title = "Share Feedback",
+                    title = stringResource(R.string.share_feedback),
                     onClick = { showFeedbackDialog = true }
                 )
 
@@ -188,20 +206,20 @@ fun SettingsScreen(navController: NavHostController) {
                 SettingsRow(
                     icon = Icons.Default.AddCircleOutline,
                     iconColor = MaterialTheme.colorScheme.secondary,
-                    title = "Request a Feature",
+                    title = stringResource(R.string.request_feature),
                     onClick = { showFeatureRequestDialog = true }
                 )
             }
 
             Spacer(Modifier.height(8.dp))
 
-            SettingsSectionHeader("About")
+            SettingsSectionHeader(stringResource(R.string.about_section))
 
             SettingsCard {
                 SettingsRow(
                     icon = Icons.Default.Info,
                     iconColor = UIConstants.ColorIconInfo,
-                    title = "About DeDup",
+                    title = stringResource(R.string.about_dedup),
                     trailing = {
                         Text(
                             UIConstants.APP_VERSION,
@@ -217,7 +235,7 @@ fun SettingsScreen(navController: NavHostController) {
                 SettingsRow(
                     icon = Icons.Default.Security,
                     iconColor = MaterialTheme.colorScheme.primary,
-                    title = "Privacy Policy",
+                    title = stringResource(R.string.privacy_policy),
                     onClick = { 
                         analyticsManager.logPrivacyPolicyViewed()
                         navController.navigate(Screen.PrivacyPolicy.route) 
@@ -227,13 +245,13 @@ fun SettingsScreen(navController: NavHostController) {
 
             Spacer(Modifier.height(8.dp))
 
-            SettingsSectionHeader("Account")
+            SettingsSectionHeader(stringResource(R.string.account_section))
 
             SettingsCard {
                 SettingsRow(
                     icon = Icons.AutoMirrored.Filled.Logout,
                     iconColor = MaterialTheme.colorScheme.error,
-                    title = "Logout",
+                    title = stringResource(R.string.logout),
                     onClick = { showLogoutDialog = true }
                 )
             }
@@ -252,8 +270,8 @@ fun SettingsScreen(navController: NavHostController) {
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Log out?") },
-            text = { Text("You'll need to sign in again to access your account.") },
+            title = { Text(stringResource(R.string.logout_confirm_title)) },
+            text = { Text(stringResource(R.string.logout_confirm_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -271,12 +289,12 @@ fun SettingsScreen(navController: NavHostController) {
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Log out")
+                    Text(stringResource(R.string.logout))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -300,6 +318,20 @@ fun SettingsScreen(navController: NavHostController) {
             onSelect = { value ->
                 settingsViewModel.setSimilarityThreshold(value)
                 showThresholdDialog = false
+            }
+        )
+    }
+
+    if (showLanguageDialog) {
+        LanguagePickerDialog(
+            currentCode = selectedLanguage,
+            onDismiss = { showLanguageDialog = false },
+            onSelect = { code ->
+                scope.launch {
+                    settingsViewModel.setLanguage(code)
+                    LocaleManager.applyLocale(code)
+                }
+                showLanguageDialog = false
             }
         )
     }
@@ -381,7 +413,7 @@ private fun ExcludedFoldersDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Excluded Folders",
+                        stringResource(R.string.excluded_folders),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     IconButton(onClick = onAdd) {
@@ -516,7 +548,7 @@ private fun FeedbackDialog(
                 Spacer(Modifier.height(24.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                     Button(
                         onClick = { onSubmit(text) },
                         enabled = text.isNotBlank()
@@ -564,7 +596,7 @@ private fun ThresholdPickerDialog(
                 )
                 
                 Text(
-                    text = "${sliderValue.toInt()} bits difference allowed",
+                    text = stringResource(R.string.bits, sliderValue.toInt()),
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     style = MaterialTheme.typography.labelLarge
                 )
@@ -572,8 +604,80 @@ private fun ThresholdPickerDialog(
                 Spacer(Modifier.height(24.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                     Button(onClick = { onSelect(sliderValue.toInt()) }) { Text("Save") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguagePickerDialog(
+    currentCode: String,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    val languages = LocaleManager.getSupportedLanguages()
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    stringResource(R.string.choose_language),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    languages.forEach { language ->
+                        val selected = currentCode == language.code
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(language.code) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            else Color.Transparent,
+                            border = BorderStroke(
+                                1.dp,
+                                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                                else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = language.name,
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                )
+                                if (selected) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                 }
             }
         }
@@ -806,15 +910,14 @@ private fun ThemePickerDialog(
 
                 Spacer(Modifier.height(12.dp))
 
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(
-                        "Cancel",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            stringResource(R.string.cancel),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

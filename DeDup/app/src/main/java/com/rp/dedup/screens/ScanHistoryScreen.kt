@@ -25,6 +25,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.db.AppDatabase
@@ -60,10 +62,10 @@ fun ScanHistoryScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Scan History",
+                title = stringResource(R.string.screen_scan_history),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
@@ -71,7 +73,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
                         IconButton(onClick = { showClearDialog = true }) {
                             Icon(
                                 Icons.Default.DeleteSweep,
-                                contentDescription = "Clear history",
+                                contentDescription = stringResource(R.string.clear),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -96,7 +98,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
 
                 item {
                     Text(
-                        text = "RECENT SCANS",
+                        text = stringResource(R.string.recent_scans_label),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 2.sp
@@ -121,19 +123,19 @@ fun ScanHistoryScreen(navController: NavHostController) {
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("Clear All History") },
-            text = { Text("This will permanently delete all scan records.") },
+            title = { Text(stringResource(R.string.delete_all_history_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_all_history_confirm_msg)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.clearAll()
                     showClearDialog = false
                 }) {
-                    Text("Clear", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.clear), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -165,7 +167,7 @@ private fun SummaryCard(history: List<ScanHistory>) {
         ) {
             SummaryStatColumn(
                 value = summaryStats.totalScans.toString(),
-                label = "Total Scans",
+                label = stringResource(R.string.total_scans),
                 color = MaterialTheme.colorScheme.primary
             )
             VerticalDivider(
@@ -174,7 +176,7 @@ private fun SummaryCard(history: List<ScanHistory>) {
             )
             SummaryStatColumn(
                 value = summaryStats.totalDuplicates.toString(),
-                label = "Duplicates",
+                label = stringResource(R.string.duplicates),
                 color = UIConstants.ColorDuplicatesStat
             )
             VerticalDivider(
@@ -185,7 +187,7 @@ private fun SummaryCard(history: List<ScanHistory>) {
                 value = if (summaryStats.totalReclaimable > 0)
                     Formatter.formatShortFileSize(context, summaryStats.totalReclaimable)
                 else "—",
-                label = "Reclaimable",
+                label = stringResource(R.string.reclaimable),
                 color = UIConstants.ColorReclaimableStat
             )
         }

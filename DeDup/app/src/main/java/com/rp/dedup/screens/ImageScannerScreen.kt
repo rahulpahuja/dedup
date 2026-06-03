@@ -58,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,7 @@ import androidx.navigation.NavHostController
 import com.canopas.lib.showcase.IntroShowcase
 import com.canopas.lib.showcase.component.ShowcaseStyle
 import com.rp.dedup.LocalDrawerState
+import com.rp.dedup.R
 import com.rp.dedup.ScannerViewModelFactory
 import com.rp.dedup.core.ScannerContent
 import com.rp.dedup.core.viewmodels.ScannerViewModel
@@ -172,7 +174,7 @@ fun ImageScannerScreen(navController: NavHostController) {
         Scaffold(
             topBar = {
                 DeDupTopBar(
-                    title = "DeDup",
+                    title = stringResource(R.string.app_name),
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
@@ -250,8 +252,8 @@ fun ImageScannerScreen(navController: NavHostController) {
                                     style = tutorialStyle,
                                     content = {
                                         TutorialTooltip(
-                                            title = "Full Image Preview",
-                                            body = "Long press on any image to see it in full screen and view AI-detected labels."
+                                            title = stringResource(R.string.tut_preview_title),
+                                            body = stringResource(R.string.tut_preview_body)
                                         )
                                     }
                                 )
@@ -264,17 +266,13 @@ fun ImageScannerScreen(navController: NavHostController) {
         if (showAutoClearWarning) {
             AlertDialog(
                 onDismissRequest = { showAutoClearWarning = false },
-                title = { Text("Auto Clear") },
+                title = { Text(stringResource(R.string.auto_clear_confirm_title)) },
                 text = {
                     Text(
-                        "Auto clear keeps one copy from each group and deletes the rest. " +
-                                "This will free up ${
-                                    formatFileSize(
-                                        context,
-                                        autoClearSavingsBytes
-                                    )
-                                }.\n\n" +
-                                "Visual similarity detection can occasionally make mistakes. Proceed?"
+                        stringResource(
+                            R.string.auto_clear_confirm_msg,
+                            formatFileSize(context, autoClearSavingsBytes)
+                        )
                     )
                 },
                 confirmButton = {
@@ -286,10 +284,10 @@ fun ImageScannerScreen(navController: NavHostController) {
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error
                         )
-                    ) { Text("Yes, Auto Clear") }
+                    ) { Text(stringResource(R.string.auto_clear_confirm_btn)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showAutoClearWarning = false }) { Text("Cancel") }
+                    TextButton(onClick = { showAutoClearWarning = false }) { Text(stringResource(R.string.cancel)) }
                 }
             )
         }
@@ -312,7 +310,7 @@ private fun TutorialTooltip(title: String, body: String) {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Tap anywhere to continue",
+            text = stringResource(R.string.tap_anywhere_continue),
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF5FA3FF)
         )
@@ -381,12 +379,12 @@ private fun ScannerHeader(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = when {
-                        isScanning -> "Scanning gallery…"
+                        isScanning -> stringResource(R.string.scanning_gallery)
                         hasResults && groupCount > 0 ->
-                            "$groupCount duplicate group${if (groupCount != 1) "s" else ""} found"
+                            stringResource(R.string.duplicate_groups_found, groupCount)
 
-                        hasResults -> "Your gallery is clean"
-                        else -> "Image Scanner"
+                        hasResults -> stringResource(R.string.gallery_clean)
+                        else -> stringResource(R.string.scanner_title)
                     },
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
@@ -410,7 +408,7 @@ private fun ScannerHeader(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(6.dp))
-                Text(if (isScanning) "Stop" else "Scan")
+                Text(if (isScanning) stringResource(R.string.stop_btn) else stringResource(R.string.scan_btn))
             }
         }
 
@@ -430,7 +428,7 @@ private fun ScannerHeader(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        "Auto Clear (${formatFileSize(context, autoClearSavings)})",
+                        stringResource(R.string.auto_clear_btn, formatFileSize(context, autoClearSavings)),
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
@@ -449,7 +447,7 @@ private fun ScannerHeader(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            "Delete $selectedCount (${formatFileSize(context, manualSavings)})",
+                            stringResource(R.string.delete_selected_btn, selectedCount, formatFileSize(context, manualSavings)),
                             style = MaterialTheme.typography.labelMedium
                         )
                     }

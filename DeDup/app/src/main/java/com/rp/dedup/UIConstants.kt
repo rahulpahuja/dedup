@@ -1,5 +1,6 @@
 package com.rp.dedup
 
+import com.rp.dedup.R
 import androidx.compose.ui.graphics.Color
 
 object UIConstants {
@@ -29,29 +30,31 @@ object UIConstants {
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
-    fun getScreenName(route: String?): String {
-        if (route == null) return APP_NAME
-        if (route == ROUTE_LOGIN)           return "Login"
-        if (route == ROUTE_DASHBOARD)       return "Dashboard"
-        if (route == ROUTE_CLEANUP)         return "File Cleanup"
-        if (route == ROUTE_SETTINGS)        return "Settings"
-        if (route == ROUTE_IMAGE_SCANNER)   return "Image Scanner"
-        if (route == ROUTE_VIDEO_SCANNER)   return "Video Scanner"
-        if (route.startsWith("file_scanner/pdf")) return "PDF Scanner"
-        if (route.startsWith("file_scanner/apk")) return "APK Scanner"
-        if (route == ROUTE_ABOUT)           return "About"
-        if (route == ROUTE_ACTIVITY)        return "Activity Log"
-        if (route == ROUTE_SCAN_HISTORY)    return "Scan History"
-        if (route == ROUTE_FILE_BROWSER)    return "File Browser"
-        if (route == ROUTE_CACHE_CLEANER)   return "Cache Cleaner"
-        if (route == ROUTE_SMART_JUNK)              return "Smart Cleanup"
-        if (route == ROUTE_PRIVACY_POLICY)          return "Privacy Policy"
-        if (route == ROUTE_DEEP_OPTIMIZATION)       return "Deep Optimization"
-        if (route == ROUTE_SOCIAL_MEDIA_CLEANER)    return "Social Media Cleaner"
-        if (route == ROUTE_EMPTY_FOLDER)            return "Empty Folder Remover"
-        if (route == ROUTE_BIG_FILE_MAP)            return "Big File Map"
-        if (route == ROUTE_WHATSAPP_CLEANER)        return "WhatsApp Cleaner"
-        return APP_NAME
+    fun getScreenNameRes(route: String?): Int {
+        if (route == null) return R.string.app_name
+        return when {
+            route == ROUTE_LOGIN -> R.string.screen_login
+            route == ROUTE_DASHBOARD -> R.string.screen_dashboard
+            route == ROUTE_CLEANUP -> R.string.screen_file_cleanup
+            route == ROUTE_SETTINGS -> R.string.settings_title
+            route == ROUTE_IMAGE_SCANNER -> R.string.scanner_title
+            route == ROUTE_VIDEO_SCANNER -> R.string.video_scanner_title
+            route.startsWith("file_scanner/pdf") -> R.string.pdf_scanner_title
+            route.startsWith("file_scanner/apk") -> R.string.apk_scanner_title
+            route == ROUTE_ABOUT -> R.string.screen_about
+            route == ROUTE_ACTIVITY -> R.string.screen_activity_log
+            route == ROUTE_SCAN_HISTORY -> R.string.screen_scan_history
+            route == ROUTE_FILE_BROWSER -> R.string.screen_file_browser
+            route == ROUTE_CACHE_CLEANER -> R.string.screen_cache_cleaner
+            route == ROUTE_SMART_JUNK -> R.string.screen_smart_cleanup
+            route == ROUTE_PRIVACY_POLICY -> R.string.screen_privacy_policy
+            route == ROUTE_DEEP_OPTIMIZATION -> R.string.screen_deep_optimization
+            route == ROUTE_SOCIAL_MEDIA_CLEANER -> R.string.screen_social_media_cleaner
+            route == ROUTE_EMPTY_FOLDER -> R.string.screen_empty_folder_remover
+            route == ROUTE_BIG_FILE_MAP -> R.string.screen_big_file_map
+            route == ROUTE_WHATSAPP_CLEANER -> R.string.screen_whatsapp_cleaner
+            else -> R.string.app_name
+        }
     }
 
     // ── App-level strings ─────────────────────────────────────────────────────

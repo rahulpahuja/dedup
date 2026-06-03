@@ -52,6 +52,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DeDup"
+        android:localeConfig="@xml/locales_config"
         android:networkSecurityConfig="@xml/network_security_config"
         android:extractNativeLibs="false"
         android:enableOnBackInvokedCallback="true">
@@ -120,6 +121,18 @@
                 <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="androidx.appcompat.app.AppLocalesMetadataHolderService" />
+            </intent-filter>
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
 
     </application>
 

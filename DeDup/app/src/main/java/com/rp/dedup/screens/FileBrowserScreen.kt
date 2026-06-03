@@ -34,6 +34,8 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.model.FileItem
 import com.rp.dedup.core.viewmodels.FileBrowserViewModel
@@ -129,7 +131,7 @@ fun FileBrowserContent(
                                 onValueChange = onSearchQueryChange,
                                 placeholder = {
                                     Text(
-                                        "Search in ${currentDir.name}…",
+                                        stringResource(R.string.search_in, currentDir.name),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 },
@@ -157,11 +159,11 @@ fun FileBrowserContent(
                     navigationIcon = {
                         if (canNavigateUp) {
                             IconButton(onClick = onNavigateUp) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                             }
                         } else {
                             IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Close")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.close))
                             }
                         }
                     },
@@ -172,14 +174,14 @@ fun FileBrowserContent(
                         }) {
                             Icon(
                                 if (searchActive) Icons.Default.Close else Icons.Default.Search,
-                                contentDescription = if (searchActive) "Close search" else "Search"
+                                contentDescription = if (searchActive) stringResource(R.string.close_search) else stringResource(R.string.search)
                             )
                         }
                         IconButton(onClick = onSortClick) {
-                            Icon(Icons.Default.Sort, contentDescription = "Sort")
+                            Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.sort))
                         }
                         IconButton(onClick = onRefresh) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
                         }
                     }
                 )
@@ -213,11 +215,15 @@ fun FileBrowserContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            buildString {
-                                if (dirCount > 0) append("$dirCount folder${if (dirCount > 1) "s" else ""}")
+                            text = buildString {
+                                if (dirCount > 0) {
+                                    append(if (dirCount == 1) stringResource(R.string.folder_count_singular, dirCount) else stringResource(R.string.folder_count_plural, dirCount))
+                                }
                                 if (dirCount > 0 && fileCount > 0) append("  •  ")
-                                if (fileCount > 0) append("$fileCount file${if (fileCount > 1) "s" else ""}")
-                                if (dirCount == 0 && fileCount == 0) append("Empty folder")
+                                if (fileCount > 0) {
+                                    append(if (fileCount == 1) stringResource(R.string.file_count_singular, fileCount) else stringResource(R.string.file_count_plural, fileCount))
+                                }
+                                if (dirCount == 0 && fileCount == 0) append(stringResource(R.string.empty_folder))
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

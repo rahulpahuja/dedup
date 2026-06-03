@@ -18,11 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.R
 import com.rp.dedup.UIConstants
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar
@@ -33,10 +35,10 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Deep System Optimization",
+                title = stringResource(R.string.screen_deep_optimization),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -51,7 +53,7 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
         ) {
             item {
                 Text(
-                    "Advanced tools to reclaim space and keep your storage clean.",
+                    text = stringResource(R.string.deep_opt_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -61,9 +63,9 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
                 OptimizationFeatureCard(
                     icon = Icons.Default.Chat,
                     iconTint = Color(0xFF25D366),
-                    title = "WhatsApp Cleaner",
-                    description = "Find duplicate forwards, stale statuses, duplicate documents, large files, and content sent & received multiple times.",
-                    ctaLabel = "Clean Now",
+                    title = stringResource(R.string.screen_whatsapp_cleaner),
+                    description = stringResource(R.string.whatsapp_cleaner_detailed_desc),
+                    ctaLabel = stringResource(R.string.clean_now),
                     onClick = { navController.navigate(UIConstants.ROUTE_WHATSAPP_CLEANER) }
                 )
             }
@@ -71,9 +73,9 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
                 OptimizationFeatureCard(
                     icon = Icons.Default.PermMedia,
                     iconTint = Color(0xFF0088CC),
-                    title = "Social Media Cleaner",
-                    description = "Find and remove duplicate photos, videos, and files inside WhatsApp and Telegram media folders.",
-                    ctaLabel = "Scan Now",
+                    title = stringResource(R.string.screen_social_media_cleaner),
+                    description = stringResource(R.string.social_media_cleaner_desc),
+                    ctaLabel = stringResource(R.string.scan_now),
                     onClick = { navController.navigate(UIConstants.ROUTE_SOCIAL_MEDIA_CLEANER) }
                 )
             }
@@ -81,9 +83,9 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
                 OptimizationFeatureCard(
                     icon = Icons.Default.FolderDelete,
                     iconTint = Color(0xFFFF6D00),
-                    title = "Empty Folder Remover",
-                    description = "Deep sweep your storage to find and delete leftover empty directory trees after cleanup.",
-                    ctaLabel = "Deep Sweep",
+                    title = stringResource(R.string.screen_empty_folder_remover),
+                    description = stringResource(R.string.empty_folder_desc),
+                    ctaLabel = stringResource(R.string.deep_sweep),
                     onClick = { navController.navigate(UIConstants.ROUTE_EMPTY_FOLDER) }
                 )
             }
@@ -91,9 +93,9 @@ fun DeepSystemOptimizationScreen(navController: NavHostController) {
                 OptimizationFeatureCard(
                     icon = Icons.Default.AccountTree,
                     iconTint = Color(0xFF1A73E8),
-                    title = "Big File Map",
-                    description = "Visual treemap showing exactly which folders are consuming the most storage space.",
-                    ctaLabel = "View Map",
+                    title = stringResource(R.string.screen_big_file_map),
+                    description = stringResource(R.string.big_file_map_desc),
+                    ctaLabel = stringResource(R.string.view_map),
                     onClick = { navController.navigate(UIConstants.ROUTE_BIG_FILE_MAP) }
                 )
             }

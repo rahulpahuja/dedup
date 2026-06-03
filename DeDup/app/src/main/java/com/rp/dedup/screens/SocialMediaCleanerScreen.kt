@@ -1,13 +1,11 @@
 package com.rp.dedup.screens
 
+import android.net.Uri
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -20,22 +18,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import com.rp.dedup.core.model.SocialApp
+import com.rp.dedup.R
 import com.rp.dedup.core.model.SocialMediaFile
-import com.rp.dedup.core.model.SocialMediaType
 import com.rp.dedup.core.model.SocialMediaCleanerState
+import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
-import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,15 +41,15 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
         factory = SocialMediaCleanerViewModel.factory(context)
     )
     val state by viewModel.state.collectAsState()
-    val selectedUris = remember { mutableStateSetOf<android.net.Uri>() }
+    val selectedUris = remember { mutableStateSetOf<Uri>() }
 
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Social Media Cleaner",
+                title = stringResource(R.string.screen_social_media_cleaner),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -71,9 +67,7 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "${selectedUris.size} selected · ${selectedUris
-                                .mapNotNull { uri -> results.duplicateGroups.flatten().find { it.uri == uri } }
-                                .sumOf { it.size }.toReadableSize()} reclaimable",
+                            stringResource(R.string.delete_selected_btn, selectedUris.size, ""),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Button(
@@ -85,7 +79,7 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Delete Selected")
+                            Text(stringResource(R.string.delete_selected_btn, selectedUris.size, "").split(" (")[0]) // Temporary hack to reuse string
                         }
                     }
                 }
@@ -94,29 +88,33 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val s = state) {
-                is SocialMediaCleanerState.Idle -> IdleView(onScan = { viewModel.startScan() })
+                is SocialMediaCleanerState.Idle -> IdleView(onScan = viewModel::startScan)
                 is SocialMediaCleanerState.ScanningFiles -> ScanProgressView(
-                    label = "Scanning media files...",
+                    phase = stringResource(R.string.scanning),
                     progress = null,
-                    detail = "${s.found} files found"
+                    detail = "Found ${s.found} files"
                 )
                 is SocialMediaCleanerState.ComputingChecksums -> ScanProgressView(
-                    label = "Computing checksums...",
+                    phase = "Computing Checksums",
                     progress = s.progress,
-                    detail = "${(s.progress * 100).toInt()}% complete"
+                    detail = "${(s.progress * 100).toInt()}%"
                 )
                 is SocialMediaCleanerState.Results -> ResultsContent(
                     groups = s.duplicateGroups,
-                    reclaimableBytes = s.reclaimableBytes,
+                    totalReclaimable = s.reclaimableBytes,
                     selectedUris = selectedUris,
                     onToggle = { uri ->
-                        if (uri in selectedUris) selectedUris.remove(uri) else selectedUris.add(uri)
+                        if (selectedUris.contains(uri)) selectedUris.remove(uri)
+                        else selectedUris.add(uri)
                     },
-                    onRescan = { viewModel.startScan() }
+                    onAutoSelect = {
+                        val toSelect = s.duplicateGroups.flatMap { it.drop(1) }.map { it.uri }
+                        selectedUris.addAll(toSelect)
+                    }
                 )
                 is SocialMediaCleanerState.Error -> ErrorView(
                     message = s.message,
-                    onRetry = { viewModel.startScan() }
+                    onRetry = viewModel::startScan
                 )
             }
         }
@@ -137,10 +135,10 @@ private fun IdleView(onScan: () -> Unit) {
             tint = Color(0xFF25D366)
         )
         Spacer(Modifier.height(24.dp))
-        Text("Scan WhatsApp & Telegram", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.scan_social_media), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Find duplicate media files inside social app folders.",
+            stringResource(R.string.social_media_cleaner_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -148,29 +146,25 @@ private fun IdleView(onScan: () -> Unit) {
         Button(onClick = onScan, shape = RoundedCornerShape(12.dp)) {
             Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Start Scan")
+            Text(stringResource(R.string.start_scan))
         }
     }
 }
 
 @Composable
-private fun ScanProgressView(label: String, progress: Float?, detail: String) {
+private fun ScanProgressView(phase: String, progress: Float?, detail: String) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(56.dp))
-        Spacer(Modifier.height(24.dp))
-        Text(label, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
         if (progress != null) {
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxWidth(0.6f).clip(CircleShape)
-            )
-            Spacer(Modifier.height(8.dp))
+            CircularProgressIndicator(progress = { progress })
+        } else {
+            CircularProgressIndicator()
         }
+        Spacer(Modifier.height(24.dp))
+        Text(phase, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -178,80 +172,53 @@ private fun ScanProgressView(label: String, progress: Float?, detail: String) {
 @Composable
 private fun ResultsContent(
     groups: List<List<SocialMediaFile>>,
-    reclaimableBytes: Long,
-    selectedUris: Set<android.net.Uri>,
-    onToggle: (android.net.Uri) -> Unit,
-    onRescan: () -> Unit
+    totalReclaimable: Long,
+    selectedUris: Set<Uri>,
+    onToggle: (Uri) -> Unit,
+    onAutoSelect: () -> Unit
 ) {
-    if (groups.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+    Column(modifier = Modifier.fillMaxSize()) {
+        SummaryBanner(
+            groupCount = groups.size,
+            reclaimableBytes = totalReclaimable,
+            onAutoSelect = onAutoSelect
+        )
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                Icons.Default.CheckCircle,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = Color(0xFF34A853)
-            )
-            Spacer(Modifier.height(16.dp))
-            Text("No duplicates found!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Your WhatsApp and Telegram folders are clean.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        return
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            SummaryBanner(
-                groupCount = groups.size,
-                reclaimableBytes = reclaimableBytes,
-                onRescan = onRescan
-            )
-        }
-        itemsIndexed(groups) { _, group ->
-            DuplicateGroupCard(group = group, selectedUris = selectedUris, onToggle = onToggle)
+            items(groups) { group ->
+                DuplicateGroupCard(group, selectedUris, onToggle)
+            }
+            item { Spacer(Modifier.height(80.dp)) }
         }
     }
 }
 
 @Composable
-private fun SummaryBanner(groupCount: Int, reclaimableBytes: Long, onRescan: () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+private fun SummaryBanner(groupCount: Int, reclaimableBytes: Long, onAutoSelect: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "$groupCount duplicate group${if (groupCount != 1) "s" else ""} found",
+                    stringResource(R.string.duplicate_groups_found, groupCount),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    "${reclaimableBytes.toReadableSize()} reclaimable",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    stringResource(R.string.storage_summary_reclaimable, reclaimableBytes.toReadableSize()),
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
-            TextButton(onClick = onRescan) {
-                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("Rescan")
+            Button(onClick = onAutoSelect, shape = RoundedCornerShape(8.dp)) {
+                Text(stringResource(R.string.auto_select))
             }
         }
     }
@@ -259,43 +226,33 @@ private fun SummaryBanner(groupCount: Int, reclaimableBytes: Long, onRescan: () 
 
 @Composable
 private fun DuplicateGroupCard(
-    group: List<SocialMediaFile>,
-    selectedUris: Set<android.net.Uri>,
-    onToggle: (android.net.Uri) -> Unit
+    files: List<SocialMediaFile>,
+    selectedUris: Set<Uri>,
+    onToggle: (Uri) -> Unit
 ) {
-    val appColor = if (group.first().app == SocialApp.WHATSAPP) Color(0xFF25D366) else Color(0xFF2CA5E0)
-
-    Card(shape = RoundedCornerShape(12.dp)) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(appColor, CircleShape)
+            Text(
+                stringResource(R.string.group_files_count, files.size),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(8.dp))
+            files.forEachIndexed { index, file ->
+                DuplicateFileItem(
+                    file = file,
+                    isKeep = index == 0,
+                    isSelected = selectedUris.contains(file.uri),
+                    onToggle = { onToggle(file.uri) }
                 )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    group.first().app.displayName,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = appColor,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "· ${group.first().mediaType.displayName} · ${group.first().size.toReadableSize()}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(Modifier.height(10.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                itemsIndexed(group) { index, file ->
-                    DuplicateFileItem(
-                        file = file,
-                        isFirst = index == 0,
-                        isSelected = file.uri in selectedUris,
-                        onToggle = { onToggle(file.uri) }
-                    )
+                if (index < files.size - 1) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
             }
         }
@@ -305,70 +262,57 @@ private fun DuplicateGroupCard(
 @Composable
 private fun DuplicateFileItem(
     file: SocialMediaFile,
-    isFirst: Boolean,
+    isKeep: Boolean,
     isSelected: Boolean,
     onToggle: () -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
-            .width(90.dp)
-            .clickable(enabled = !isFirst) { onToggle() },
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxWidth()
+            .clickable { onToggle() },
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box {
-            if (file.mediaType == SocialMediaType.IMAGE || file.mediaType == SocialMediaType.VIDEO) {
-                AsyncImage(
-                    model = file.uri,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(90.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .border(
-                            width = if (isSelected) 2.dp else 0.dp,
-                            color = if (isSelected) MaterialTheme.colorScheme.error else Color.Transparent,
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(90.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.InsertDriveFile, contentDescription = null, modifier = Modifier.size(32.dp))
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            AsyncImage(
+                model = file.uri,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                file.name,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(file.size.toReadableSize(), style = MaterialTheme.typography.bodySmall)
+                if (isKeep) {
+                    Spacer(Modifier.width(8.dp))
+                    Surface(
+                        color = Color(0xFF2E7D32).copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.keep),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF2E7D32),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
-
-            // KEEP / SELECT badge
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(4.dp)
-                    .background(
-                        if (isFirst) Color(0xFF34A853) else if (isSelected) MaterialTheme.colorScheme.error else Color.Black.copy(alpha = 0.5f),
-                        RoundedCornerShape(4.dp)
-                    )
-                    .padding(horizontal = 5.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    if (isFirst) "KEEP" else if (isSelected) "✓" else "DEL",
-                    color = Color.White,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
         }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            file.name,
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        Checkbox(checked = isSelected, onCheckedChange = { onToggle() })
     }
 }
 
@@ -379,26 +323,30 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Default.ErrorOutline, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.error)
+        Icon(Icons.Default.ErrorOutline, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(16.dp))
-        Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        Text(message, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onRetry) { Text("Retry") }
+        Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
     }
 }
 
-private fun Long.toReadableSize(): String = when {
-    this < 1_024 -> "$this B"
-    this < 1_048_576 -> "${this / 1_024} KB"
-    this < 1_073_741_824 -> "${this / 1_048_576} MB"
-    else -> "${"%.1f".format(this.toDouble() / 1_073_741_824)} GB"
+private fun Long.toReadableSize(): String {
+    val kb = this / 1024.0
+    val mb = kb / 1024.0
+    val gb = mb / 1024.0
+    return when {
+        gb >= 1.0 -> "%.2f GB".format(gb)
+        mb >= 1.0 -> "%.2f MB".format(mb)
+        kb >= 1.0 -> "%.2f KB".format(kb)
+        else -> "$this B"
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun SocialMediaCleanerScreenPreview() {
     DeDupTheme {
-        val navController = rememberNavController()
-        SocialMediaCleanerScreen(navController = navController)
+        SocialMediaCleanerScreen(navController = NavHostController(LocalContext.current))
     }
 }

@@ -2,28 +2,32 @@ package com.rp.dedup.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.FolderDelete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.R
 import com.rp.dedup.core.model.EmptyFolder
 import com.rp.dedup.core.model.EmptyFolderState
+import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
-import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,10 +42,10 @@ fun EmptyFolderScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Empty Folder Remover",
+                title = stringResource(R.string.screen_empty_folder_remover),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
@@ -54,7 +58,7 @@ fun EmptyFolderScreen(navController: NavHostController) {
                                 selectedPaths.addAll(results.folders.map { it.path })
                             }
                         }) {
-                            Text(if (selectedPaths.size == results.folders.size) "None" else "All")
+                            Text(if (selectedPaths.size == results.folders.size) stringResource(R.string.none) else stringResource(R.string.all))
                         }
                     }
                 }
@@ -73,7 +77,7 @@ fun EmptyFolderScreen(navController: NavHostController) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "${selectedPaths.size} folder${if (selectedPaths.size != 1) "s" else ""} selected",
+                            stringResource(R.string.folders_selected, selectedPaths.size),
                             style = MaterialTheme.typography.bodySmall
                         )
                         Button(
@@ -86,7 +90,7 @@ fun EmptyFolderScreen(navController: NavHostController) {
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Delete Selected")
+                            Text(stringResource(R.string.delete_folders, selectedPaths.size))
                         }
                     }
                 }
@@ -95,41 +99,26 @@ fun EmptyFolderScreen(navController: NavHostController) {
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val s = state) {
-                is EmptyFolderState.Idle -> EmptyFolderIdleView(onSweep = { viewModel.startScan() })
+                is EmptyFolderState.Idle -> EmptyFolderIdleView(onSweep = viewModel::startScan)
                 is EmptyFolderState.Scanning -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(56.dp))
-                        Spacer(Modifier.height(24.dp))
-                        Text("Sweeping storage...", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "Scanning for empty directory trees",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
                 }
-                is EmptyFolderState.Results -> EmptyFolderResultsView(
-                    folders = s.folders,
-                    selectedPaths = selectedPaths,
-                    onToggle = { path ->
-                        if (path in selectedPaths) selectedPaths.remove(path) else selectedPaths.add(path)
-                    },
-                    onRescan = { viewModel.startScan() }
-                )
-                is EmptyFolderState.Error -> Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(Icons.Default.ErrorOutline, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.height(16.dp))
-                    Text(s.message, style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.height(16.dp))
-                    Button(onClick = { viewModel.startScan() }) { Text("Retry") }
+                is EmptyFolderState.Results -> {
+                    EmptyFolderResultsView(
+                        folders = s.folders,
+                        selectedPaths = selectedPaths,
+                        onToggle = { path ->
+                            if (selectedPaths.contains(path)) selectedPaths.remove(path)
+                            else selectedPaths.add(path)
+                        }
+                    )
+                }
+                is EmptyFolderState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(s.message, color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
@@ -150,10 +139,10 @@ private fun EmptyFolderIdleView(onSweep: () -> Unit) {
             tint = MaterialTheme.colorScheme.primary
         )
         Spacer(Modifier.height(24.dp))
-        Text("Deep Sweep", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.deep_sweep), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Scan for empty folders left behind after cleaning.",
+            stringResource(R.string.empty_folder_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -161,7 +150,7 @@ private fun EmptyFolderIdleView(onSweep: () -> Unit) {
         Button(onClick = onSweep, shape = RoundedCornerShape(12.dp)) {
             Icon(Icons.Default.CleaningServices, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Start Sweep")
+            Text(stringResource(R.string.start_sweep))
         }
     }
 }
@@ -170,107 +159,49 @@ private fun EmptyFolderIdleView(onSweep: () -> Unit) {
 private fun EmptyFolderResultsView(
     folders: List<EmptyFolder>,
     selectedPaths: Set<String>,
-    onToggle: (String) -> Unit,
-    onRescan: () -> Unit
+    onToggle: (String) -> Unit
 ) {
     if (folders.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                Icons.Default.CheckCircle,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(Modifier.height(16.dp))
-            Text("No empty folders found!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onRescan) { Text("Scan again") }
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No empty folders found.")
         }
-        return
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "${folders.size} empty folder${if (folders.size != 1) "s" else ""} found",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    TextButton(onClick = onRescan) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Rescan")
-                    }
-                }
+    } else {
+        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+            items(folders, key = { it.path }) { folder ->
+                EmptyFolderItem(
+                    folder = folder,
+                    isSelected = selectedPaths.contains(folder.path),
+                    onToggle = { onToggle(folder.path) }
+                )
+                Spacer(Modifier.height(8.dp))
             }
-        }
-        itemsIndexed(folders) { _, folder ->
-            EmptyFolderItem(
-                folder = folder,
-                isSelected = folder.path in selectedPaths,
-                onToggle = { onToggle(folder.path) }
-            )
         }
     }
 }
 
 @Composable
-private fun EmptyFolderItem(folder: EmptyFolder, isSelected: Boolean, onToggle: () -> Unit) {
-    Card(
+private fun EmptyFolderItem(
+    folder: EmptyFolder,
+    isSelected: Boolean,
+    onToggle: () -> Unit
+) {
+    Surface(
         onClick = onToggle,
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                MaterialTheme.colorScheme.errorContainer
-            else
-                MaterialTheme.colorScheme.surfaceVariant
-        )
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Checkbox(checked = isSelected, onCheckedChange = { onToggle() })
-            Icon(
-                Icons.Default.FolderOff,
-                contentDescription = null,
-                tint = if (isSelected) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
+            Icon(Icons.Default.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    folder.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    folder.path,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Text(folder.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                Text(folder.path, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            Checkbox(checked = isSelected, onCheckedChange = { onToggle() })
         }
     }
 }
@@ -279,7 +210,6 @@ private fun EmptyFolderItem(folder: EmptyFolder, isSelected: Boolean, onToggle: 
 @Composable
 private fun EmptyFolderScreenPreview() {
     DeDupTheme {
-        val navController = rememberNavController()
-        EmptyFolderScreen(navController = navController)
+        EmptyFolderScreen(navController = NavHostController(LocalContext.current))
     }
 }

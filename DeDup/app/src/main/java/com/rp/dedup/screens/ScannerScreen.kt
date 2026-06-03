@@ -58,6 +58,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.rp.dedup.core.model.ScannedImage
@@ -96,12 +98,12 @@ fun ScannerContent(
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        "No duplicates found!",
+                        stringResource(R.string.no_duplicates_found),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Your gallery is clean.",
+                        stringResource(R.string.gallery_clean_msg),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -125,7 +127,7 @@ fun ScannerContent(
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        "Tap Scan to find duplicate images",
+                        stringResource(R.string.tap_scan_prompt),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyMedium
@@ -216,7 +218,7 @@ fun PaginationBar(
             ) {
                 Icon(
                     Icons.Default.ChevronLeft,
-                    contentDescription = "Previous page",
+                    contentDescription = stringResource(R.string.prev_page),
                     tint = if (currentPage > 1) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                 )
@@ -244,7 +246,7 @@ fun PaginationBar(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = "$page",
+                                text = stringResource(R.string.page_number, page),
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                                 ),
@@ -266,7 +268,7 @@ fun PaginationBar(
             ) {
                 Icon(
                     Icons.Default.ChevronRight,
-                    contentDescription = "Next page",
+                    contentDescription = stringResource(R.string.next_page),
                     tint = if (currentPage < totalPages) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                 )
@@ -313,14 +315,14 @@ private fun DuplicateGroupCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "Group $groupIndex",
+                        stringResource(R.string.group_label, groupIndex),
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                     )
                     Text(
-                        "${group.size} photos · save ${formatFileSize(context, savingsBytes)}",
+                        stringResource(R.string.group_subtitle, group.size, formatFileSize(context, savingsBytes)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -452,7 +454,7 @@ private fun SelectableImageItem(
 
         if (isKeep) {
             Text(
-                text = if (item.isAiSuggestion) "ML BEST CHOICE" else "KEEP",
+                text = if (item.isAiSuggestion) stringResource(R.string.ml_best_choice) else stringResource(R.string.keep),
                 color = Color.White,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
@@ -471,8 +473,8 @@ private fun SelectableImageItem(
     if (showPreview) {
         val labels = buildList {
             add(formatFileSize(context, item.sizeInBytes))
-            if (item.isAiSuggestion) add("Best Shot")
-            else if (isKeep) add("Keep")
+            if (item.isAiSuggestion) add(stringResource(R.string.best_shot))
+            else if (isKeep) add(stringResource(R.string.keep))
         }
         ImagePreviewDialog(
             uri = item.uri.toUri(),

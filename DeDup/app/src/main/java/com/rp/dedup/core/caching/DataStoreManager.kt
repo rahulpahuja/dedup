@@ -26,6 +26,7 @@ class DataStoreManager(private val context: Context) {
         val SIMILARITY_THRESHOLD = stringPreferencesKey("similarity_threshold") // Stores int as string for simpler generic logic
         val EXCLUDED_FOLDERS = stringPreferencesKey("excluded_folders") // Stores comma-separated paths
         val AUTO_SCAN_ON_STARTUP = booleanPreferencesKey("auto_scan_on_startup")
+        val SELECTED_LANGUAGE = stringPreferencesKey("selected_language")
         val LAST_IMAGE_SCAN_TIME = stringPreferencesKey("last_image_scan_time")
     }
 

@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.rp.dedup.R
 import com.rp.dedup.ui.theme.DarkCyan
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.LightCyan
@@ -64,10 +66,10 @@ fun DeduplicationScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "DeDup",
+                title = stringResource(R.string.app_name),
                 navigationIcon = {
                     IconButton(onClick = { }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                     }
                 },
                 actions = {
@@ -79,7 +81,7 @@ fun DeduplicationScreen(navController: NavHostController) {
                         ) {
                             Icon(
                                 Icons.Default.Person,
-                                contentDescription = "Profile",
+                                contentDescription = stringResource(R.string.profile),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -104,7 +106,7 @@ fun DeduplicationScreen(navController: NavHostController) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Contact\nDeduplication",
+                    stringResource(R.string.contact_deduplication),
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
                         lineHeight = 40.sp,
@@ -118,7 +120,7 @@ fun DeduplicationScreen(navController: NavHostController) {
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            "14 MERGEABLE\nGROUPS FOUND",
+                            stringResource(R.string.groups_found_label, 14),
                             color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -126,7 +128,7 @@ fun DeduplicationScreen(navController: NavHostController) {
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        "Review suggestions to\noptimize your address\nbook.",
+                        stringResource(R.string.contact_dedup_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -136,13 +138,13 @@ fun DeduplicationScreen(navController: NavHostController) {
 
             // Identical Name Section
             item {
-                SectionHeader("Identical Name", "Contacts sharing the exact same display name.")
+                SectionHeader(stringResource(R.string.identical_name), stringResource(R.string.identical_name_desc))
                 ContactCard(
                     initials = "JS",
                     name = "Johnathan Smith",
                     phone = "+1 (555) 123-4567",
                     email = "john.smith@gmail.com",
-                    badge = "PRIMARY RECORD",
+                    badge = stringResource(R.string.primary_record),
                     badgeColor = LightCyan,
                     badgeTextColor = DarkCyan,
                     isSelected = true
@@ -152,8 +154,8 @@ fun DeduplicationScreen(navController: NavHostController) {
                     initials = "JS",
                     name = "Johnathan Smith",
                     phone = "+1 (555) 123-4567",
-                    email = "No email provided",
-                    badge = "DUPLICATE",
+                    email = stringResource(R.string.no_email_provided),
+                    badge = stringResource(R.string.duplicate),
                     badgeColor = MaterialTheme.colorScheme.surface,
                     badgeTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     isSelected = true,
@@ -165,8 +167,8 @@ fun DeduplicationScreen(navController: NavHostController) {
             // Same Number Section
             item {
                 SectionHeader(
-                    "Same Number",
-                    "Different names associated with the same phone number."
+                    stringResource(R.string.same_number),
+                    stringResource(R.string.same_number_desc)
                 )
                 ContactCard(
                     name = "Sarah Connor",
@@ -193,14 +195,14 @@ fun DeduplicationScreen(navController: NavHostController) {
 
             // Similar Info Section
             item {
-                SectionHeader("Similar Info", "Fuzzy matching on emails and company data.")
+                SectionHeader(stringResource(R.string.similar_info), stringResource(R.string.similar_info_desc))
                 ContactCard(
                     name = "Alex Rivera",
                     info = "Design Architect at Studio-X",
                     email = "a.rivera@studio-x.io",
                     infoIcon = Icons.Default.Info,
                     emailIcon = Icons.Default.Email,
-                    topBadge = "SAFE TO KEEP",
+                    topBadge = stringResource(R.string.safe_to_keep),
                     topBadgeColor = LightCyan,
                     topBadgeTextColor = DarkCyan,
                     isSelected = true
@@ -210,7 +212,7 @@ fun DeduplicationScreen(navController: NavHostController) {
                     name = "Alex Rivera",
                     info = "Company info missing",
                     infoIcon = Icons.Default.Info,
-                    topBadge = "POTENTIAL MATCH",
+                    topBadge = stringResource(R.string.potential_match),
                     topBadgeColor = Color.Transparent,
                     topBadgeTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     isSelected = true,
@@ -253,7 +255,7 @@ fun SectionHeader(title: String, subtitle: String) {
         }
         TextButton(onClick = { }) {
             Text(
-                "Select\nAll",
+                stringResource(R.string.select_all),
                 style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.primary)
             )
         }
@@ -428,11 +430,11 @@ fun SelectionBar() {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "SELECTION",
+                    stringResource(R.string.selection_label),
                     style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray)
                 )
                 Text(
-                    "7 Contacts",
+                    stringResource(R.string.contacts_selected_count, 7),
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = Color.White,
                         fontWeight = FontWeight.Bold
@@ -446,7 +448,7 @@ fun SelectionBar() {
             ) {
                 Icon(Icons.Default.Add, contentDescription = null) // Fallback for Merge icon
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Merge Selected")
+                Text(stringResource(R.string.merge_selected))
             }
         }
     }
@@ -457,25 +459,25 @@ fun BottomNavigationBar() {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text("DASHBOARD") },
+            label = { Text(stringResource(R.string.nav_dash)) },
             selected = false,
             onClick = { }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Search, contentDescription = null) },
-            label = { Text("SCAN") },
+            label = { Text(stringResource(R.string.nav_scan)) },
             selected = false,
             onClick = { }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
-            label = { Text("RESULTS") },
+            label = { Text(stringResource(R.string.results_label)) },
             selected = true,
             onClick = { }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-            label = { Text("SETTINGS") },
+            label = { Text(stringResource(R.string.nav_settings)) },
             selected = false,
             onClick = { }
         )

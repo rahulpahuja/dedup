@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,6 +52,7 @@ import coil.compose.AsyncImage
 import com.canopas.lib.showcase.IntroShowcase
 import com.canopas.lib.showcase.component.ShowcaseStyle
 import com.rp.dedup.LocalDrawerState
+import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.analytics.AnalyticsManager
@@ -193,12 +195,12 @@ fun DashboardScreenContent(
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
                         Icon(
                             Icons.Default.Menu,
-                            contentDescription = "Menu",
+                            contentDescription = stringResource(R.string.menu),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
                     Text(
-                        UIConstants.APP_NAME,
+                        stringResource(R.string.app_name),
                         modifier = Modifier.weight(1f).padding(start = 4.dp),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
@@ -215,7 +217,7 @@ fun DashboardScreenContent(
                                 if (userImageUrl.isNotEmpty()) {
                                     AsyncImage(
                                         model = userImageUrl,
-                                        contentDescription = "Profile",
+                                        contentDescription = stringResource(R.string.profile),
                                         modifier = Modifier.fillMaxSize().clip(CircleShape),
                                         contentScale = ContentScale.Crop
                                     )
@@ -257,14 +259,14 @@ fun DashboardScreenContent(
                             },
                             placeholder = {
                                 Text(
-                                    "Find \"pet\", \"nature\", \"receipts\"…",
+                                    stringResource(R.string.search_placeholder),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             },
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.ImageSearch,
-                                    contentDescription = "Image search"
+                                    contentDescription = stringResource(R.string.search)
                                 )
                             },
                             trailingIcon = {
@@ -276,7 +278,7 @@ fun DashboardScreenContent(
                                         searchQuery = ""
                                         onClearSearch()
                                     }) {
-                                        Icon(Icons.Default.Close, contentDescription = "Close search")
+                                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close_search))
                                     }
                                 }
                             }
@@ -299,8 +301,8 @@ fun DashboardScreenContent(
                                 style = tutorialStyle,
                                 content = {
                                     TutorialTooltip(
-                                        title = "Smart AI Search",
-                                        body = "Search for things like \"pets\", \"food\", or \"docs\". AI understands what's inside your photos."
+                                        title = stringResource(R.string.tut_search_title),
+                                        body = stringResource(R.string.tut_search_body)
                                     )
                                 }
                             )
@@ -332,7 +334,7 @@ fun DashboardScreenContent(
                 ) {
                     item {
                         Text(
-                            "Storage Dashboard",
+                            stringResource(R.string.dashboard_title),
                             style = MaterialTheme.typography.headlineLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -353,8 +355,8 @@ fun DashboardScreenContent(
                                 style = tutorialStyle,
                                 content = {
                                     TutorialTooltip(
-                                        title = "Storage Overview",
-                                        body = "See your total device usage. Tap here for a deep visual map of your storage."
+                                        title = stringResource(R.string.tut_storage_title),
+                                        body = stringResource(R.string.tut_storage_body)
                                     )
                                 }
                             )
@@ -367,7 +369,7 @@ fun DashboardScreenContent(
                     }
                     item {
                         Text(
-                            "Quick Scan",
+                            stringResource(R.string.quick_scan_title),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -382,8 +384,8 @@ fun DashboardScreenContent(
                                 style = tutorialStyle,
                                 content = {
                                     TutorialTooltip(
-                                        title = "Quick Scan",
-                                        body = "Tap any category to find and remove duplicate images, videos, documents, APKs and more."
+                                        title = stringResource(R.string.tut_quick_scan_title),
+                                        body = stringResource(R.string.tut_quick_scan_body)
                                     )
                                 }
                             )
@@ -398,8 +400,8 @@ fun DashboardScreenContent(
                                 style = tutorialStyle,
                                 content = {
                                     TutorialTooltip(
-                                        title = "Optimization Tips",
-                                        body = "Follow these suggestions to clear cache, review large files and keep your device running smoothly."
+                                        title = stringResource(R.string.tut_opt_tips_title),
+                                        body = stringResource(R.string.tut_opt_tips_body)
                                     )
                                 }
                             )
@@ -481,12 +483,12 @@ fun SmartAiCleanupCard(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
-                    "Smart AI Cleanup",
+                    stringResource(R.string.smart_ai_cleanup_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Text(
-                    "AI detection for screenshots, memes & receipts",
+                    stringResource(R.string.smart_ai_cleanup_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                 )
@@ -525,12 +527,12 @@ fun DeepOptimizationCard(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Deep System Optimization",
+                    stringResource(R.string.deep_system_opt_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Text(
-                    "WhatsApp cleaner · Empty folders · Storage map",
+                    stringResource(R.string.deep_system_opt_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                 )
@@ -595,7 +597,7 @@ fun SavingsCalculatorCard(reclaimableBytes: Long) {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
-                    "Potential Savings",
+                    stringResource(R.string.potential_savings),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                 )
@@ -643,7 +645,7 @@ fun StorageSummaryCard(
         "${Formatter.formatShortFileSize(context, stats.usedBytes)} / ${
             Formatter.formatShortFileSize(context, stats.totalBytes)
         }"
-    else "Calculating…"
+    else stringResource(R.string.calculating)
 
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -658,7 +660,7 @@ fun StorageSummaryCard(
             ) {
                 Column {
                     Text(
-                        "Used Space",
+                        stringResource(R.string.used_space),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -679,7 +681,7 @@ fun StorageSummaryCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                "DEVICE STORAGE",
+                stringResource(R.string.device_storage),
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
@@ -699,7 +701,7 @@ fun StorageSummaryCard(
                 if (stats.totalBytes > 0)
                     "${"%.0f".format(stats.usedFraction * 100)}% of storage used  •  " +
                     "${Formatter.formatShortFileSize(context, stats.freeBytes)} free"
-                else "Loading storage info…",
+                else stringResource(R.string.loading_storage_info),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f)
             )
@@ -714,7 +716,7 @@ fun StorageSummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "DEDUP SAVINGS",
+                    stringResource(R.string.dedup_savings),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
@@ -748,8 +750,8 @@ fun StorageSummaryCard(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 if (reclaimableBytes > 0)
-                    "${"%.1f".format(savingsFraction * 100)}% of used storage identified as reclaimable"
-                else "Run a scan to identify reclaimable space",
+                    stringResource(R.string.storage_summary_reclaimable, Formatter.formatShortFileSize(context, reclaimableBytes))
+                else stringResource(R.string.run_scan_prompt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f)
             )
@@ -773,7 +775,7 @@ fun QuickScanGrid(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
-                title = UIConstants.QUICK_SCAN_IMAGES,
+                title = stringResource(R.string.quick_scan_images),
                 count = formatCount(mediaCounts.images),
                 icon = Icons.Default.Image,
                 color = UIConstants.ColorImages,
@@ -781,7 +783,7 @@ fun QuickScanGrid(
                 onClick = { navController.navigate(Screen.ImageScanner.route) }
             )
             ScanCategoryCard(
-                title = UIConstants.QUICK_SCAN_VIDEOS,
+                title = stringResource(R.string.quick_scan_videos),
                 count = formatCount(mediaCounts.videos),
                 icon = Icons.Default.Videocam,
                 color = UIConstants.ColorVideos,
@@ -791,7 +793,7 @@ fun QuickScanGrid(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
-                title = UIConstants.QUICK_SCAN_DOCUMENTS,
+                title = stringResource(R.string.quick_scan_documents),
                 count = formatCount(mediaCounts.pdfs),
                 icon = Icons.Default.Description,
                 color = UIConstants.ColorDocuments,
@@ -799,7 +801,7 @@ fun QuickScanGrid(
                 onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
             )
             ScanCategoryCard(
-                title = UIConstants.QUICK_SCAN_APKS,
+                title = stringResource(R.string.quick_scan_apks),
                 count = formatCount(mediaCounts.apks),
                 icon = Icons.Default.Android,
                 color = UIConstants.ColorApks,
@@ -809,7 +811,7 @@ fun QuickScanGrid(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
-                title = UIConstants.QUICK_SCAN_BROWSE_FILES,
+                title = stringResource(R.string.quick_scan_browse_files),
                 count = "All",
                 icon = Icons.Default.FolderOpen,
                 color = UIConstants.ColorBrowseFiles,
@@ -817,7 +819,7 @@ fun QuickScanGrid(
                 onClick = { navController.navigate(Screen.FileBrowser.route) }
             )
             ScanCategoryCard(
-                title = UIConstants.QUICK_SCAN_HISTORY,
+                title = stringResource(R.string.quick_scan_history),
                 count = "Log",
                 icon = Icons.Default.History,
                 color = UIConstants.ColorScanHistory,
@@ -872,7 +874,7 @@ fun ScanCategoryCard(
 fun OptimizationSection(navController: NavHostController, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
-            "Optimization Suggestions",
+            stringResource(R.string.optimization_suggestions),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -880,16 +882,16 @@ fun OptimizationSection(navController: NavHostController, modifier: Modifier = M
         )
         Spacer(modifier = Modifier.height(16.dp))
         OptimizationCard(
-            title = "Clear Cache Files",
-            description = "Remove temporary app data to free up space",
+            title = stringResource(R.string.clear_cache_files),
+            description = stringResource(R.string.clear_cache_desc),
             icon = Icons.Default.CleaningServices,
             isOptimized = false,
             onClick = { navController.navigate(Screen.CacheCleaner.route) }
         )
         Spacer(modifier = Modifier.height(12.dp))
         OptimizationCard(
-            title = "Large File Review",
-            description = "Analyze 4 files larger than 500 MB",
+            title = stringResource(R.string.large_file_review),
+            description = stringResource(R.string.large_file_review_desc, 4),
             icon = Icons.Default.Assessment,
             isOptimized = true,
             onClick = { }
@@ -961,32 +963,32 @@ fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         NavigationBarItem(
             icon = { Icon(Icons.Default.GridView, contentDescription = null) },
-            label = { Text(UIConstants.NAV_LABEL_DASH) },
+            label = { Text(stringResource(R.string.nav_dash)) },
             selected = selectedIndex == 0,
             onClick = { navController.navigate(Screen.Dashboard.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Search, contentDescription = null) },
-            label = { Text(UIConstants.NAV_LABEL_SCAN) },
+            label = { Text(stringResource(R.string.nav_scan)) },
             selected = selectedIndex == 1,
             onClick = { navController.navigate(Screen.Cleanup.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Description, contentDescription = null) },
-            label = { Text(UIConstants.NAV_LABEL_FILES) },
+            label = { Text(stringResource(R.string.nav_files)) },
             selected = selectedIndex == 2,
 //            onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
             onClick = { navController.navigate(Screen.FileBrowser.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Videocam, contentDescription = null) },
-            label = { Text(UIConstants.NAV_LABEL_VIDEO) },
+            label = { Text(stringResource(R.string.nav_video)) },
             selected = selectedIndex == 3,
             onClick = { navController.navigate(Screen.VideoScanner.route) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-            label = { Text(UIConstants.NAV_LABEL_SETTINGS) },
+            label = { Text(stringResource(R.string.nav_settings)) },
             selected = selectedIndex == 4,
             onClick = { navController.navigate(Screen.Settings.route) }
         )
@@ -1016,13 +1018,13 @@ fun ImageSearchContent(
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        "Describe what you're looking for",
+                        stringResource(R.string.search_desc),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "e.g. \"wearing a red shirt\" or \"sunset beach\"",
+                        stringResource(R.string.search_example),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
@@ -1040,8 +1042,8 @@ fun ImageSearchContent(
                 Spacer(Modifier.height(16.dp))
                 val (labeled, total) = progress
                 Text(
-                    if (total > 0) "Analyzing images… $labeled / $total"
-                    else "Analyzing images…",
+                    if (total > 0) stringResource(R.string.analyzing_images_progress, labeled, total)
+                    else stringResource(R.string.analyzing_images),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1078,13 +1080,13 @@ fun ImageSearchContent(
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        "No matching images found",
+                        stringResource(R.string.no_matching_images),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Try different words or check gallery permissions",
+                        stringResource(R.string.try_different_words),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
@@ -1095,7 +1097,7 @@ fun ImageSearchContent(
         else -> {
             Column(modifier = Modifier.fillMaxSize()) {
                 Text(
-                    "${results.size} image${if (results.size != 1) "s" else ""} matched",
+                    if (results.size == 1) stringResource(R.string.image_matched, 1) else stringResource(R.string.images_matched, results.size),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -1178,7 +1180,7 @@ private fun TutorialTooltip(title: String, body: String) {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Tap anywhere to continue",
+            text = stringResource(R.string.tap_anywhere_continue),
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF5FA3FF)
         )

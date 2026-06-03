@@ -14,9 +14,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.rp.dedup.core.PaginationBar
@@ -32,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +40,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.rp.dedup.LocalDrawerState
+import com.rp.dedup.R
 import com.rp.dedup.VideoScannerViewModelFactory
 import com.rp.dedup.core.model.ScannedVideo
 import com.rp.dedup.core.viewmodels.VideoScannerViewModel
@@ -93,16 +92,16 @@ fun VideoScannerScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Video Duplicates",
+                title = stringResource(R.string.video_scanner_title),
                 navigationIcon = {
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                     }
                 },
                 actions = {
                     if (selectedUris.isNotEmpty()) {
                         IconButton(onClick = { triggerDelete(selectedUris.toList()) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Selected", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_selected_btn, selectedUris.size, ""), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -124,19 +123,19 @@ fun VideoScannerScreen(navController: NavHostController) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "Scanner",
+                        stringResource(R.string.scanner_header),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
                     )
                     when {
                         isScanning -> Text(
-                            "Scanned $scannedCount videos · ${duplicateGroups.size} groups found",
+                            stringResource(R.string.scanned_videos_summary, scannedCount, duplicateGroups.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         duplicateGroups.isNotEmpty() -> Text(
-                            "${duplicateGroups.size} duplicate groups found",
+                            stringResource(R.string.duplicate_groups_found, duplicateGroups.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -158,7 +157,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text(if (isScanning) "Stop" else "Scan")
+                    Text(if (isScanning) stringResource(R.string.stop_btn) else stringResource(R.string.scan_btn))
                 }
             }
 
@@ -171,7 +170,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                         CircularProgressIndicator()
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "Analyzing videos for duplicates…",
+                            stringResource(R.string.analyzing_videos),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -190,7 +189,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "No duplicates found. Tap Scan.",
+                            stringResource(R.string.no_video_duplicates),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -258,7 +257,7 @@ fun DuplicateVideoGroup(
 ) {
     Column {
         Text(
-            text = "Duplicate Group (${group.size} items)",
+            text = stringResource(R.string.duplicate_group_items, group.size),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -348,11 +347,11 @@ private fun VideoGridItem(
                         modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
                     ) {
                         Text(
-                            "KEEP",
+                            stringResource(R.string.keep),
                             color = Color.White,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                         )
                     }
                 }
@@ -370,7 +369,7 @@ private fun VideoGridItem(
                 ) {
                     Icon(
                         Icons.Default.PlayArrow,
-                        contentDescription = "Play",
+                        contentDescription = stringResource(R.string.play),
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )

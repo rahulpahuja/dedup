@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
+import androidx.compose.ui.res.stringResource
 import com.rp.dedup.Screen
 import com.rp.dedup.pendingDeepLinkRoute
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
@@ -297,7 +298,7 @@ fun SplashScreen(navController: NavHostController) {
 
             // Tagline — fades in with the app name
             Text(
-                text = "Clean phone. Private. Always.",
+                text = stringResource(R.string.tagline),
                 modifier = Modifier.graphicsLayer { alpha = nameAlpha * 0.75f },
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color.Gray,

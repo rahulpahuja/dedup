@@ -157,6 +157,7 @@ dependencies {
     implementation(libs.introshowcaseview)
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(enforcedPlatform(libs.androidx.compose.bom))

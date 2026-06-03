@@ -15,12 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.rp.dedup.R
 import com.rp.dedup.core.utils.CacheCleaner
 import com.rp.dedup.core.model.CleaningProgress
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -53,10 +55,10 @@ fun CacheCleanerScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "Cache Cleaner",
+                title = stringResource(R.string.screen_cache_cleaner),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -92,13 +94,13 @@ fun CacheCleanerScreen(navController: NavHostController) {
             when (val state = progressState) {
                 is CleaningProgress.Scanning -> {
                     Text(
-                        "Analyzing Cache...",
+                        stringResource(R.string.analyzing_cache),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Found ${state.filesFound} files so far",
+                        stringResource(R.string.files_found_so_far, state.filesFound),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -111,12 +113,12 @@ fun CacheCleanerScreen(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text("Start Cleaning")
+                        Text(stringResource(R.string.start_cleaning))
                     }
                 }
                 is CleaningProgress.Cleaning -> {
                     Text(
-                        "Cleaning in Progress",
+                        stringResource(R.string.cleaning_in_progress),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -142,20 +144,20 @@ fun CacheCleanerScreen(navController: NavHostController) {
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Cleared: ${Formatter.formatFileSize(context, state.bytesCleared)}",
+                        stringResource(R.string.cleared_label, Formatter.formatFileSize(context, state.bytesCleared)),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 is CleaningProgress.Finished -> {
                     Text(
-                        "Cache Cleaned!",
+                        stringResource(R.string.cache_cleaned),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF34A853)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Successfully cleared ${Formatter.formatFileSize(context, state.totalBytesCleared)}",
+                        stringResource(R.string.successfully_cleared, Formatter.formatFileSize(context, state.totalBytesCleared)),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center
                     )
@@ -165,12 +167,12 @@ fun CacheCleanerScreen(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text("Back to Dashboard")
+                        Text(stringResource(R.string.back_to_dashboard))
                     }
                 }
                 is CleaningProgress.Error -> {
                     Text(
-                        "Error Occurred",
+                        stringResource(R.string.error_occurred),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error
@@ -179,7 +181,7 @@ fun CacheCleanerScreen(navController: NavHostController) {
                     Text(state.message, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(onClick = { startCleaning = true }) {
-                        Text("Retry")
+                        Text(stringResource(R.string.retry))
                     }
                 }
             }

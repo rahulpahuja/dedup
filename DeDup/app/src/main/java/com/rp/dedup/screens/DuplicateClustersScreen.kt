@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DeleteSweep
@@ -43,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -50,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
+import com.rp.dedup.R
 import com.rp.dedup.ui.theme.DarkCyan
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.RedBadge
@@ -66,17 +69,17 @@ fun DuplicateClustersScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "DeDup",
+                title = stringResource(R.string.app_name),
                 navigationIcon = {
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                     }
                 },
                 actions = {
                     IconButton(onClick = { }) {
                         Icon(
                             Icons.Default.Search,
-                            contentDescription = "Search",
+                            contentDescription = stringResource(R.string.search),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -88,7 +91,7 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                         ) {
                             Icon(
                                 Icons.Default.Person,
-                                contentDescription = "Profile",
+                                contentDescription = stringResource(R.string.profile),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -113,7 +116,7 @@ fun DuplicateClustersScreen(navController: NavHostController) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "RESULTS / PHOTO & VIDEO",
+                    stringResource(R.string.results_photo_video),
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = Color(0xFF00838F),
                         fontWeight = FontWeight.Bold
@@ -127,7 +130,7 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Duplicate clusters.",
+                            stringResource(R.string.duplicate_clusters_title),
                             style = MaterialTheme.typography.headlineMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -135,7 +138,7 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Our ML engine identified 34 redundant groups across your library. Keep the sharpest, purge the rest.",
+                            stringResource(R.string.duplicate_clusters_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -148,24 +151,24 @@ fun DuplicateClustersScreen(navController: NavHostController) {
 
             // Cluster 01
             item {
-                ClusterHeader("01", "Golden Hour Beach", "4 similar items found", 3)
+                ClusterHeader("01", "Golden Hour Beach", stringResource(R.string.similar_items_found, 4), 3)
                 Spacer(modifier = Modifier.height(16.dp))
                 MainMediaItem(
-                    badge = "ML BEST CHOICE",
+                    badge = stringResource(R.string.ml_best_choice),
                     similarity = "88% Similarity",
                     fileName = "IMG_8433.JPG",
                     fileInfo = "12.4 MB • 4032 × 3024"
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                DuplicateListItem("SLOPPY BLUR", "IMG_8433.JPG", "1.2 MB | 72% Sharp")
+                DuplicateListItem(stringResource(R.string.sloppy_blur), "IMG_8433.JPG", "1.2 MB | 72% Sharp")
                 Spacer(modifier = Modifier.height(8.dp))
-                DuplicateListItem("UNDEREXPOSED", "IMG_8454.JPG", "1.1 MB | 62% Sharp")
+                DuplicateListItem(stringResource(R.string.underexposed), "IMG_8454.JPG", "1.1 MB | 62% Sharp")
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
             // Cluster 02
             item {
-                ClusterHeader("02", "Mountain Hike Burst", "2 identical video files", 2)
+                ClusterHeader("02", "Mountain Hike Burst", stringResource(R.string.identical_video_files, 2), 2)
                 Spacer(modifier = Modifier.height(16.dp))
                 MainMediaItem(
                     isVideo = true,
@@ -174,9 +177,9 @@ fun DuplicateClustersScreen(navController: NavHostController) {
                     fileInfo = "167.2 MB"
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                DuplicateListItem("EXACT MATCH", "VID_2023_D01.MP4", "167.2 MB • Exact Copy")
+                DuplicateListItem(stringResource(R.string.exact_match), "VID_2023_D01.MP4", "167.2 MB • Exact Copy")
                 Spacer(modifier = Modifier.height(8.dp))
-                DuplicateListItem("EXACT MATCH", "VID_2023_D01.MP4", "167.2 MB • Exact Copy")
+                DuplicateListItem(stringResource(R.string.exact_match), "VID_2023_D01.MP4", "167.2 MB • Exact Copy")
                 Spacer(modifier = Modifier.height(100.dp))
             }
         }
@@ -201,7 +204,7 @@ fun PotentialSpaceCard() {
             )
             Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.End) {
                 Text(
-                    "POTENTIAL SPACE",
+                    stringResource(R.string.potential_space_label),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -253,7 +256,7 @@ fun ClusterHeader(id: String, title: String, subtitle: String, duplicateCount: I
                     .background(RedText, CircleShape))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "Delete $duplicateCount Duplicates",
+                    stringResource(R.string.delete_duplicates_btn, duplicateCount),
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = RedText,
                         fontWeight = FontWeight.Bold
@@ -380,7 +383,7 @@ fun MainMediaItem(
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        "KEEP",
+                        stringResource(R.string.keep),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
@@ -432,7 +435,7 @@ fun DuplicateListItem(label: String, fileName: String, info: String) {
             IconButton(onClick = { }) {
                 Icon(
                     Icons.Default.DeleteSweep,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.delete_selected_btn, 1, ""),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
@@ -454,7 +457,7 @@ fun PurgeSelectionBar() {
         ) {
             Column {
                 Text(
-                    "TOTAL SELECTION",
+                    stringResource(R.string.total_selection_label),
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = Color.LightGray,
                         fontSize = 8.sp
@@ -471,14 +474,14 @@ fun PurgeSelectionBar() {
             Spacer(modifier = Modifier.width(24.dp))
             Column {
                 Text(
-                    "FILES TO PURGE",
+                    stringResource(R.string.files_to_purge_label),
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = Color.LightGray,
                         fontSize = 8.sp
                     )
                 )
                 Text(
-                    "12 Items",
+                    stringResource(R.string.items_count_label, 12),
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = Color.White,
                         fontWeight = FontWeight.Bold
@@ -493,7 +496,7 @@ fun PurgeSelectionBar() {
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Text(
-                    "Purge All Duplicates",
+                    stringResource(R.string.purge_all_duplicates),
                     style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.width(8.dp))

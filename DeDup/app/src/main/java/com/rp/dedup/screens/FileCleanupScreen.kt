@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
+import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.CleanupViewModel
@@ -71,8 +73,8 @@ fun FileCleanupScreen(navController: NavHostController) {
 
     val largeFileItems = listOf(
         LargeFileItemLocal(
-            title = "Unused Video Assets",
-            subtitle = if (cleanupState.videoStats.isLoading) "Scanning..." else "${cleanupState.videoStats.count} high-res recordings found",
+            title = stringResource(R.string.unused_video_assets),
+            subtitle = if (cleanupState.videoStats.isLoading) stringResource(R.string.scanning) else stringResource(R.string.video_assets_subtitle, cleanupState.videoStats.count),
             sizeBytes = cleanupState.videoStats.totalSize,
             sizeLabel = Formatter.formatShortFileSize(context, cleanupState.videoStats.totalSize),
             icon = Icons.Default.VideoLibrary,
@@ -80,8 +82,8 @@ fun FileCleanupScreen(navController: NavHostController) {
             iconTint = Color(0xFF006064)
         ),
         LargeFileItemLocal(
-            title = "Obsolete Archives",
-            subtitle = if (cleanupState.archiveStats.isLoading) "Scanning..." else "${cleanupState.archiveStats.count} ZIP & RAR files found",
+            title = stringResource(R.string.obsolete_archives),
+            subtitle = if (cleanupState.archiveStats.isLoading) stringResource(R.string.scanning) else stringResource(R.string.archives_subtitle, cleanupState.archiveStats.count),
             sizeBytes = cleanupState.archiveStats.totalSize,
             sizeLabel = Formatter.formatShortFileSize(context, cleanupState.archiveStats.totalSize),
             icon = Icons.Default.Archive,
@@ -89,8 +91,8 @@ fun FileCleanupScreen(navController: NavHostController) {
             iconTint = Color(0xFF512DA8)
         ),
         LargeFileItemLocal(
-            title = "Large App Downloads",
-            subtitle = if (cleanupState.appDownloadStats.isLoading) "Scanning..." else "${cleanupState.appDownloadStats.count} APKs and OBBs found",
+            title = stringResource(R.string.large_app_downloads),
+            subtitle = if (cleanupState.appDownloadStats.isLoading) stringResource(R.string.scanning) else stringResource(R.string.app_downloads_subtitle, cleanupState.appDownloadStats.count),
             sizeBytes = cleanupState.appDownloadStats.totalSize,
             sizeLabel = Formatter.formatShortFileSize(context, cleanupState.appDownloadStats.totalSize),
             icon = Icons.Default.Android,
@@ -105,10 +107,10 @@ fun FileCleanupScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "DeDup",
+                title = stringResource(R.string.app_name),
                 navigationIcon = {
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                     }
                 },
                 actions = {
@@ -120,7 +122,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                         ) {
                             Icon(
                                 Icons.Default.Person,
-                                contentDescription = "Profile",
+                                contentDescription = stringResource(R.string.profile),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -139,7 +141,7 @@ fun FileCleanupScreen(navController: NavHostController) {
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "File Cleanup",
+                    stringResource(R.string.screen_file_cleanup),
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -152,7 +154,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            "SCAN TO FIND REDUNDANT FILES",
+                            stringResource(R.string.scan_redundant_files_btn),
                             color = MaterialTheme.colorScheme.onSecondary,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -160,7 +162,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                     }
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        "Manage documents & APKs",
+                        stringResource(R.string.manage_docs_apks),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -171,7 +173,7 @@ fun FileCleanupScreen(navController: NavHostController) {
             // Scanner Categories
             item {
                 Text(
-                    "Scanner Categories",
+                    stringResource(R.string.scanner_categories),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold
                     )
@@ -182,14 +184,14 @@ fun FileCleanupScreen(navController: NavHostController) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CategoryCard(
-                        title = "PDFs",
+                        title = stringResource(R.string.pdfs_label),
                         icon = Icons.Default.Description,
                         color = Color(0xFFE53935),
                         modifier = Modifier.weight(1f),
                         onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
                     )
                     CategoryCard(
-                        title = "APKs",
+                        title = stringResource(R.string.apks_label),
                         icon = Icons.Default.Android,
                         color = Color(0xFF43A047),
                         modifier = Modifier.weight(1f),
@@ -202,14 +204,14 @@ fun FileCleanupScreen(navController: NavHostController) {
             // Large File Finder Section
             item {
                 Text(
-                    "Large File Finder",
+                    stringResource(R.string.large_file_finder),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 )
                 Text(
-                    "Target massive storage consumers",
+                    stringResource(R.string.large_file_finder_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -236,7 +238,7 @@ fun FileCleanupScreen(navController: NavHostController) {
                     iconTint = file.iconTint,
                     isCountType = file.isCountType,
                     onClick = {
-                        if (file.title == "Large App Downloads") {
+                        if (file.title == context.getString(R.string.large_app_downloads)) {
                             navController.navigate(Screen.FileScanner.createRoute("apk"))
                         }
                     }

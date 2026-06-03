@@ -30,6 +30,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.BuildConfig
 import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,12 +42,12 @@ fun AboutScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = "About",
+                title = stringResource(R.string.screen_about),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }
@@ -70,7 +72,7 @@ fun AboutScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                text = stringResource(R.string.version_info, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -78,7 +80,7 @@ fun AboutScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Developed by",
+                text = stringResource(R.string.developed_by),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.secondary
             )
@@ -92,7 +94,7 @@ fun AboutScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Visit my website:",
+                text = stringResource(R.string.visit_website),
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -114,7 +116,7 @@ fun AboutScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(48.dp))
 
             Text(
-                text = "DeDup helps you find and remove duplicate files, images, and videos to save space on your device.",
+                text = stringResource(R.string.about_description),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant

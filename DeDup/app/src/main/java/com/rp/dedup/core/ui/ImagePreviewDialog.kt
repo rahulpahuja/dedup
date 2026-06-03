@@ -1,5 +1,7 @@
 package com.rp.dedup.core.ui
 
+import androidx.compose.ui.res.stringResource
+import com.rp.dedup.R
 import android.net.Uri
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -140,13 +142,13 @@ fun ImagePreviewDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        "Tap anywhere to dismiss",
+                        stringResource(R.string.tap_anywhere_dismiss),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White.copy(alpha = 0.45f),
                         fontSize = 11.sp
                     )
                     Text(
-                        "Closing in ${remainingSeconds}s",
+                        stringResource(R.string.closing_in, remainingSeconds),
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = Color.White.copy(alpha = 0.75f),
                         fontSize = 11.sp
