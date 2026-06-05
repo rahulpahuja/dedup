@@ -27,6 +27,7 @@ object UIConstants {
     const val ROUTE_EMPTY_FOLDER            = "empty_folder"
     const val ROUTE_BIG_FILE_MAP            = "big_file_map"
     const val ROUTE_WHATSAPP_CLEANER        = "whatsapp_cleaner"
+    const val ROUTE_CONTACT_DEDUP          = "deduplication"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -53,6 +54,7 @@ object UIConstants {
             route == ROUTE_EMPTY_FOLDER -> R.string.screen_empty_folder_remover
             route == ROUTE_BIG_FILE_MAP -> R.string.screen_big_file_map
             route == ROUTE_WHATSAPP_CLEANER -> R.string.screen_whatsapp_cleaner
+            route == ROUTE_CONTACT_DEDUP -> R.string.contact_deduplication
             else -> R.string.app_name
         }
     }

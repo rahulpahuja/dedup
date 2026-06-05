@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash and Icon Backgrounds - Night -->
+    <color name="splash_bg_start">#060D1F</color>
+    <color name="splash_bg_end">#0D2347</color>
+    <color name="icon_bg_start">#060D1F</color>
+    <color name="icon_bg_center">#040810</color>
+    <color name="icon_bg_end">#000000</color>
+
+    <color name="splash_logo_card">#1E1E1E</color>
+    <color name="splash_text_watermark">#FFFFFF</color>
+    <color name="splash_name_color">#5FA3FF</color>
+</resources>

@@ -1,6 +1,8 @@
 package com.rp.dedup.core.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.model.ScannedContact
 import com.rp.dedup.core.repository.ContactScannerRepository
@@ -46,6 +48,28 @@ class ContactScannerViewModel(private val repository: ContactScannerRepository) 
         
         _duplicateGroups.value = (nameGroups.values + phoneGroups).distinctBy { group ->
             group.map { it.id }.sorted()
+        }
+    }
+
+    fun mergeSelected(ids: List<String>, onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            repository.mergeContacts(ids).onSuccess {
+                // Remove merged IDs from the UI
+                val updatedGroups = _duplicateGroups.value.map { group ->
+                    group.filterNot { ids.contains(it.id) }
+                }.filter { it.size > 1 }
+                
+                _duplicateGroups.value = updatedGroups
+                onComplete()
+            }
+        }
+    }
+
+    companion object {
+        fun factory(context: Context): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                ContactScannerViewModel(ContactScannerRepository(context)) as T
         }
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
+import androidx.core.content.ContextCompat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -167,6 +168,21 @@ fun ImageScannerScreen(navController: NavHostController) {
         }
     }
 
+    var showBubblePermRationale by remember { mutableStateOf(false) }
+    val bubblePermLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) com.rp.dedup.core.bubble.BubbleLauncher.launch(context)
+        else showBubblePermRationale = true
+    }
+    val onBubbleClick: () -> Unit = {
+        val hasPermission = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (hasPermission) com.rp.dedup.core.bubble.BubbleLauncher.launch(context)
+        else bubblePermLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+
     val tutorialStyle = ShowcaseStyle.Default.copy(
         backgroundColor = Color.Black,
         backgroundAlpha = 0.92f,
@@ -231,7 +247,8 @@ fun ImageScannerScreen(navController: NavHostController) {
                         else viewModel.startScanning()
                     },
                     onAutoClear = { showAutoClearWarning = true },
-                    onDeleteSelected = { triggerOSDeletionPrompt(selectedForDeletion.toList()) }
+                    onDeleteSelected = { triggerOSDeletionPrompt(selectedForDeletion.toList()) },
+                    onBubbleClick = onBubbleClick
                 )
 
                 if (isScanning) {
@@ -276,6 +293,29 @@ fun ImageScannerScreen(navController: NavHostController) {
                     }
                 }
             }
+        }
+
+        if (showBubblePermRationale) {
+            AlertDialog(
+                onDismissRequest = { showBubblePermRationale = false },
+                title = { Text("Notifications Required") },
+                text = { Text("Allow notifications to show the floating scanner bubble. Enable them in Settings.") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        showBubblePermRationale = false
+                        context.startActivity(
+                            Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = android.net.Uri.fromParts("package", context.packageName, null)
+                            }
+                        )
+                    }) { Text("Open Settings") }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { showBubblePermRationale = false }) {
+                        Text("Not now")
+                    }
+                }
+            )
         }
 
         if (showAutoClearWarning) {
@@ -380,7 +420,8 @@ private fun ScannerHeader(
     context: android.content.Context,
     onScanClick: () -> Unit,
     onAutoClear: () -> Unit,
-    onDeleteSelected: () -> Unit
+    onDeleteSelected: () -> Unit,
+    onBubbleClick: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -418,10 +459,7 @@ private fun ScannerHeader(
             // App Bubble Action (Android 17)
             if (android.os.Build.VERSION.SDK_INT >= 37 && isScanning) {
                 IconButton(
-                    onClick = {
-                        val intent = Intent(context, com.rp.dedup.core.bubble.BubbleActivity::class.java)
-                        context.startActivity(intent)
-                    },
+                    onClick = onBubbleClick,
                     modifier = Modifier
                         .size(40.dp)
                         .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)

@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -70,6 +71,20 @@ fun VideoScannerScreen(navController: NavHostController) {
 
     val selectedUris = remember { mutableStateListOf<Uri>() }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var showBubblePermRationale by remember { mutableStateOf(false) }
+    val bubblePermLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) com.rp.dedup.core.bubble.BubbleLauncher.launch(context)
+        else showBubblePermRationale = true
+    }
+    val onBubbleClick: () -> Unit = {
+        val hasPermission = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (hasPermission) com.rp.dedup.core.bubble.BubbleLauncher.launch(context)
+        else bubblePermLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     val deleteLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -92,6 +107,27 @@ fun VideoScannerScreen(navController: NavHostController) {
             viewModel.removeDeletedVideosFromUI(uris)
             selectedUris.removeAll(uris)
         }
+    }
+
+    if (showBubblePermRationale) {
+        AlertDialog(
+            onDismissRequest = { showBubblePermRationale = false },
+            title = { Text("Notifications Required") },
+            text = { Text("Allow notifications to show the floating scanner bubble. Enable them in Settings.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showBubblePermRationale = false
+                    context.startActivity(
+                        Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = android.net.Uri.fromParts("package", context.packageName, null)
+                        }
+                    )
+                }) { Text("Open Settings") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBubblePermRationale = false }) { Text("Not now") }
+            }
+        )
     }
 
     Scaffold(
@@ -146,6 +182,24 @@ fun VideoScannerScreen(navController: NavHostController) {
                         )
                     }
                 }
+                // App Bubble Action (Android 17)
+                if (android.os.Build.VERSION.SDK_INT >= 37 && isScanning) {
+                    IconButton(
+                        onClick = onBubbleClick,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+                    ) {
+                        Icon(
+                            Icons.Default.OpenInFull,
+                            contentDescription = "Bubble Scan",
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                }
+
                 Button(
                     onClick = {
                         if (isScanning) viewModel.cancelScanning()
@@ -163,27 +217,6 @@ fun VideoScannerScreen(navController: NavHostController) {
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(if (isScanning) stringResource(R.string.stop_btn) else stringResource(R.string.scan_btn))
-                }
-
-                // App Bubble Action (Android 17)
-                if (android.os.Build.VERSION.SDK_INT >= 37 && isScanning) {
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(context, com.rp.dedup.core.bubble.BubbleActivity::class.java)
-                            context.startActivity(intent)
-                        },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
-                    ) {
-                        Icon(
-                            Icons.Default.OpenInFull,
-                            contentDescription = "Bubble Scan",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 }
             }
 

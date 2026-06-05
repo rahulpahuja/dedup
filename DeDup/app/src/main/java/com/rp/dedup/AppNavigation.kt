@@ -38,6 +38,7 @@ import com.rp.dedup.UIConstants.ROUTE_SMART_JUNK
 import com.rp.dedup.UIConstants.ROUTE_SOCIAL_MEDIA_CLEANER
 import com.rp.dedup.UIConstants.ROUTE_SPLASH
 import com.rp.dedup.UIConstants.ROUTE_WHATSAPP_CLEANER
+import com.rp.dedup.UIConstants.ROUTE_CONTACT_DEDUP
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
@@ -54,6 +55,7 @@ sealed class Screen(val route: String) {
     object Login : Screen(ROUTE_LOGIN)
     object Dashboard : Screen(ROUTE_DASHBOARD)
     object Cleanup : Screen(ROUTE_CLEANUP)
+    object ContactDedup : Screen(ROUTE_CONTACT_DEDUP)
     object ImageScanner : Screen(UIConstants.ROUTE_IMAGE_SCANNER)
     object ResultsMedia : Screen(ROUTE_RESULTS_MEDIA)
     object Activity : Screen(ROUTE_ACTIVITY)
@@ -91,6 +93,7 @@ fun AppNavHost(navController: NavHostController) {
             || currentRoute == Screen.Settings.route
             || currentRoute == Screen.ScanHistory.route
             || currentRoute == Screen.FileBrowser.route
+            || currentRoute == Screen.ContactDedup.route
             || currentRoute?.startsWith("file_scanner") == true
 
     CompositionLocalProvider(LocalDrawerState provides drawerState) {
@@ -156,6 +159,9 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.SmartJunk.route) {
                     SmartJunkScreen(navController)
+                }
+                composable(Screen.ContactDedup.route) {
+                    DeduplicationScreen(navController)
                 }
                 composable(Screen.PrivacyPolicy.route) {
                     PrivacyPolicyScreen(navController)

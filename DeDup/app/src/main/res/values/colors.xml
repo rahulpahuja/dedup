@@ -7,4 +7,15 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Splash and Icon Backgrounds -->
+    <color name="splash_bg_start">#F0F4F8</color>
+    <color name="splash_bg_end">#DDE6EF</color>
+    <color name="icon_bg_start">#132545</color>
+    <color name="icon_bg_center">#090F20</color>
+    <color name="icon_bg_end">#040810</color>
+
+    <color name="splash_logo_card">#FFFFFF</color>
+    <color name="splash_text_watermark">#000000</color>
+    <color name="splash_name_color">#0056D2</color>
 </resources>

@@ -51,4 +51,23 @@ class ContactScannerRepository(private val context: Context) {
         
         contactsMap.values.forEach { emit(it) }
     }.flowOn(Dispatchers.IO)
+
+    suspend fun mergeContacts(idsToMerge: List<String>): Result<Unit> = with(Dispatchers.IO) {
+        try {
+            // Simple merging strategy: delete the duplicates.
+            // A more advanced strategy would be to combine their info into one primary record.
+            val operations = idsToMerge.map { id ->
+                android.content.ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI)
+                    .withSelection("${ContactsContract.RawContacts.CONTACT_ID} = ?", arrayOf(id))
+                    .build()
+            }
+
+            if (operations.isNotEmpty()) {
+                context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ArrayList(operations))
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

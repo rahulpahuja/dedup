@@ -1,6 +1,12 @@
 package com.rp.dedup.screens
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.provider.ContactsContract
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,6 +37,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,39 +49,80 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
+import com.rp.dedup.core.model.ScannedContact
+import com.rp.dedup.core.viewmodels.ContactScannerViewModel
+import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.ui.theme.DarkCyan
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.LightCyan
 import com.rp.dedup.ui.theme.SelectionBarBackground
-import com.rp.dedup.core.ui.DeDupTopBar
+
+private fun String.initials(): String =
+    split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeduplicationScreen(navController: NavHostController) {
+    val context = LocalContext.current
+    val viewModel: ContactScannerViewModel = viewModel(
+        factory = ContactScannerViewModel.factory(context)
+    )
+    val duplicateGroups by viewModel.duplicateGroups.collectAsState()
+    val isScanning by viewModel.isScanning.collectAsState()
+
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasPermission = granted
+        if (granted) viewModel.startScanning()
+    }
+
+    LaunchedEffect(hasPermission) {
+        if (hasPermission && duplicateGroups.isEmpty() && !isScanning) viewModel.startScanning()
+    }
+
+    val selectedIds = remember { mutableStateListOf<String>() }
+
     Scaffold(
         topBar = {
             DeDupTopBar(
                 title = stringResource(R.string.app_name),
                 navigationIcon = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = {}) {
                         Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = {}) {
                         Surface(
                             shape = CircleShape,
                             modifier = Modifier.size(32.dp),
@@ -90,9 +139,15 @@ fun DeduplicationScreen(navController: NavHostController) {
             )
         },
         bottomBar = {
-            Column {
-                SelectionBar()
-                BottomNavigationBar()
+            if (selectedIds.isNotEmpty()) {
+                SelectionBar(
+                    selectedCount = selectedIds.size,
+                    onMerge = {
+                        viewModel.mergeSelected(selectedIds.toList()) {
+                            selectedIds.clear()
+                        }
+                    }
+                )
             }
         }
     ) { paddingValues ->
@@ -104,17 +159,18 @@ fun DeduplicationScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp)
         ) {
             item {
+                // Privacy Mode banner (Android 17+)
                 if (android.os.Build.VERSION.SDK_INT >= 37) {
                     Surface(
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(16.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        )
                     ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 Icons.Default.CheckCircle,
                                 contentDescription = null,
@@ -123,18 +179,16 @@ fun DeduplicationScreen(navController: NavHostController) {
                             )
                             Spacer(Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    "Privacy Mode Active",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text("Privacy Mode Active", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                 Text(
                                     "Using Android 17 Standardized Picker to protect your contact data.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            IconButton(onClick = { /* In API 37, this would launch the Standardized Picker */ }) {
+                            IconButton(onClick = {
+                                context.startActivity(Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI))
+                            }) {
                                 Icon(Icons.Default.Add, contentDescription = "Open Picker")
                             }
                         }
@@ -152,12 +206,9 @@ fun DeduplicationScreen(navController: NavHostController) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
+                    Surface(color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(8.dp)) {
                         Text(
-                            stringResource(R.string.groups_found_label, 14),
+                            stringResource(R.string.groups_found_label, duplicateGroups.size),
                             color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
@@ -167,140 +218,143 @@ fun DeduplicationScreen(navController: NavHostController) {
                     Text(
                         stringResource(R.string.contact_dedup_desc),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
                     )
+                    if (hasPermission && !isScanning && duplicateGroups.isNotEmpty()) {
+                        TextButton(onClick = { viewModel.startScanning() }) { Text("Rescan") }
+                    }
                 }
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Identical Name Section
-            item {
-                SectionHeader(stringResource(R.string.identical_name), stringResource(R.string.identical_name_desc))
-                ContactCard(
-                    initials = "JS",
-                    name = "Johnathan Smith",
-                    phone = "+1 (555) 123-4567",
-                    email = "john.smith@gmail.com",
-                    badge = stringResource(R.string.primary_record),
-                    badgeColor = LightCyan,
-                    badgeTextColor = DarkCyan,
-                    isSelected = true
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ContactCard(
-                    initials = "JS",
-                    name = "Johnathan Smith",
-                    phone = "+1 (555) 123-4567",
-                    email = stringResource(R.string.no_email_provided),
-                    badge = stringResource(R.string.duplicate),
-                    badgeColor = MaterialTheme.colorScheme.surface,
-                    badgeTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    isSelected = true,
-                    isEmailItalic = true
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-            }
-
-            // Same Number Section
-            item {
-                SectionHeader(
-                    stringResource(R.string.same_number),
-                    stringResource(R.string.same_number_desc)
-                )
-                ContactCard(
-                    name = "Sarah Connor",
-                    phone = "+1 (212) 999-0000",
-                    info = "Last synced: 2 days ago",
-                    isSelected = false
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ContactCard(
-                    name = "S. Connor",
-                    phone = "+1 (212) 999-0000",
-                    info = "Imported from LinkedIn",
-                    isSelected = false
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ContactCard(
-                    name = "Sarah C.",
-                    phone = "+1 (212) 999-0000",
-                    info = "Manual entry",
-                    isSelected = false
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-            }
-
-            // Similar Info Section
-            item {
-                SectionHeader(stringResource(R.string.similar_info), stringResource(R.string.similar_info_desc))
-                ContactCard(
-                    name = "Alex Rivera",
-                    info = "Design Architect at Studio-X",
-                    email = "a.rivera@studio-x.io",
-                    infoIcon = Icons.Default.Info,
-                    emailIcon = Icons.Default.Email,
-                    topBadge = stringResource(R.string.safe_to_keep),
-                    topBadgeColor = LightCyan,
-                    topBadgeTextColor = DarkCyan,
-                    isSelected = true
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ContactCard(
-                    name = "Alex Rivera",
-                    info = "Company info missing",
-                    infoIcon = Icons.Default.Info,
-                    topBadge = stringResource(R.string.potential_match),
-                    topBadgeColor = Color.Transparent,
-                    topBadgeTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    isSelected = true,
-                    isInfoItalic = true
-                )
-                Spacer(modifier = Modifier.height(100.dp))
+            when {
+                !hasPermission -> item { ContactsPermissionCard(onRequest = { permLauncher.launch(android.Manifest.permission.READ_CONTACTS) }) }
+                isScanning -> item { ContactsScanningIndicator() }
+                duplicateGroups.isEmpty() -> item { ContactsEmptyState() }
+                else -> {
+                    item {
+                        SectionHeader(
+                            title = stringResource(R.string.identical_name),
+                            subtitle = stringResource(R.string.identical_name_desc),
+                            onSelectAll = {
+                                duplicateGroups.flatten().forEach { contact ->
+                                    if (!selectedIds.contains(contact.id)) {
+                                        selectedIds.add(contact.id)
+                                    }
+                                }
+                            }
+                        )
+                    }
+                    items(duplicateGroups) { group ->
+                        DuplicateContactGroup(
+                            group = group,
+                            selectedIds = selectedIds,
+                            onToggleSelect = { id ->
+                                if (selectedIds.contains(id)) selectedIds.remove(id)
+                                else selectedIds.add(id)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                }
             }
         }
     }
 }
 
 @Composable
-fun SectionHeader(title: String, subtitle: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(48.dp)
-                .background(MaterialTheme.colorScheme.primary)
+private fun DuplicateContactGroup(
+    group: List<ScannedContact>,
+    selectedIds: List<String>,
+    onToggleSelect: (String) -> Unit
+) {
+    group.forEachIndexed { index, contact ->
+        val isPrimary = index == 0
+        ContactCard(
+            id = contact.id,
+            initials = contact.name.initials().ifEmpty { "?" },
+            name = contact.name,
+            phone = contact.phoneNumbers.firstOrNull(),
+            badge = if (isPrimary) stringResource(R.string.primary_record) else stringResource(R.string.duplicate),
+            badgeColor = if (isPrimary) LightCyan else MaterialTheme.colorScheme.surface,
+            badgeTextColor = if (isPrimary) DarkCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+            isSelected = selectedIds.contains(contact.id),
+            onToggleSelect = onToggleSelect
         )
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        if (index < group.lastIndex) Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun ContactsPermissionCard(onRequest: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(Icons.Default.Person, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(12.dp))
+            Text("Contacts Access Required", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
             Text(
-                title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            )
-            Text(
-                subtitle,
+                "Allow DeDup to read your contacts to find and merge duplicates.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onRequest) { Text("Allow Access") }
         }
-        TextButton(onClick = { }) {
-            Text(
-                stringResource(R.string.select_all),
-                style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.primary)
-            )
+    }
+}
+
+@Composable
+private fun ContactsScanningIndicator() {
+    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(12.dp))
+            Text("Scanning contacts…", style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+private fun ContactsEmptyState() {
+    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(Icons.Default.CheckCircle, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(12.dp))
+            Text("No duplicate contacts found!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            Text("Your address book looks clean.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun SectionHeader(title: String, subtitle: String, onSelectAll: () -> Unit = {}) {
+    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.width(4.dp).height(48.dp).background(MaterialTheme.colorScheme.primary))
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground))
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        TextButton(onClick = onSelectAll) {
+            Text(stringResource(R.string.select_all), style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.primary))
         }
     }
 }
 
 @Composable
 fun ContactCard(
+    id: String,
     initials: String? = null,
     name: String,
     phone: String? = null,
@@ -316,27 +370,27 @@ fun ContactCard(
     topBadgeTextColor: Color = Color.Black,
     isSelected: Boolean = false,
     isEmailItalic: Boolean = false,
-    isInfoItalic: Boolean = false
+    isInfoItalic: Boolean = false,
+    onToggleSelect: (String) -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggleSelect(id) },
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+            else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        shape = RoundedCornerShape(12.dp),
+        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)) else null
     ) {
         Box(modifier = Modifier.padding(16.dp)) {
             Column {
                 if (topBadge != null) {
-                    Surface(
-                        color = topBadgeColor,
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
+                    Surface(color = topBadgeColor, shape = RoundedCornerShape(4.dp)) {
                         Text(
                             topBadge,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = topBadgeTextColor,
-                                fontSize = 10.sp
-                            ),
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = topBadgeTextColor, fontSize = 10.sp),
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
@@ -344,100 +398,44 @@ fun ContactCard(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (initials != null) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.size(48.dp)
-                        ) {
+                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.size(48.dp)) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    initials,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
+                                Text(initials, style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSecondaryContainer, fontWeight = FontWeight.Bold))
                             }
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            name,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        )
+                        Text(name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface))
                         if (phone != null) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.Phone,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    phone,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                )
+                                Icon(Icons.Default.Phone, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                                Spacer(Modifier.width(4.dp))
+                                Text(phone, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
                             }
                         }
                         if (email != null) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    emailIcon ?: Icons.Default.Email,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    email,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontStyle = if (isEmailItalic) FontStyle.Italic else FontStyle.Normal
-                                    )
-                                )
+                                Icon(emailIcon ?: Icons.Default.Email, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Spacer(Modifier.width(4.dp))
+                                Text(email, style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = if (isEmailItalic) FontStyle.Italic else FontStyle.Normal))
                             }
                         }
                         if (info != null) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (infoIcon != null) {
-                                    Icon(
-                                        infoIcon,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(14.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(infoIcon, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Spacer(Modifier.width(4.dp))
                                 }
-                                Text(
-                                    info,
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontStyle = if (isInfoItalic) FontStyle.Italic else FontStyle.Normal
-                                    )
-                                )
+                                Text(info, style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, fontStyle = if (isInfoItalic) FontStyle.Italic else FontStyle.Normal))
                             }
                         }
                         if (badge != null) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Surface(
-                                color = badgeColor,
-                                shape = RoundedCornerShape(4.dp)
-                            ) {
+                            Surface(color = badgeColor, shape = RoundedCornerShape(4.dp)) {
                                 Text(
                                     badge,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = badgeTextColor,
-                                        fontSize = 10.sp
-                                    ),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = badgeTextColor, fontSize = 10.sp),
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
@@ -447,7 +445,7 @@ fun ContactCard(
             }
             Checkbox(
                 checked = isSelected,
-                onCheckedChange = { },
+                onCheckedChange = { onToggleSelect(id) },
                 modifier = Modifier.align(Alignment.TopEnd)
             )
         }
@@ -455,35 +453,19 @@ fun ContactCard(
 }
 
 @Composable
-fun SelectionBar() {
-    Surface(
-        color = SelectionBarBackground,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+fun SelectionBar(selectedCount: Int = 0, onMerge: () -> Unit = {}) {
+    Surface(color = SelectionBarBackground, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    stringResource(R.string.selection_label),
-                    style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray)
-                )
-                Text(
-                    stringResource(R.string.contacts_selected_count, 7),
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
+                Text(stringResource(R.string.selection_label), style = MaterialTheme.typography.labelSmall.copy(color = Color.LightGray))
+                Text(stringResource(R.string.contacts_selected_count, selectedCount), style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontWeight = FontWeight.Bold))
             }
             Button(
-                onClick = { },
+                onClick = onMerge,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = null) // Fallback for Merge icon
+                Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.merge_selected))
             }
@@ -491,35 +473,7 @@ fun SelectionBar() {
     }
 }
 
-@Composable
-fun BottomNavigationBar() {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_dash)) },
-            selected = false,
-            onClick = { }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Search, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_scan)) },
-            selected = false,
-            onClick = { }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
-            label = { Text(stringResource(R.string.results_label)) },
-            selected = true,
-            onClick = { }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_settings)) },
-            selected = false,
-            onClick = { }
-        )
-    }
-}
+
 
 @Preview(showBackground = true)
 @Composable

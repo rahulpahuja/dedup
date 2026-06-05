@@ -37,6 +37,12 @@
     <!-- ── Notifications (API 33+ runtime permission) ── -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- ── Contacts ── -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- ── Location (coarse — used for sunrise/sunset auto-theme; no active request) ── -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <!-- ── All Files Access (API 30+) ── -->
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"

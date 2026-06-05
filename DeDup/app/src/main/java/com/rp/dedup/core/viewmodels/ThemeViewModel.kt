@@ -1,12 +1,15 @@
 package com.rp.dedup.core.viewmodels
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.model.ThemeMode
+import com.rp.dedup.core.theme.SolarThemeCalculator
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -19,11 +22,7 @@ class ThemeViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
         DataStoreManager.THEME_MODE,
         ThemeMode.AUTO.name
     ).map { name ->
-        try {
-            ThemeMode.valueOf(name)
-        } catch (e: Exception) {
-            ThemeMode.AUTO
-        }
+        try { ThemeMode.valueOf(name) } catch (_: Exception) { ThemeMode.AUTO }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -38,11 +37,30 @@ class ThemeViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
 
     @Composable
     fun isDarkTheme(): Boolean {
-        val mode = themeMode.collectAsState().value
+        val mode by themeMode.produceAsState()
         return when (mode) {
             ThemeMode.LIGHT -> false
             ThemeMode.DARK -> true
-            ThemeMode.AUTO -> isSystemInDarkTheme()
+            ThemeMode.AUTO -> {
+                val context = LocalContext.current
+                // Re-evaluate every minute so the theme flips exactly at sunrise/sunset.
+                val isDark by produceState(
+                    initialValue = SolarThemeCalculator.isDarkNow(context),
+                    key1 = context
+                ) {
+                    while (true) {
+                        delay(60_000L)
+                        value = SolarThemeCalculator.isDarkNow(context)
+                    }
+                }
+                isDark
+            }
         }
     }
 }
+
+@Composable
+private fun <T> StateFlow<T>.produceAsState(): androidx.compose.runtime.State<T> =
+    produceState(initialValue = value) {
+        collect { value = it }
+    }

@@ -1,41 +1,17 @@
 package com.rp.dedup.screens
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.StartOffset
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -44,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
-import androidx.compose.ui.res.stringResource
 import com.rp.dedup.Screen
 import com.rp.dedup.pendingDeepLinkRoute
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
@@ -84,6 +60,16 @@ fun SplashScreen(navController: NavHostController) {
             popUpTo(Screen.Splash.route) { inclusive = true }
         }
     }
+
+    // --- Dynamic Theme Aware Colors ---
+    // We use isSystemInDarkTheme() here to ensure the splash background 
+    // immediately matches the MaterialTheme wrapper provided in MainActivity.
+    val isDark = isSystemInDarkTheme()
+    val bgStart = if (isDark) Color(0xFF060D1F) else Color(0xFFF0F4F8)
+    val bgEnd = if (isDark) Color(0xFF0D2347) else Color(0xFFDDE6EF)
+    val logoCardColor = if (isDark) Color(0xFF1E1E1E) else Color.White
+    val watermarkColor = if (isDark) Color.White else Color.Black
+    val nameColor = if (isDark) Color(0xFF5FA3FF) else PrimaryBlue
 
     // --- Entrance animations ---
     val logoScale by animateFloatAsState(
@@ -187,7 +173,7 @@ fun SplashScreen(navController: NavHostController) {
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFFF0F4F8), Color(0xFFDDE6EF))
+                    colors = listOf(bgStart, bgEnd)
                 )
             )
     ) {
@@ -201,7 +187,7 @@ fun SplashScreen(navController: NavHostController) {
             style = MaterialTheme.typography.displayLarge.copy(
                 fontSize = 120.sp,
                 fontWeight = FontWeight.Black,
-                color = Color.Black,
+                color = watermarkColor,
                 letterSpacing = 8.sp
             )
         )
@@ -248,7 +234,7 @@ fun SplashScreen(navController: NavHostController) {
                             alpha = logoAlpha
                         },
                     shape = RoundedCornerShape(32.dp),
-                    color = Color.White,
+                    color = logoCardColor,
                     shadowElevation = 16.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -289,7 +275,7 @@ fun SplashScreen(navController: NavHostController) {
                 },
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Bold,
-                    color = PrimaryBlue,
+                    color = nameColor,
                     letterSpacing = (-1).sp
                 )
             )
@@ -301,7 +287,7 @@ fun SplashScreen(navController: NavHostController) {
                 text = stringResource(R.string.tagline),
                 modifier = Modifier.graphicsLayer { alpha = nameAlpha * 0.75f },
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = Color.Gray,
+                    color = if (triggered) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else Color.Gray,
                     letterSpacing = 0.3.sp,
                     fontWeight = FontWeight.Normal
                 )
@@ -315,8 +301,8 @@ fun SplashScreen(navController: NavHostController) {
                 .fillMaxWidth()
                 .padding(bottom = 0.dp)
                 .graphicsLayer { alpha = bottomAlpha },
-            color = PrimaryBlue,
-            trackColor = PrimaryBlue.copy(alpha = 0.12f)
+            color = nameColor,
+            trackColor = nameColor.copy(alpha = 0.12f)
         )
     }
 }

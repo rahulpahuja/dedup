@@ -33,13 +33,9 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
                     _uiState.value = SmartJunkState.Scanning(scanned.toFloat() / total)
                 }
                 
-                // Initial results
+                // Initial results — enhance with Gemini Nano when available, heuristics otherwise
                 _uiState.value = SmartJunkState.Results(results)
-                
-                // Enhancing with AI insights
-                if (aiClassifier.isSupported()) {
-                    enhanceWithAi(results)
-                }
+                enhanceWithAi(results)
                 
                 val totalFound = results.values.sumOf { it.size }
                 analyticsManager.logScanCompleted("JUNK", totalFound, totalFound, 0L) // reclaimable bytes not easily available here
