@@ -27,6 +27,7 @@ import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.security.RootDetectionManager
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import kotlinx.coroutines.launch
 
 // Global state to track deep link route across activity instances/recompositions
 var pendingDeepLinkRoute by mutableStateOf<String?>(null)
@@ -43,16 +44,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Note: We don't call applyLocale here anymore because AppCompatDelegate
-        // automatically restores the persisted locale from its own storage.
-        
         enableEdgeToEdge()
 
         // Handle initial intent
         handleIntent(intent)
 
-        // it is intentionally synchronous so there is no window where the app
-        // UI could flash before the block screen appears.
         val rootResult = RootDetectionManager.check(applicationContext)
         
         val analyticsManager = AnalyticsManager(applicationContext)
@@ -65,27 +61,44 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContent {
+            val scope = rememberCoroutineScope()
             DeDupTheme(darkTheme = themeViewModel.isDarkTheme()) {
 
                 if (rootResult.isRooted) {
                     RootedDeviceScreen(triggeredChecks = rootResult.triggeredChecks)
                 } else {
                     val navController: NavHostController = rememberNavController()
+                    val snackbarHostState = remember { SnackbarHostState() }
                     
-                    // Handle deep links from widget
+                    // Handle deep links and handoffs
                     LaunchedEffect(pendingDeepLinkRoute) {
                         pendingDeepLinkRoute?.let { route ->
                             analyticsManager.logDeepLinkOpened(route)
+                            
+                            val handoffScanType = intent?.getStringExtra("handoff_scan_type")
+                            if (handoffScanType != null) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Resuming $handoffScanType scan from other device",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+
                             navController.navigate(route) {
-                                // Clear splash if we're navigating from it
                                 popUpTo(Screen.Splash.route) { inclusive = true }
                             }
-                            pendingDeepLinkRoute = null // Clear after use
+                            pendingDeepLinkRoute = null 
                         }
                     }
 
                     Box(modifier = Modifier.fillMaxSize()) {
                         AppNavHost(navController = navController)
+                        
+                        SnackbarHost(
+                            hostState = snackbarHostState,
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
+                        )
                     }
                 }
             }
@@ -118,7 +131,6 @@ private fun RootedDeviceScreen(triggeredChecks: List<String>) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Shield icon
             Surface(
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.errorContainer,
@@ -155,7 +167,6 @@ private fun RootedDeviceScreen(triggeredChecks: List<String>) {
                 textAlign = TextAlign.Center
             )
 
-            // Show which checks fired (collapsed into a card for clarity)
             if (triggeredChecks.isNotEmpty()) {
                 Spacer(Modifier.height(24.dp))
 

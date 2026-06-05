@@ -2,11 +2,15 @@ package com.rp.dedup.core.viewmodels
 
 import android.app.Application
 import android.net.Uri
+import android.text.format.Formatter
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.ai.GeminiClassifier
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.model.SmartJunkState
 import com.rp.dedup.core.search.SmartJunkRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +19,7 @@ import kotlinx.coroutines.launch
 class SmartJunkViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SmartJunkRepository(application)
     private val analyticsManager = AnalyticsManager(application)
+    private val aiClassifier = GeminiClassifier(application)
 
     private val _uiState = MutableStateFlow<SmartJunkState>(SmartJunkState.Idle)
     val uiState: StateFlow<SmartJunkState> = _uiState.asStateFlow()
@@ -27,12 +32,40 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
                 val results = repository.scanForJunk { scanned, total ->
                     _uiState.value = SmartJunkState.Scanning(scanned.toFloat() / total)
                 }
+                
+                // Initial results
                 _uiState.value = SmartJunkState.Results(results)
+                
+                // Enhancing with AI insights
+                if (aiClassifier.isSupported()) {
+                    enhanceWithAi(results)
+                }
                 
                 val totalFound = results.values.sumOf { it.size }
                 analyticsManager.logScanCompleted("JUNK", totalFound, totalFound, 0L) // reclaimable bytes not easily available here
             } catch (e: Exception) {
                 _uiState.value = SmartJunkState.Error(e.localizedMessage ?: "Unknown error during scan")
+            }
+        }
+    }
+
+    private fun enhanceWithAi(groups: Map<SmartJunkRepository.JunkCategory, List<SmartJunkRepository.JunkItem>>) {
+        viewModelScope.launch {
+            val enhancedGroups = groups.mapValues { (_, items) ->
+                items.map { item ->
+                    async {
+                        val reason = aiClassifier.classifyFile(
+                            item.fileName, 
+                            Formatter.formatShortFileSize(getApplication(), item.size)
+                        )
+                        item.copy(aiReason = reason)
+                    }
+                }.awaitAll()
+            }
+            
+            val current = _uiState.value
+            if (current is SmartJunkState.Results) {
+                _uiState.value = current.copy(groups = enhancedGroups)
             }
         }
     }

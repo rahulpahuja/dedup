@@ -84,6 +84,16 @@
             </intent-filter>
         </activity>
 
+        <!-- Android 17 App Bubble Activity -->
+        <activity
+            android:name=".core.bubble.BubbleActivity"
+            android:label="DeDup Scanner"
+            android:theme="@style/Theme.DeDup"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true"
+            android:exported="false">
+        </activity>
+
         <activity
             android:name=".DemotestActivity"
             android:exported="false"
@@ -133,6 +143,16 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
+
+        <!-- Android 17 Handoff Receiver -->
+        <receiver
+            android:name=".core.handoff.HandoffReceiver"
+            android:exported="true"
+            android:permission="android.permission.ACCEPT_HANDOFF">
+            <intent-filter>
+                <action android:name="android.intent.action.HANDOFF_RECEIVED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

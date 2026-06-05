@@ -2,6 +2,9 @@ package com.rp.dedup.core.viewmodels
 
 import android.content.Context
 import android.provider.MediaStore
+import android.companion.CompanionDeviceManager
+import android.content.Intent
+import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
@@ -155,12 +158,34 @@ class ScannerViewModel(
 
                 _duplicateGroups.value = finalizedGroups
 
+                val totalScanned = synchronized(groupsLock) { allScannedGroups.values.sumOf { it.size } }
+                val duplicatesFound = finalizedGroups.sumOf { it.size - 1 }
+                val reclaimableBytes = finalizedGroups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
+
                 analyticsManager?.logScanCompleted(
                     scanType = "IMAGE",
-                    totalScanned = synchronized(groupsLock) { allScannedGroups.values.sumOf { it.size } },
-                    duplicatesFound = finalizedGroups.sumOf { it.size - 1 },
-                    reclaimableBytes = finalizedGroups.sumOf { group -> group.drop(1).sumOf { it.sizeInBytes } }
+                    totalScanned = totalScanned,
+                    duplicatesFound = duplicatesFound,
+                    reclaimableBytes = reclaimableBytes
                 )
+
+                // Android 17 Handoff: Broadcast state to other devices
+                if (android.os.Build.VERSION.SDK_INT >= 37) {
+                    val companionManager = context.getSystemService(Context.COMPANION_DEVICE_SERVICE) as? CompanionDeviceManager
+                    companionManager?.let {
+                        val handoffBundle = Bundle().apply {
+                            putString("handoff_route", "image_scanner")
+                            putString("scan_type", "IMAGE")
+                            putInt("duplicates_found", duplicatesFound)
+                        }
+                        // This is a simplified representation of the Android 17 Handoff API
+                        // In a real implementation, you'd use startHandoff() with a ClipData or specific intent
+                        val handoffIntent = Intent("android.intent.action.HANDOFF_RECEIVED").apply {
+                            putExtras(handoffBundle)
+                        }
+                        context.sendBroadcast(handoffIntent)
+                    }
+                }
 
                 persistResults(finalizedGroups)
 

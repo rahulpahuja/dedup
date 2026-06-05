@@ -44,7 +44,10 @@ class SmartJunkRepository(private val context: Context) {
     data class JunkItem(
         val uri: Uri,
         val category: JunkCategory,
-        val labels: List<String>
+        val labels: List<String>,
+        val fileName: String = "",
+        val size: Long = 0L,
+        val aiReason: String? = null
     )
 
     /** Scans the most recent [limit] images and groups them into junk categories. */
@@ -72,6 +75,20 @@ class SmartJunkRepository(private val context: Context) {
     private suspend fun processImage(uri: Uri): JunkItem? {
         val labels = getLabels(uri)
         if (labels.isEmpty()) return null
+
+        var fileName = ""
+        var size = 0L
+
+        context.contentResolver.query(
+            uri, 
+            arrayOf(MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.SIZE),
+            null, null, null
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                fileName = cursor.getString(0) ?: ""
+                size = cursor.getLong(1)
+            }
+        }
 
         val category = when {
             // Logic for Screenshots: Check for specific labels and "text" dominance
@@ -105,7 +122,7 @@ class SmartJunkRepository(private val context: Context) {
             else -> null
         }
 
-        return category?.let { JunkItem(uri, it, labels) }
+        return category?.let { JunkItem(uri, it, labels, fileName, size) }
     }
 
     private suspend fun getLabels(uri: Uri): List<String> = suspendCancellableCoroutine { cont ->

@@ -1,6 +1,7 @@
 package com.rp.dedup.screens
 
 import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
@@ -412,6 +414,28 @@ private fun ScannerHeader(
                 }
             }
             Spacer(Modifier.width(12.dp))
+            
+            // App Bubble Action (Android 17)
+            if (android.os.Build.VERSION.SDK_INT >= 37 && isScanning) {
+                IconButton(
+                    onClick = {
+                        val intent = Intent(context, com.rp.dedup.core.bubble.BubbleActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+                ) {
+                    Icon(
+                        Icons.Default.OpenInFull,
+                        contentDescription = "Bubble Scan",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+            }
+
             Button(
                 onClick = onScanClick,
                 shape = RoundedCornerShape(12.dp)

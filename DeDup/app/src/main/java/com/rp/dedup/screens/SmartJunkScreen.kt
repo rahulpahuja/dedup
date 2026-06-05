@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -262,6 +263,8 @@ private fun JunkItemThumbnail(
     isSelected: Boolean,
     onToggle: () -> Unit
 ) {
+    var showAiReason by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .size(100.dp)
@@ -274,6 +277,29 @@ private fun JunkItemThumbnail(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
+        // AI Insight Badge
+        if (item.aiReason != null) {
+            Surface(
+                color = Color.Black.copy(alpha = 0.6f),
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(4.dp)
+                    .size(24.dp)
+                    .clickable { showAiReason = true }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = "AI Insight",
+                        tint = Color(0xFFFBBC05),
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+        }
+
         if (isSelected) {
             Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)))
             Icon(
@@ -283,6 +309,19 @@ private fun JunkItemThumbnail(
                 modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
             )
         }
+    }
+
+    if (showAiReason && item.aiReason != null) {
+        AlertDialog(
+            onDismissRequest = { showAiReason = false },
+            confirmButton = { TextButton(onClick = { showAiReason = false }) { Text("Got it") } },
+            title = { Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AutoAwesome, null, tint = Color(0xFFFBBC05))
+                Spacer(Modifier.width(8.dp))
+                Text("AI Insight")
+            }},
+            text = { Text(item.aiReason) }
+        )
     }
 }
 

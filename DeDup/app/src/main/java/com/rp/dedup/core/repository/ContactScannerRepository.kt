@@ -1,6 +1,7 @@
 package com.rp.dedup.core.repository
 
 import android.content.Context
+import android.content.Intent
 import android.provider.ContactsContract
 import com.rp.dedup.core.model.ScannedContact
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +12,10 @@ import kotlinx.coroutines.flow.flowOn
 class ContactScannerRepository(private val context: Context) {
 
     fun scanContacts(): Flow<ScannedContact> = flow {
+        // Android 17 standardized picker handling (simplified logic)
+        // In API 37, we transition to using ACTION_PICK_CONTACTS for privacy
+        // but for deep scanning/deduping we still need the full list if permitted.
+
         val contactsMap = mutableMapOf<String, ScannedContact>()
 
         val projection = arrayOf(

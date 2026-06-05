@@ -23,7 +23,8 @@ import com.rp.dedup.core.ui.DeDupTopBar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivacyPolicyScreen(navController: NavHostController) {
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(androidx.compose.ui.platform.LocalContext.current) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("PrivacyPolicy")
     }

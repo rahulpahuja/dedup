@@ -164,6 +164,27 @@ fun VideoScannerScreen(navController: NavHostController) {
                     Spacer(Modifier.width(6.dp))
                     Text(if (isScanning) stringResource(R.string.stop_btn) else stringResource(R.string.scan_btn))
                 }
+
+                // App Bubble Action (Android 17)
+                if (android.os.Build.VERSION.SDK_INT >= 37 && isScanning) {
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {
+                            val intent = Intent(context, com.rp.dedup.core.bubble.BubbleActivity::class.java)
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+                    ) {
+                        Icon(
+                            Icons.Default.OpenInFull,
+                            contentDescription = "Bubble Scan",
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
 
             if (isScanning && duplicateGroups.isEmpty()) {

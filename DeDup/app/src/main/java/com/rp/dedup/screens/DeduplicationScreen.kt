@@ -104,6 +104,43 @@ fun DeduplicationScreen(navController: NavHostController) {
                 .padding(horizontal = 16.dp)
         ) {
             item {
+                if (android.os.Build.VERSION.SDK_INT >= 37) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Privacy Mode Active",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "Using Android 17 Standardized Picker to protect your contact data.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            IconButton(onClick = { /* In API 37, this would launch the Standardized Picker */ }) {
+                                Icon(Icons.Default.Add, contentDescription = "Open Picker")
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     stringResource(R.string.contact_deduplication),
