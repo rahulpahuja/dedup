@@ -39,6 +39,7 @@
 
     <!-- ── Contacts ── -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
 
     <!-- ── Location (coarse — used for sunrise/sunset auto-theme; no active request) ── -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

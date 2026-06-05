@@ -95,13 +95,14 @@ fun DeduplicationScreen(navController: NavHostController) {
 
     var hasPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_CONTACTS)
-                == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_GRANTED
         )
     }
     val permLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.values.all { it }
         hasPermission = granted
         if (granted) viewModel.startScanning()
     }
@@ -229,7 +230,16 @@ fun DeduplicationScreen(navController: NavHostController) {
             }
 
             when {
-                !hasPermission -> item { ContactsPermissionCard(onRequest = { permLauncher.launch(android.Manifest.permission.READ_CONTACTS) }) }
+                !hasPermission -> item { 
+                    ContactsPermissionCard(onRequest = { 
+                        permLauncher.launch(
+                            arrayOf(
+                                android.Manifest.permission.READ_CONTACTS,
+                                android.Manifest.permission.WRITE_CONTACTS
+                            )
+                        ) 
+                    }) 
+                }
                 isScanning -> item { ContactsScanningIndicator() }
                 duplicateGroups.isEmpty() -> item { ContactsEmptyState() }
                 else -> {
