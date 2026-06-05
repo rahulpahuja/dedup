@@ -92,6 +92,18 @@ class PermissionManager(private val context: Context) {
             Manifest.permission.RECEIVE_SMS
         )
 
+        // ── Personal Info ────────────────────────────────────────────────────
+
+        /**
+         * Read and Write contacts.
+         * Note: On Android 17+, for standard picking we use ACTION_PICK_CONTACTS, 
+         * but for full scanning and merging, runtime permissions are required.
+         */
+        val CONTACTS: List<String> = listOf(
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.WRITE_CONTACTS
+        )
+
         // ── System ───────────────────────────────────────────────────────────
 
         /**
@@ -110,7 +122,7 @@ class PermissionManager(private val context: Context) {
         val ALL_MEDIA: List<String> = (IMAGE + VIDEO + AUDIO + FILES).distinct()
 
         /** Every runtime permission the app may ever request, de-duplicated. */
-        val ALL: List<String> = (ALL_MEDIA + SMS + NOTIFICATIONS).distinct()
+        val ALL: List<String> = (ALL_MEDIA + SMS + CONTACTS + NOTIFICATIONS).distinct()
     }
 
     // ── Runtime check helpers ─────────────────────────────────────────────────
@@ -135,6 +147,7 @@ class PermissionManager(private val context: Context) {
     val hasAudioAccess: Boolean        get() = areAllGranted(AUDIO)
     val hasFileAccess:  Boolean        get() = areAllGranted(FILES)
     val hasSmsAccess:   Boolean        get() = areAllGranted(SMS)
+    val hasContactAccess: Boolean      get() = areAllGranted(CONTACTS)
     val hasNotificationAccess: Boolean get() =
         NOTIFICATIONS.isEmpty() || areAllGranted(NOTIFICATIONS)
 

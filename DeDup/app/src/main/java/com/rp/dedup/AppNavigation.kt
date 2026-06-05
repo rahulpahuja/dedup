@@ -161,7 +161,7 @@ fun AppNavHost(navController: NavHostController) {
                     SmartJunkScreen(navController)
                 }
                 composable(Screen.ContactDedup.route) {
-                    DeduplicationScreen(navController)
+                    ContactScannerGatekeeper(navController)
                 }
                 composable(Screen.PrivacyPolicy.route) {
                     PrivacyPolicyScreen(navController)
@@ -245,6 +245,17 @@ fun AppNavHost(navController: NavHostController) {
             } // Scaffold innerPadding
         } // ModalNavigationDrawer
     } // CompositionLocalProvider
+}
+
+@Composable
+fun ContactScannerGatekeeper(navController: NavHostController) {
+    PermissionGate(
+        permissions      = PermissionManager.CONTACTS,
+        rationaleTitle   = "Contacts Access Needed",
+        rationaleMessage = "DeDup needs access to your contacts to find and merge duplicate entries."
+    ) {
+        DeduplicationScreen(navController = navController)
+    }
 }
 
 @Composable

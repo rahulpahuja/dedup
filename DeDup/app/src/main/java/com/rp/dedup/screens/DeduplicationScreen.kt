@@ -1,10 +1,7 @@
 package com.rp.dedup.screens
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.provider.ContactsContract
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -25,8 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
@@ -42,8 +37,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,9 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,7 +58,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -87,28 +77,15 @@ private fun String.initials(): String =
 @Composable
 fun DeduplicationScreen(navController: NavHostController) {
     val context = LocalContext.current
+    
     val viewModel: ContactScannerViewModel = viewModel(
         factory = ContactScannerViewModel.factory(context)
     )
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
 
-    var hasPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(context, android.Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-    val permLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val granted = permissions.values.all { it }
-        hasPermission = granted
-        if (granted) viewModel.startScanning()
-    }
-
-    LaunchedEffect(hasPermission) {
-        if (hasPermission && duplicateGroups.isEmpty() && !isScanning) viewModel.startScanning()
+    LaunchedEffect(Unit) {
+        if (duplicateGroups.isEmpty() && !isScanning) viewModel.startScanning()
     }
 
     val selectedIds = remember { mutableStateListOf<String>() }
@@ -222,7 +199,7 @@ fun DeduplicationScreen(navController: NavHostController) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f)
                     )
-                    if (hasPermission && !isScanning && duplicateGroups.isNotEmpty()) {
+                    if (!isScanning && duplicateGroups.isNotEmpty()) {
                         TextButton(onClick = { viewModel.startScanning() }) { Text("Rescan") }
                     }
                 }
@@ -230,16 +207,6 @@ fun DeduplicationScreen(navController: NavHostController) {
             }
 
             when {
-                !hasPermission -> item { 
-                    ContactsPermissionCard(onRequest = { 
-                        permLauncher.launch(
-                            arrayOf(
-                                android.Manifest.permission.READ_CONTACTS,
-                                android.Manifest.permission.WRITE_CONTACTS
-                            )
-                        ) 
-                    }) 
-                }
                 isScanning -> item { ContactsScanningIndicator() }
                 duplicateGroups.isEmpty() -> item { ContactsEmptyState() }
                 else -> {
@@ -294,32 +261,6 @@ private fun DuplicateContactGroup(
             onToggleSelect = onToggleSelect
         )
         if (index < group.lastIndex) Spacer(modifier = Modifier.height(8.dp))
-    }
-}
-
-@Composable
-private fun ContactsPermissionCard(onRequest: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(Icons.Default.Person, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(12.dp))
-            Text("Contacts Access Required", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Allow DeDup to read your contacts to find and merge duplicates.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = onRequest) { Text("Allow Access") }
-        }
     }
 }
 
