@@ -54,8 +54,9 @@ class ContactScannerRepository(private val context: Context) {
 
     suspend fun mergeContacts(idsToMerge: List<String>): Result<Unit> = with(Dispatchers.IO) {
         try {
-            // Simple merging strategy: delete the duplicates.
-            // A more advanced strategy would be to combine their info into one primary record.
+            android.util.Log.d("ContactScannerRepo", "Attempting to delete contacts: $idsToMerge")
+            
+            // Delete the duplicate contacts.
             val operations = idsToMerge.map { id ->
                 android.content.ContentProviderOperation.newDelete(ContactsContract.RawContacts.CONTENT_URI)
                     .withSelection("${ContactsContract.RawContacts.CONTACT_ID} = ?", arrayOf(id))
@@ -63,10 +64,12 @@ class ContactScannerRepository(private val context: Context) {
             }
 
             if (operations.isNotEmpty()) {
-                context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ArrayList(operations))
+                val results = context.contentResolver.applyBatch(ContactsContract.AUTHORITY, ArrayList(operations))
+                android.util.Log.d("ContactScannerRepo", "Batch delete result: ${results.size} ops completed")
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            android.util.Log.e("ContactScannerRepo", "Failed to merge contacts", e)
             Result.failure(e)
         }
     }

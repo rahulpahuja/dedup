@@ -6,12 +6,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.model.ScannedContact
 import com.rp.dedup.core.repository.ContactScannerRepository
+import com.rp.dedup.core.notifications.ToastManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class ContactScannerViewModel(private val repository: ContactScannerRepository) : ViewModel() {
+class ContactScannerViewModel(
+    private val repository: ContactScannerRepository,
+    private val toastManager: ToastManager
+) : ViewModel() {
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedContact>>>(emptyList())
     val duplicateGroups: StateFlow<List<List<ScannedContact>>> = _duplicateGroups.asStateFlow()
@@ -60,7 +64,10 @@ class ContactScannerViewModel(private val repository: ContactScannerRepository) 
                 }.filter { it.size > 1 }
                 
                 _duplicateGroups.value = updatedGroups
+                toastManager.showShort("Contacts merged successfully")
                 onComplete()
+            }.onFailure {
+                toastManager.showShort("Failed to merge contacts")
             }
         }
     }
@@ -69,7 +76,10 @@ class ContactScannerViewModel(private val repository: ContactScannerRepository) 
         fun factory(context: Context): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ContactScannerViewModel(ContactScannerRepository(context)) as T
+                ContactScannerViewModel(
+                    ContactScannerRepository(context),
+                    ToastManager(context)
+                ) as T
         }
     }
 }
