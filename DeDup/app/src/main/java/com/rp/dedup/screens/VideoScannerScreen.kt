@@ -48,6 +48,8 @@ import com.rp.dedup.core.viewmodels.VideoScannerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import androidx.core.content.FileProvider
+import java.io.File
 import com.rp.dedup.core.ui.DeDupTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -418,11 +420,22 @@ private fun VideoGridItem(
                 // Play Button Overlay
                 IconButton(
                     onClick = {
+                        val videoFile = video.path?.let { File(it) }
+                        val uriToShare = if (videoFile != null && videoFile.exists()) {
+                            FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                videoFile
+                            )
+                        } else {
+                            video.uri
+                        }
+
                         val intent = Intent(Intent.ACTION_VIEW).apply {
-                            setDataAndType(video.uri, "video/*")
+                            setDataAndType(uriToShare, "video/*")
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                        context.startActivity(intent)
+                        context.startActivity(Intent.createChooser(intent, "Play Video"))
                     },
                     modifier = Modifier.size(40.dp).background(Color.Black.copy(alpha = 0.5f), CircleShape)
                 ) {

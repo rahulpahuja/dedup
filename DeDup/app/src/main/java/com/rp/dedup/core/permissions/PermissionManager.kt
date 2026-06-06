@@ -29,10 +29,11 @@ class PermissionManager(private val context: Context) {
         // ── Media ────────────────────────────────────────────────────────────
 
         /**
-         * Read images.
+         * Read/delete images.
          * - API 34+ : READ_MEDIA_IMAGES + READ_MEDIA_VISUAL_USER_SELECTED (partial picker)
          * - API 33  : READ_MEDIA_IMAGES
-         * - API ≤32 : READ_EXTERNAL_STORAGE
+         * - API 29+ : READ_EXTERNAL_STORAGE  (scoped storage; createDeleteRequest handles delete consent)
+         * - API ≤28 : READ_EXTERNAL_STORAGE + WRITE_EXTERNAL_STORAGE (direct delete via contentResolver)
          */
         val IMAGE: List<String> = when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> listOf(
@@ -42,18 +43,30 @@ class PermissionManager(private val context: Context) {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> listOf(
                 Manifest.permission.READ_MEDIA_IMAGES
             )
-            else -> listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> listOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            else -> listOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
         }
 
         /**
-         * Read videos.
+         * Read/delete videos.
          * - API 33+ : READ_MEDIA_VIDEO
-         * - API ≤32 : READ_EXTERNAL_STORAGE
+         * - API 29+ : READ_EXTERNAL_STORAGE  (scoped storage; createDeleteRequest handles delete consent)
+         * - API ≤28 : READ_EXTERNAL_STORAGE + WRITE_EXTERNAL_STORAGE (direct delete via contentResolver)
          */
         val VIDEO: List<String> = when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
                 listOf(Manifest.permission.READ_MEDIA_VIDEO)
-            else -> listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
+                listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+            else -> listOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
         }
 
         /**

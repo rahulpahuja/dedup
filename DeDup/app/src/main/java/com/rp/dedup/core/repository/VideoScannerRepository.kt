@@ -2,6 +2,7 @@ package com.rp.dedup.core.repository
 
 import android.content.ContentUris
 import android.content.Context
+import android.os.Build
 import android.provider.MediaStore
 import com.rp.dedup.core.common.Constants.EMPTY_STRING
 import com.rp.dedup.core.model.ScannedVideo
@@ -15,13 +16,17 @@ import kotlinx.coroutines.flow.flowOn
 class VideoScannerRepository(private val context: Context) {
 
     fun scanVideos(deepScan: Boolean = false): Flow<ScannedVideo> = flow {
-        val projection = arrayOf(
-            MediaStore.Video.Media._ID,
-            MediaStore.Video.Media.DISPLAY_NAME,
-            MediaStore.Video.Media.SIZE,
-            MediaStore.Video.Media.DURATION,
-            MediaStore.Video.Media.MIME_TYPE
-        )
+        val projection = buildList {
+            add(MediaStore.Video.Media._ID)
+            add(MediaStore.Video.Media.DISPLAY_NAME)
+            add(MediaStore.Video.Media.SIZE)
+            add(MediaStore.Video.Media.DURATION)
+            add(MediaStore.Video.Media.MIME_TYPE)
+            add(MediaStore.Video.Media.DATA)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                add(MediaStore.MediaColumns.VOLUME_NAME)
+            }
+        }.toTypedArray()
         val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
 
         context.contentResolver.query(
@@ -34,6 +39,9 @@ class VideoScannerRepository(private val context: Context) {
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
             val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
             val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
+            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+            val volumeColumn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                cursor.getColumnIndex(MediaStore.MediaColumns.VOLUME_NAME) else -1
 
             while (cursor.moveToNext()) {
                 val name = cursor.getString(nameColumn) ?: continue
@@ -45,9 +53,14 @@ class VideoScannerRepository(private val context: Context) {
                 val size = cursor.getLong(sizeColumn)
                 val duration = cursor.getLong(durationColumn)
                 val mimeType = cursor.getString(mimeTypeColumn) ?: EMPTY_STRING
-                val uri = ContentUris.withAppendedId(
-                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id
-                )
+                val path = cursor.getString(dataColumn)
+                val baseUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && volumeColumn >= 0) {
+                    val volume = cursor.getString(volumeColumn) ?: MediaStore.VOLUME_EXTERNAL_PRIMARY
+                    MediaStore.Video.Media.getContentUri(volume)
+                } else {
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                }
+                val uri = ContentUris.withAppendedId(baseUri, id)
 
                 val frameHashes = if (deepScan && duration > 0) {
                     VideoFrameHasher.calculateFrameHashes(context, uri, duration)
@@ -62,7 +75,8 @@ class VideoScannerRepository(private val context: Context) {
                         sizeInBytes = size,
                         durationMs = duration,
                         mimeType = mimeType,
-                        frameHashes = frameHashes
+                        frameHashes = frameHashes,
+                        path = path
                     )
                 )
             }

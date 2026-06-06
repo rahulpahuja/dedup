@@ -8,5 +8,6 @@ data class ScannedVideo(
     val sizeInBytes: Long,
     val durationMs: Long,
     val mimeType: String,
-    val frameHashes: List<Long> = emptyList()
+    val frameHashes: List<Long> = emptyList(),
+    val path: String? = null
 )
