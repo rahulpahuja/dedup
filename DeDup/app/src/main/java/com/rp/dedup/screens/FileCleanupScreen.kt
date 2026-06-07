@@ -98,6 +98,15 @@ fun FileCleanupScreen(navController: NavHostController) {
             icon = Icons.Default.Android,
             iconBg = Color(0xFFE8F5E9),
             iconTint = Color(0xFF2E7D32)
+        ),
+        LargeFileItemLocal(
+            title = stringResource(R.string.old_downloads),
+            subtitle = if (cleanupState.oldDownloadStats.isLoading) stringResource(R.string.scanning) else stringResource(R.string.old_downloads_subtitle, cleanupState.oldDownloadStats.count),
+            sizeBytes = cleanupState.oldDownloadStats.totalSize,
+            sizeLabel = Formatter.formatShortFileSize(context, cleanupState.oldDownloadStats.totalSize),
+            icon = Icons.Default.DownloadDone,
+            iconBg = Color(0xFFFFF9C4),
+            iconTint = Color(0xFFFBC02D)
         )
     )
 

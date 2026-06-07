@@ -36,11 +36,13 @@ class WhatsAppCleanerViewModel(
                 
                 val totalDuplicates = result.duplicateMedia.sumOf { it.size - 1 } + 
                                      result.duplicateStatuses.sumOf { it.size - 1 } + 
-                                     result.duplicateDocs.sumOf { it.size - 1 }
+                                     result.duplicateDocs.sumOf { it.size - 1 } +
+                                     result.redundantSentMedia.size
                 
                 val totalReclaimable = result.duplicateMedia.sumOf { g -> g.drop(1).sumOf { it.size } } +
                                       result.duplicateStatuses.sumOf { g -> g.drop(1).sumOf { it.size } } +
-                                      result.duplicateDocs.sumOf { g -> g.drop(1).sumOf { it.size } }
+                                      result.duplicateDocs.sumOf { g -> g.drop(1).sumOf { it.size } } +
+                                      result.redundantSentMedia.sumOf { it.size }
 
                 analyticsManager?.logScanCompleted(
                     "WHATSAPP",
@@ -66,7 +68,8 @@ class WhatsAppCleanerViewModel(
                           current.data.duplicateStatuses.flatten() + 
                           current.data.duplicateDocs.flatten() + 
                           current.data.largeFiles +
-                          current.data.sentReceivedMatches.flatMap { listOf(it.sent, it.received) }
+                          current.data.sentReceivedMatches.flatMap { listOf(it.sent, it.received) } +
+                          current.data.redundantSentMedia
             
             val freedBytes = allFiles.filter { it.uri in removed }.distinctBy { it.uri }.sumOf { it.size }
             
@@ -82,7 +85,8 @@ class WhatsAppCleanerViewModel(
                     .map { g -> g.filterNot { it.uri in removed } }.filter { it.size >= 2 },
                 largeFiles = current.data.largeFiles.filterNot { it.uri in removed },
                 sentReceivedMatches = current.data.sentReceivedMatches
-                    .filterNot { it.sent.uri in removed || it.received.uri in removed }
+                    .filterNot { it.sent.uri in removed || it.received.uri in removed },
+                redundantSentMedia = current.data.redundantSentMedia.filterNot { it.uri in removed }
             )
             _state.value = WhatsAppCleanerState.Results(updated)
         }

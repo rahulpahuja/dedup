@@ -34,7 +34,8 @@ data class WhatsAppScanResult(
     val duplicateStatuses: List<List<WhatsAppFile>>,
     val duplicateDocs: List<List<WhatsAppFile>>,
     val largeFiles: List<WhatsAppFile>,
-    val sentReceivedMatches: List<SentReceivedMatch>
+    val sentReceivedMatches: List<SentReceivedMatch>,
+    val redundantSentMedia: List<WhatsAppFile> = emptyList()
 )
 
 data class SentReceivedMatch(

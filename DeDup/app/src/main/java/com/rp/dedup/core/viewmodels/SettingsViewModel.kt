@@ -15,9 +15,9 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
 
-    val similarityThreshold: StateFlow<Int> = dataStoreManager.readData(DataStoreManager.SIMILARITY_THRESHOLD, "5")
-        .map { it.toIntOrNull() ?: 5 }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 5)
+    val similarityThreshold: StateFlow<Int> = dataStoreManager.readData(DataStoreManager.SIMILARITY_THRESHOLD, "10")
+        .map { it.toIntOrNull() ?: 10 }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 10)
 
     val excludedFolders: StateFlow<List<String>> = dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "")
         .map { if (it.isEmpty()) emptyList() else it.split(",") }

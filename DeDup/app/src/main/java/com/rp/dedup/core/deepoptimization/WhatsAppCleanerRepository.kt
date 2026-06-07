@@ -43,7 +43,8 @@ class WhatsAppCleanerRepositoryImpl(private val context: Context) : WhatsAppClea
                                              .sortedByDescending { it.size },
             sentReceivedMatches = matchSentReceived(sentImg, images) +
                                   matchSentReceived(sentVid, videos) +
-                                  matchSentReceived(sentDocs, docs)
+                                  matchSentReceived(sentDocs, docs),
+            redundantSentMedia = sentImg + sentVid + sentDocs
         )
     }
 

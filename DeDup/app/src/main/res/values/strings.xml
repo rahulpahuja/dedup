@@ -281,4 +281,11 @@
     <string name="page_number">%1$d</string>
     <string name="prev_page">Previous page</string>
     <string name="next_page">Next page</string>
+    <string name="old_downloads">Old Downloads</string>
+    <string name="old_downloads_subtitle">%1$d files older than 3 months</string>
+    <string name="redundant_sent_media">Redundant Sent Media</string>
+    <string name="sent_media_desc">Duplicates of files you sent, stored separately by WhatsApp.</string>
+    <string name="delete_all">Delete All</string>
+    <string name="large_files">Large Files</string>
+    <string name="duplicate_groups">Duplicate Groups</string>
 </resources>

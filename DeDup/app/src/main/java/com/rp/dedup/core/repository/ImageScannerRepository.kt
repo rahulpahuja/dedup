@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import androidx.exifinterface.media.ExifInterface
 import com.rp.dedup.core.image.ImageHasher
@@ -121,12 +122,17 @@ class ImageScannerRepository(private val context: Context) {
     ): Flow<ScannedImage> {
         val imageQueue = mutableListOf<Triple<Uri, Long, Long>>()
 
-        val projection = arrayOf(
-            MediaStore.Images.Media._ID,
-            MediaStore.Images.Media.SIZE,
-            MediaStore.Images.Media.DATA,
-            MediaStore.Images.Media.DATE_MODIFIED
-        )
+        val volumeColumn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            MediaStore.Images.Media.VOLUME_NAME else null
+
+        val projection = buildList {
+            add(MediaStore.Images.Media._ID)
+            add(MediaStore.Images.Media.SIZE)
+            add(MediaStore.Images.Media.DATA)
+            add(MediaStore.Images.Media.DATE_MODIFIED)
+            if (volumeColumn != null) add(volumeColumn)
+        }.toTypedArray()
+
         val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
 
         context.contentResolver.query(
@@ -137,6 +143,7 @@ class ImageScannerRepository(private val context: Context) {
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)
             val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_MODIFIED)
+            val volColumn = volumeColumn?.let { cursor.getColumnIndex(it) } ?: -1
 
             while (cursor.moveToNext()) {
                 val path = cursor.getString(dataColumn) ?: ""
@@ -145,9 +152,15 @@ class ImageScannerRepository(private val context: Context) {
                 val id = cursor.getLong(idColumn)
                 val size = cursor.getLong(sizeColumn)
                 val date = cursor.getLong(dateColumn)
-                val uri = ContentUris.withAppendedId(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id
-                )
+
+                // Use volume-aware URI so MediaStore.createDeleteRequest accepts it on API 30+.
+                val baseUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && volColumn >= 0) {
+                    val volume = cursor.getString(volColumn) ?: MediaStore.VOLUME_EXTERNAL_PRIMARY
+                    MediaStore.Images.Media.getContentUri(volume)
+                } else {
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                }
+                val uri = ContentUris.withAppendedId(baseUri, id)
                 imageQueue.add(Triple(uri, size, date))
             }
         }

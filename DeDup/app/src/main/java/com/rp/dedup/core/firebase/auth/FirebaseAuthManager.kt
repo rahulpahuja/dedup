@@ -172,10 +172,9 @@ class FirebaseAuthManager(
                     } else {
                         Log.d(TAG, "No authorised accounts; falling back to all-accounts flow.")
                     }
-                    
+
                     try {
                         // Second attempt: GetGoogleIdOption with filterByAuthorizedAccounts = false
-                        // This is more robust than GetSignInWithGoogleOption for programmatic flows
                         requestGoogleIdToken(
                             credentialManager = credentialManager,
                             activity = activity,
@@ -191,6 +190,11 @@ class FirebaseAuthManager(
                             )
                         }
                         toastManager.showShort("Sign-in cancelled")
+                        null
+                    } catch (e2: NoCredentialException) {
+                        // No Google account is set up on the device at all.
+                        Log.e(TAG, "No Google credentials found on device", e2)
+                        toastManager.showLong("No Google account found on this device. Go to Settings → Accounts and add a Google account first.")
                         null
                     } catch (e2: GetCredentialException) {
                         handleCredentialException(e2, "all-accounts")

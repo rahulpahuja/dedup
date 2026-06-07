@@ -145,10 +145,130 @@ private fun WaResultsView(
     data: WhatsAppScanResult,
     onDelete: (List<Uri>) -> Unit
 ) {
-    // Basic implementation to show something localized
-    Column(modifier = modifier.fillMaxSize()) {
-        Text(stringResource(R.string.results), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
-        // ... list groups ...
+    val context = LocalContext.current
+    val totalReclaimable = data.duplicateMedia.sumOf { g -> g.drop(1).sumOf { it.size } } +
+                          data.duplicateStatuses.sumOf { g -> g.drop(1).sumOf { it.size } } +
+                          data.duplicateDocs.sumOf { g -> g.drop(1).sumOf { it.size } } +
+                          data.redundantSentMedia.sumOf { it.size }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = WaGreen.copy(alpha = 0.1f)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        stringResource(R.string.potential_savings),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = WaGreen
+                    )
+                    Text(
+                        android.text.format.Formatter.formatFileSize(context, totalReclaimable),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = WaGreen
+                    )
+                }
+            }
+        }
+
+        if (data.redundantSentMedia.isNotEmpty()) {
+            item {
+                WaSectionHeader(
+                    title = stringResource(R.string.redundant_sent_media),
+                    subtitle = stringResource(R.string.sent_media_desc),
+                    onDeleteAll = { onDelete(data.redundantSentMedia.map { it.uri }) }
+                )
+            }
+            items(data.redundantSentMedia) { file ->
+                WaFileItem(file = file, onDelete = { onDelete(listOf(file.uri)) })
+            }
+        }
+
+        if (data.duplicateMedia.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.duplicate_groups),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            data.duplicateMedia.forEach { group ->
+                items(group.drop(1)) { file ->
+                    WaFileItem(file = file, onDelete = { onDelete(listOf(file.uri)) })
+                }
+            }
+        }
+
+        if (data.largeFiles.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.large_files),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            items(data.largeFiles.take(10)) { file ->
+                WaFileItem(file = file, onDelete = { onDelete(listOf(file.uri)) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun WaSectionHeader(title: String, subtitle: String, onDeleteAll: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        TextButton(onClick = onDeleteAll, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+            Text(stringResource(R.string.delete_all))
+        }
+    }
+}
+
+@Composable
+private fun WaFileItem(file: WhatsAppFile, onDelete: () -> Unit) {
+    val context = LocalContext.current
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = when {
+                    file.name.endsWith(".mp4", true) -> Icons.Default.Movie
+                    file.name.endsWith(".jpg", true) || file.name.endsWith(".png", true) -> Icons.Default.Image
+                    else -> Icons.Default.Description
+                },
+                contentDescription = null,
+                tint = WaGreen,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(file.name, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text(android.text.format.Formatter.formatFileSize(context, file.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            }
+        }
     }
 }
 

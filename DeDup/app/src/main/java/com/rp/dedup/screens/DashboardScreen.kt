@@ -5,6 +5,7 @@ import android.net.Uri
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -177,7 +178,7 @@ fun DashboardScreenContent(
     val scope = rememberCoroutineScope()
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var searchActive by rememberSaveable { mutableStateOf(false) }
+    var showSearchSheet by rememberSaveable { mutableStateOf(false) }
 
     val tutorialStyle = ShowcaseStyle.Default.copy(
         backgroundColor = Color(0xFF090F20),
@@ -219,6 +220,21 @@ fun DashboardScreenContent(
                             color = MaterialTheme.colorScheme.primary
                         )
                     )
+                    IconButton(
+                        onClick = { showSearchSheet = true },
+                        modifier = Modifier.introShowCaseTarget(
+                            index = 0,
+                            style = tutorialStyle,
+                            content = {
+                                TutorialTooltip(
+                                    title = stringResource(R.string.tut_search_title),
+                                    body = stringResource(R.string.tut_search_body)
+                                )
+                            }
+                        )
+                    ) {
+                        AiSearchIcon()
+                    }
                     IconButton(onClick = {}) {
                         Surface(
                             shape = CircleShape,
@@ -255,89 +271,6 @@ fun DashboardScreenContent(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            SearchBar(
-                    inputField = {
-                        SearchBarDefaults.InputField(
-                            query = searchQuery,
-                            onQueryChange = { searchQuery = it },
-                            onSearch = {
-                                onSearch(it)
-                                searchActive = true
-                            },
-                            expanded = searchActive,
-                            onExpandedChange = { active ->
-                                searchActive = active
-                                if (!active) { searchQuery = ""; onClearSearch() }
-                            },
-                            placeholder = {
-                                Text(
-                                    stringResource(R.string.search_placeholder),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.ImageSearch,
-                                    contentDescription = stringResource(R.string.search)
-                                )
-                            },
-                            trailingIcon = {
-                                if (searchActive || searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = {
-                                        if (searchActive) {
-                                            searchActive = false
-                                        }
-                                        searchQuery = ""
-                                        onClearSearch()
-                                    }) {
-                                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close_search))
-                                    }
-                                }
-                            }
-                        )
-                    },
-                    expanded = searchActive,
-                    onExpandedChange = { active ->
-                        searchActive = active
-                        if (!active) { searchQuery = ""; onClearSearch() }
-                    },
-                    windowInsets = WindowInsets(0),
-                    modifier = if (searchActive) {
-                        Modifier.fillMaxWidth()
-                    } else {
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .introShowCaseTarget(
-                                index = 0,
-                                style = tutorialStyle,
-                                content = {
-                                    TutorialTooltip(
-                                        title = stringResource(R.string.tut_search_title),
-                                        body = stringResource(R.string.tut_search_body)
-                                    )
-                                }
-                            )
-                    }
-                ) {
-                    Column {
-                        if (searchQuery.isEmpty()) {
-                            SearchSuggestionsRow { suggestion ->
-                                searchQuery = suggestion
-                                searchActive = true
-                                onSearch(suggestion)
-                            }
-                        }
-                        ImageSearchContent(
-                            query = searchQuery,
-                            results = searchResults,
-                            isSearching = isSearching,
-                            progress = searchProgress,
-                            error = searchError
-                        )
-                    }
-                }
-            if (!searchActive) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -438,11 +371,113 @@ fun DashboardScreenContent(
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
+        }
+    }
+
+    if (showSearchSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = {
+                showSearchSheet = false
+                searchQuery = ""
+                onClearSearch()
+            },
+            sheetState = sheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFF9C6FFF),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        stringResource(R.string.search_placeholder),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
+                // Search input
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text(stringResource(R.string.search_placeholder)) },
+                    leadingIcon = {
+                        Icon(Icons.Default.ImageSearch, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = ""; onClearSearch() }) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close_search))
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                    ),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onSearch = { onSearch(searchQuery) }
+                    )
+                )
+                // Suggestions when query is empty
+                if (searchQuery.isEmpty()) {
+                    SearchSuggestionsRow { suggestion ->
+                        searchQuery = suggestion
+                        onSearch(suggestion)
+                    }
+                } else {
+                    LaunchedEffect(searchQuery) { onSearch(searchQuery) }
+                }
+                // Results
+                Box(modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 480.dp)) {
+                    ImageSearchContent(
+                        query = searchQuery,
+                        results = searchResults,
+                        isSearching = isSearching,
+                        progress = searchProgress,
+                        error = searchError
+                    )
+                }
             }
         }
     }
 
     } // end IntroShowcase
+}
+
+/** Search icon with a small AutoAwesome sparkle badge to signal AI-powered search. */
+@Composable
+fun AiSearchIcon() {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(24.dp)) {
+        Icon(
+            Icons.Default.Search,
+            contentDescription = "AI Search",
+            modifier = Modifier.size(22.dp),
+            tint = MaterialTheme.colorScheme.onSurface
+        )
+        Icon(
+            Icons.Default.AutoAwesome,
+            contentDescription = null,
+            modifier = Modifier
+                .size(10.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 4.dp, y = (-4).dp),
+            tint = Color(0xFF9C6FFF)
+        )
+    }
 }
 
 @Composable
@@ -1025,38 +1060,53 @@ fun BottomNavigationBar(navController: NavHostController) {
         else -> 0
     }
 
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.GridView, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_dash)) },
-            selected = selectedIndex == 0,
-            onClick = { navController.navigate(Screen.Dashboard.route) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Search, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_scan)) },
-            selected = selectedIndex == 1,
-            onClick = { navController.navigate(Screen.Cleanup.route) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Description, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_files)) },
-            selected = selectedIndex == 2,
-//            onClick = { navController.navigate(Screen.FileScanner.createRoute("pdf")) }
-            onClick = { navController.navigate(Screen.FileBrowser.route) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Videocam, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_video)) },
-            selected = selectedIndex == 3,
-            onClick = { navController.navigate(Screen.VideoScanner.route) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-            label = { Text(stringResource(R.string.nav_settings)) },
-            selected = selectedIndex == 4,
-            onClick = { navController.navigate(Screen.Settings.route) }
-        )
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .navigationBarsPadding(),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+        tonalElevation = 8.dp,
+        shadowElevation = 10.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        NavigationBar(
+            containerColor = Color.Transparent,
+            tonalElevation = 0.dp,
+            modifier = Modifier.height(72.dp)
+        ) {
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.GridView, contentDescription = null) },
+                label = { Text(stringResource(R.string.nav_dash), style = MaterialTheme.typography.labelSmall) },
+                selected = selectedIndex == 0,
+                onClick = { navController.navigate(Screen.Dashboard.route) }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                label = { Text(stringResource(R.string.nav_scan), style = MaterialTheme.typography.labelSmall) },
+                selected = selectedIndex == 1,
+                onClick = { navController.navigate(Screen.Cleanup.route) }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Description, contentDescription = null) },
+                label = { Text(stringResource(R.string.nav_files), style = MaterialTheme.typography.labelSmall) },
+                selected = selectedIndex == 2,
+                onClick = { navController.navigate(Screen.FileBrowser.route) }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Videocam, contentDescription = null) },
+                label = { Text(stringResource(R.string.nav_video), style = MaterialTheme.typography.labelSmall) },
+                selected = selectedIndex == 3,
+                onClick = { navController.navigate(Screen.VideoScanner.route) }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                label = { Text(stringResource(R.string.nav_settings), style = MaterialTheme.typography.labelSmall) },
+                selected = selectedIndex == 4,
+                onClick = { navController.navigate(Screen.Settings.route) }
+            )
+        }
     }
 }
 

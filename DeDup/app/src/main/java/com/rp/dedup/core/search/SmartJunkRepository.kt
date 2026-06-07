@@ -52,7 +52,7 @@ class SmartJunkRepository(private val context: Context) {
 
     /** Scans the most recent [limit] images and groups them into junk categories. */
     suspend fun scanForJunk(
-        limit: Int = 200,
+        limit: Int = 1000,
         onProgress: (scanned: Int, total: Int) -> Unit
     ): Map<JunkCategory, List<JunkItem>> = coroutineScope {
         val images = loadRecentImages(limit)

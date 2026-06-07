@@ -51,13 +51,13 @@ class ScannerViewModel(
     private val _cacheLoaded = MutableStateFlow(false)
     val cacheLoaded: StateFlow<Boolean> = _cacheLoaded.asStateFlow()
 
-    // Key format: "e:<crc32>" for exact-byte duplicates, "d:<dHash>" for near-duplicates.
+    // Key format: "e:<sizeBytes>_<crc32>" for exact-byte duplicates, "d:<dHash>" for near-duplicates.
     private val allScannedGroups = mutableMapOf<String, MutableList<ScannedImage>>()
     private val groupsLock = Any()
 
     private var scanJob: Job? = null
 
-    private var similarityThreshold = 3
+    private var similarityThreshold = 6
     private var excludedFolders = emptyList<String>()
 
     init {
@@ -115,9 +115,9 @@ class ScannerViewModel(
         scanJob = viewModelScope.launch(defaultDispatcher) {
             try {
                 dataStoreManager?.let { manager ->
-                    val thresholdValue = manager.readData(com.rp.dedup.core.caching.DataStoreManager.SIMILARITY_THRESHOLD, "3")
-                        .map { it.toIntOrNull() ?: 3 }.first()
-                    similarityThreshold = thresholdValue.coerceIn(0, 10)
+                    val thresholdValue = manager.readData(com.rp.dedup.core.caching.DataStoreManager.SIMILARITY_THRESHOLD, "10")
+                        .map { it.toIntOrNull() ?: 10 }.first()
+                    similarityThreshold = thresholdValue.coerceIn(0, 20)
                     excludedFolders = manager.readData(com.rp.dedup.core.caching.DataStoreManager.EXCLUDED_FOLDERS, "")
                         .map { if (it.isEmpty()) emptyList() else it.split(",") }.first()
                 }
@@ -214,12 +214,11 @@ class ScannerViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             scannedImageRepository?.clearAll()
             val imagesToPersist = finalizedGroups.flatMap { group ->
-                // Derive the same stable key that the scanner uses so reloaded groups
-                // are compatible with any future delta-scan logic.
-                val key = if (group.first().exactHash != -1L)
-                    "e:${group.first().exactHash}"
+                val representative = group.first()
+                val key = if (representative.exactHash != -1L)
+                    "e:${representative.sizeInBytes}_${representative.exactHash}"
                 else
-                    "d:${group.first().dHash}"
+                    "d:${representative.dHash}"
                 group.map { it.copy(groupKey = key) }
             }
             scannedImageRepository?.insertImages(imagesToPersist)
@@ -238,29 +237,41 @@ class ScannerViewModel(
     private fun processBatch(images: List<ScannedImage>) {
         synchronized(groupsLock) {
             for (image in images) {
-                var groupKey: String? = null
-
+                // Stage 1: exact-byte match — requires both same size AND same CRC32 prefix.
+                // Including sizeInBytes in the key prevents 32-bit CRC32 collisions across
+                // files of different sizes, which caused false-positive duplicate groups.
                 if (image.exactHash != -1L) {
-                    val key = "e:${image.exactHash}"
-                    if (allScannedGroups.containsKey(key)) groupKey = key
-                }
-
-                if (groupKey == null) {
-                    for ((key, group) in allScannedGroups) {
-                        if (ImageHasher.calculateHammingDistance(
-                                image.dHash, group.first().dHash
-                            ) <= similarityThreshold
-                        ) {
-                            groupKey = key
-                            break
-                        }
+                    val exactKey = "e:${image.sizeInBytes}_${image.exactHash}"
+                    if (allScannedGroups.containsKey(exactKey)) {
+                        allScannedGroups[exactKey]!!.add(image)
+                        continue
                     }
                 }
 
-                if (groupKey != null) {
-                    allScannedGroups[groupKey]!!.add(image)
+                // Stage 2: near-duplicate match via dHash — only scan "d:" groups.
+                // Never expand "e:" groups via dHash: those groups represent byte-identical files
+                // and adding a merely similar image would corrupt the exact-duplicate semantics.
+                var nearDupKey: String? = null
+                for ((key, group) in allScannedGroups) {
+                    if (key.startsWith("e:")) continue
+                    if (ImageHasher.calculateHammingDistance(
+                            image.dHash, group.first().dHash
+                        ) <= similarityThreshold
+                    ) {
+                        nearDupKey = key
+                        break
+                    }
+                }
+
+                if (nearDupKey != null) {
+                    allScannedGroups[nearDupKey]!!.add(image)
                 } else {
-                    val newKey = if (image.exactHash != -1L) "e:${image.exactHash}" else "d:${image.dHash}"
+                    // New group. Use exact key when available so future byte-identical
+                    // images can find it in Stage 1; otherwise use dHash key for near-dups.
+                    val newKey = if (image.exactHash != -1L)
+                        "e:${image.sizeInBytes}_${image.exactHash}"
+                    else
+                        "d:${image.dHash}"
                     allScannedGroups[newKey] = mutableListOf(image)
                 }
             }

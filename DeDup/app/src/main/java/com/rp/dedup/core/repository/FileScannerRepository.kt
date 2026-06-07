@@ -114,6 +114,47 @@ class FileScannerRepository(private val context: Context) {
         Log.d(TAG, "Scan finished. Total files found: $count")
     }.flowOn(Dispatchers.IO)
 
+    fun scanOldFiles(folder: String, olderThanMs: Long): Flow<ScannedFile> = flow {
+        val collection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        } else {
+            MediaStore.Files.getContentUri("external")
+        }
+
+        val projection = arrayOf(
+            MediaStore.Files.FileColumns._ID,
+            MediaStore.Files.FileColumns.DISPLAY_NAME,
+            MediaStore.Files.FileColumns.SIZE,
+            MediaStore.Files.FileColumns.DATA,
+            MediaStore.Files.FileColumns.MIME_TYPE,
+            MediaStore.Files.FileColumns.DATE_MODIFIED
+        )
+
+        val selection = "${MediaStore.Files.FileColumns.DATA} LIKE ? AND ${MediaStore.Files.FileColumns.DATE_MODIFIED} < ?"
+        val selectionArgs = arrayOf("$folder%", (olderThanMs / 1000).toString())
+
+        context.contentResolver.query(
+            collection, projection, selection, selectionArgs,
+            "${MediaStore.Files.FileColumns.DATE_MODIFIED} ASC"
+        )?.use { cursor ->
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DISPLAY_NAME)
+            val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE)
+            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA)
+
+            while (cursor.moveToNext()) {
+                val path = cursor.getString(dataColumn) ?: ""
+                val id = cursor.getLong(idColumn)
+                val name = cursor.getString(nameColumn) ?: "Unknown"
+                val size = cursor.getLong(sizeColumn)
+                val uri = ContentUris.withAppendedId(collection, id)
+                val ext = name.substringAfterLast('.', "")
+
+                emit(ScannedFile(uri, name, size, path, ext))
+            }
+        }
+    }.flowOn(Dispatchers.IO)
+
     private fun scanDirectoryRecursively(
         directory: File,
         extensions: List<String>,

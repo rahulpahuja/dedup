@@ -281,4 +281,11 @@
     <string name="page_number">%1$d</string>
     <string name="prev_page">पिछला पेज</string>
     <string name="next_page">अगला पेज</string>
+    <string name="old_downloads">पुराने डाउनलोड</string>
+    <string name="old_downloads_subtitle">3 महीने से पुराने %1$d फ़ाइलें</string>
+    <string name="redundant_sent_media">अनावश्यक भेजे गए मीडिया</string>
+    <string name="sent_media_desc">आपके द्वारा भेजी गई फ़ाइलों की प्रतियां, जिन्हें व्हाट्सएप अलग से सहेजता है।</string>
+    <string name="delete_all">सभी हटाएं</string>
+    <string name="large_files">बड़ी फ़ाइलें</string>
+    <string name="duplicate_groups">डुप्लिकेट समूह</string>
 </resources>

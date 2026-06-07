@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.model.ContactDataEntry
+import com.rp.dedup.core.model.MergePreviewGroup
 import com.rp.dedup.core.model.ScannedContact
 import com.rp.dedup.core.repository.ContactScannerRepository
 import com.rp.dedup.core.notifications.ToastManager
@@ -23,52 +25,136 @@ class ContactScannerViewModel(
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
+    /** Non-null while the merge-selection dialog is open. */
+    private val _mergePreview = MutableStateFlow<List<MergePreviewGroup>?>(null)
+    val mergePreview: StateFlow<List<MergePreviewGroup>?> = _mergePreview.asStateFlow()
+
+    private val _isPreparingMerge = MutableStateFlow(false)
+    val isPreparingMerge: StateFlow<Boolean> = _isPreparingMerge.asStateFlow()
+
+    // ── Scanning ──────────────────────────────────────────────────────────────
+
     fun startScanning() {
         _isScanning.value = true
         viewModelScope.launch {
             val allContacts = mutableListOf<ScannedContact>()
             repository.scanContacts().collect { allContacts.add(it) }
-            
             findDuplicates(allContacts)
             _isScanning.value = false
         }
     }
 
     private fun findDuplicates(contacts: List<ScannedContact>) {
-        // Group by name first
         val nameGroups = contacts.groupBy { it.name }.filter { it.value.size > 1 }
-        
-        // Group by normalized phone numbers
         val phoneMap = mutableMapOf<String, MutableList<ScannedContact>>()
         contacts.forEach { contact ->
             contact.phoneNumbers.forEach { num ->
                 val normalized = num.replace("[^0-9]".toRegex(), "")
-                if (normalized.length >= 10) {
+                if (normalized.length >= 10)
                     phoneMap.getOrPut(normalized) { mutableListOf() }.add(contact)
-                }
             }
         }
         val phoneGroups = phoneMap.filter { it.value.size > 1 }.values
-        
         _duplicateGroups.value = (nameGroups.values + phoneGroups).distinctBy { group ->
             group.map { it.id }.sorted()
         }
     }
 
-    fun mergeSelected(ids: List<String>, onComplete: () -> Unit = {}) {
+    // ── Merge flow ────────────────────────────────────────────────────────────
+
+    /**
+     * Queries all phone/email data rows for every group that has selected duplicates,
+     * then exposes the result via [mergePreview] so the UI can show the selection dialog.
+     */
+    fun prepareMergePreview(selectedIds: List<String>) {
+        val groups = _duplicateGroups.value
+        _isPreparingMerge.value = true
         viewModelScope.launch {
-            repository.mergeContacts(ids).onSuccess {
-                // Remove merged IDs from the UI
-                val updatedGroups = _duplicateGroups.value.map { group ->
-                    group.filterNot { ids.contains(it.id) }
-                }.filter { it.size > 1 }
-                
-                _duplicateGroups.value = updatedGroups
-                toastManager.showShort("Contacts merged successfully")
-                onComplete()
-            }.onFailure {
-                toastManager.showShort("Failed to merge contacts")
+            val previewGroups = mutableListOf<MergePreviewGroup>()
+
+            for (group in groups) {
+                val primary = group.firstOrNull() ?: continue
+                val duplicatesInGroup = group.drop(1).filter { it.id in selectedIds }
+                if (duplicatesInGroup.isEmpty()) continue
+
+                // Collect phone + email entries for primary and each duplicate.
+                val phoneEntries = mutableListOf<ContactDataEntry>()
+                val emailEntries = mutableListOf<ContactDataEntry>()
+
+                phoneEntries += repository.queryPhoneEntries(primary.id, primary.name, isPrimary = true)
+                emailEntries += repository.queryEmailEntries(primary.id, primary.name, isPrimary = true)
+
+                for (dup in duplicatesInGroup) {
+                    phoneEntries += repository.queryPhoneEntries(dup.id, dup.name, isPrimary = false)
+                    emailEntries += repository.queryEmailEntries(dup.id, dup.name, isPrimary = false)
+                }
+
+                previewGroups.add(MergePreviewGroup(
+                    primaryId    = primary.id,
+                    primaryName  = primary.name,
+                    duplicateIds = duplicatesInGroup.map { it.id },
+                    phoneEntries = phoneEntries,
+                    emailEntries = emailEntries
+                ))
             }
+
+            _isPreparingMerge.value = false
+            _mergePreview.value = previewGroups.ifEmpty { null }
+        }
+    }
+
+    fun dismissMergePreview() {
+        _mergePreview.value = null
+    }
+
+    /**
+     * Executes the merge for all groups in [preview] using the user's checkbox selections.
+     *
+     * [keptDataIds]: set of Data._IDs the user checked to keep.
+     * - Primary entries NOT in this set → deleted from the primary.
+     * - Duplicate entries IN this set    → copied into the primary.
+     */
+    fun executeConfirmedMerge(
+        preview: List<MergePreviewGroup>,
+        keptDataIds: Set<String>,
+        onComplete: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            var anyFailure = false
+
+            for (group in preview) {
+                val allEntries = group.phoneEntries + group.emailEntries
+
+                val primaryDataIdsToRemove = allEntries
+                    .filter { it.isFromPrimary && it.dataId !in keptDataIds }
+                    .map { it.dataId }
+                    .toSet()
+
+                val entriesToAdd = allEntries
+                    .filter { !it.isFromPrimary && it.dataId in keptDataIds }
+
+                repository.mergeContactsWithSelection(
+                    keepId                    = group.primaryId,
+                    duplicateIds              = group.duplicateIds,
+                    primaryDataIdsToRemove    = primaryDataIdsToRemove,
+                    entriesToAddFromDuplicates = entriesToAdd
+                ).onFailure { anyFailure = true }
+            }
+
+            if (anyFailure)
+                toastManager.showShort("Some contacts could not be merged")
+            else
+                toastManager.showShort("Contacts merged successfully")
+
+            // Remove merged duplicate IDs from UI.
+            val mergedDuplicateIds = preview.flatMap { it.duplicateIds }.toSet()
+            val primaryIds = preview.map { it.primaryId }.toSet()
+            _duplicateGroups.value = _duplicateGroups.value
+                .map { group -> group.filterNot { it.id in mergedDuplicateIds && it.id !in primaryIds } }
+                .filter { it.size > 1 }
+
+            _mergePreview.value = null
+            onComplete()
         }
     }
 

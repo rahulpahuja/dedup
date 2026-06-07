@@ -4,9 +4,13 @@ import android.content.Context
 import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.repository.ImageScannerRepository
 import com.rp.dedup.core.viewmodels.ScannerViewModel
+import com.rp.dedup.core.image.BestShotAnalyzer
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -27,7 +31,14 @@ class ScannerViewModelTest {
 
     @Before
     fun setUp() {
+        mockkObject(BestShotAnalyzer)
+        coEvery { BestShotAnalyzer.analyzeGroups(any(), any()) } answers { it.invocation.args[1] as List<List<ScannedImage>> }
         viewModel = ScannerViewModel(context, repository, defaultDispatcher = coroutineRule.testDispatcher)
+    }
+
+    @org.junit.After
+    fun tearDown() {
+        unmockkObject(BestShotAnalyzer)
     }
 
     // --- Initial state ---

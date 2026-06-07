@@ -38,6 +38,7 @@ import com.rp.dedup.UIConstants.ROUTE_SMART_JUNK
 import com.rp.dedup.UIConstants.ROUTE_SOCIAL_MEDIA_CLEANER
 import com.rp.dedup.UIConstants.ROUTE_SPLASH
 import com.rp.dedup.UIConstants.ROUTE_WHATSAPP_CLEANER
+import com.rp.dedup.UIConstants.ROUTE_CONTACT_TEST
 import com.rp.dedup.UIConstants.ROUTE_CONTACT_DEDUP
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
@@ -75,6 +76,7 @@ sealed class Screen(val route: String) {
     object EmptyFolder : Screen(ROUTE_EMPTY_FOLDER)
     object BigFileMap : Screen(ROUTE_BIG_FILE_MAP)
     object WhatsAppCleaner : Screen(ROUTE_WHATSAPP_CLEANER)
+    object ContactTest : Screen(ROUTE_CONTACT_TEST)
 }
 
 @Composable
@@ -162,6 +164,9 @@ fun AppNavHost(navController: NavHostController) {
                 }
                 composable(Screen.ContactDedup.route) {
                     ContactScannerGatekeeper(navController)
+                }
+                composable(Screen.ContactTest.route) {
+                    ContactTestScreen(navController)
                 }
                 composable(Screen.PrivacyPolicy.route) {
                     PrivacyPolicyScreen(navController)
