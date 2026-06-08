@@ -19,8 +19,8 @@ class SmartJunkViewModelTest {
 
     private fun uri(s: String): Uri = mockk<Uri>(relaxed = true).also { every { it.toString() } returns s }
 
-    private fun junkItem(name: String, uriStr: String) = SmartJunkRepository.JunkItem(
-        uri      = uri(uriStr),
+    private fun junkItem(uriRef: Uri, name: String) = SmartJunkRepository.JunkItem(
+        uri      = uriRef,
         category = cat,
         labels   = emptyList(),
         fileName = name,
@@ -77,11 +77,12 @@ class SmartJunkViewModelTest {
     fun `selectAll adds all uris from category`() {
         val u1 = uri("content://a")
         val u2 = uri("content://b")
-        val items = listOf(junkItem("a.tmp", "content://a"), junkItem("b.tmp", "content://b"))
+        val items = listOf(junkItem(u1, "a.tmp"), junkItem(u2, "b.tmp"))
         val state = resultsState(groups = groups(*items.toTypedArray()))
         val categoryUris = items.map { it.uri }.toSet()
         val newState = state.copy(selectedUris = state.selectedUris + categoryUris)
-        assertTrue(newState.selectedUris.containsAll(listOf(u1, u2)))
+        assertTrue(newState.selectedUris.contains(u1))
+        assertTrue(newState.selectedUris.contains(u2))
     }
 
     // ── deselectAllInCategory ──────────────────────────────────────────────────
@@ -90,7 +91,7 @@ class SmartJunkViewModelTest {
     fun `deselectAll removes all uris from category`() {
         val u1 = uri("content://a")
         val u2 = uri("content://b")
-        val items = listOf(junkItem("a.tmp", "content://a"), junkItem("b.tmp", "content://b"))
+        val items = listOf(junkItem(u1, "a.tmp"), junkItem(u2, "b.tmp"))
         val state = resultsState(groups = groups(*items.toTypedArray()), selected = setOf(u1, u2))
         val categoryUris = items.map { it.uri }.toSet()
         val newState = state.copy(selectedUris = state.selectedUris - categoryUris)
@@ -103,7 +104,8 @@ class SmartJunkViewModelTest {
     @Test
     fun `removeDeletedItems filters items from groups`() {
         val u1 = uri("content://a")
-        val items = listOf(junkItem("a.tmp", "content://a"), junkItem("b.tmp", "content://b"))
+        val u2 = uri("content://b")
+        val items = listOf(junkItem(u1, "a.tmp"), junkItem(u2, "b.tmp"))
         val state = resultsState(groups = groups(*items.toTypedArray()), selected = setOf(u1))
 
         val deletedUris = listOf(u1)
@@ -119,7 +121,7 @@ class SmartJunkViewModelTest {
     @Test
     fun `removeDeletedItems removes empty categories`() {
         val u1 = uri("content://only")
-        val items = listOf(junkItem("only.tmp", "content://only"))
+        val items = listOf(junkItem(u1, "only.tmp"))
         val state = resultsState(groups = groups(*items.toTypedArray()))
 
         val newGroups = state.groups.mapValues { (_, its) ->
