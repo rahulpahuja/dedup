@@ -45,16 +45,24 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!--
-        MANAGE_EXTERNAL_STORAGE (API 30+) — required for five specific features that cannot
-        use scoped media permissions because they operate outside MediaStore-indexed paths:
-          • SocialMediaCleaner  — scans /Android/media/com.whatsapp/ and Telegram folders
-          • WhatsAppCleaner     — reads WhatsApp's media directory directly
-          • EmptyFolderRemover  — traverses arbitrary directory trees to find empty dirs
-          • BigFileMap          — builds a full storage tree across all directories
-          • FileBrowser         — user-facing file manager across all public storage
-        Image/video scanning uses READ_MEDIA_IMAGES/VIDEO (scoped) and does NOT request this.
-        tools:ignore="ScopedStorage" suppresses the policy-compliance lint; the Play Store
-        declaration of use must be kept up-to-date in the Play Console.
+        MANAGE_EXTERNAL_STORAGE (API 30+) — required ONLY for two file-management features
+        that must navigate arbitrary directory trees beyond MediaStore-indexed paths:
+          • FileBrowser         — user-facing general-purpose file manager (browse, open, share
+                                  any file; explicit file-manager use case per Google policy)
+          • FileScanner (PDF/APK) — scans all directories for duplicate documents/installers
+                                    that are not fully indexed by MediaStore
+
+        All other features use scoped alternatives:
+          • SocialMediaCleaner  — MediaStore queries only (no raw filesystem access)
+          • WhatsAppCleaner     — MediaStore queries for images/videos/documents
+          • EmptyFolderRemover  — SAF (ACTION_OPEN_DOCUMENT_TREE) on Android 11+;
+                                  READ_EXTERNAL_STORAGE on Android ≤ 10
+          • BigFileMap          — MediaStore RELATIVE_PATH aggregation on Android 11+;
+                                  READ_EXTERNAL_STORAGE on Android ≤ 10
+
+        Image/video scanning uses READ_MEDIA_IMAGES/VIDEO (scoped) and does NOT use this.
+        tools:ignore="ScopedStorage" suppresses the policy-compliance lint; the Play Console
+        declaration of use must describe the FileBrowser and FileScanner features specifically.
     -->
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"

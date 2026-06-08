@@ -1,6 +1,7 @@
 package com.rp.dedup.core.viewmodels
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -25,16 +26,18 @@ class EmptyFolderViewModel(
     private val _state = MutableStateFlow<EmptyFolderState>(EmptyFolderState.Idle)
     val state: StateFlow<EmptyFolderState> = _state.asStateFlow()
 
-    fun startScan() {
+    // treeUri: SAF tree URI on Android 11+ (passed by the screen after the user grants access);
+    //          null on Android < 11 (File API is used instead).
+    fun startScan(treeUri: Uri? = null) {
         if (_state.value is EmptyFolderState.Scanning) return
         viewModelScope.launch(ioDispatcher) {
             _state.value = EmptyFolderState.Scanning
             analyticsManager?.logScanStarted("EMPTY_FOLDER")
             try {
-                val folders = repository.findEmptyFolders()
+                val folders = repository.findEmptyFolders(treeUri)
                 analyticsManager?.logScanCompleted(
-                    scanType = "EMPTY_FOLDER",
-                    totalScanned = folders.size,
+                    scanType       = "EMPTY_FOLDER",
+                    totalScanned   = folders.size,
                     duplicatesFound = folders.size,
                     reclaimableBytes = 0L
                 )
@@ -65,7 +68,7 @@ class EmptyFolderViewModel(
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return EmptyFolderViewModel(
-                    repository = EmptyFolderRepositoryImpl(context),
+                    repository       = EmptyFolderRepositoryImpl(context),
                     analyticsManager = AnalyticsManager(context)
                 ) as T
             }

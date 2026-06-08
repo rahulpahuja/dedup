@@ -1,5 +1,11 @@
 package com.rp.dedup.screens
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +16,7 @@ import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderDelete
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,6 +39,17 @@ import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
+private const val SAF_PREFS     = "empty_folder_saf_prefs"
+private const val SAF_URI_KEY   = "tree_uri"
+
+private fun loadTreeUri(context: Context): Uri? =
+    context.getSharedPreferences(SAF_PREFS, Context.MODE_PRIVATE)
+        .getString(SAF_URI_KEY, null)?.let { Uri.parse(it) }
+
+private fun saveTreeUri(context: Context, uri: Uri) =
+    context.getSharedPreferences(SAF_PREFS, Context.MODE_PRIVATE)
+        .edit().putString(SAF_URI_KEY, uri.toString()).apply()
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmptyFolderScreen(navController: NavHostController) {
@@ -43,6 +62,29 @@ fun EmptyFolderScreen(navController: NavHostController) {
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
     val selectedPaths = remember { mutableStateSetOf<String>() }
     var showGuestSignInDialog by remember { mutableStateOf(false) }
+
+    // On Android 11+ we use SAF instead of MANAGE_EXTERNAL_STORAGE.
+    // The tree URI is persisted so the user only grants access once per install.
+    var treeUri by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) loadTreeUri(context) else null
+        )
+    }
+    val safLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri != null) {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            saveTreeUri(context, uri)
+            treeUri = uri
+        }
+    }
+
+    // On Android 11+ with no SAF grant: show a rationale and ask the user to pick their storage root.
+    val needsSAFGrant = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && treeUri == null
 
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("EmptyFolderRemover")
@@ -112,7 +154,13 @@ fun EmptyFolderScreen(navController: NavHostController) {
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val s = state) {
-                is EmptyFolderState.Idle -> EmptyFolderIdleView(onSweep = viewModel::startScan)
+                is EmptyFolderState.Idle -> {
+                    if (needsSAFGrant) {
+                        EmptyFolderSAFRationaleView(onGrant = { safLauncher.launch(null) })
+                    } else {
+                        EmptyFolderIdleView(onSweep = { viewModel.startScan(treeUri) })
+                    }
+                }
                 is EmptyFolderState.Scanning -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
@@ -147,6 +195,66 @@ fun EmptyFolderScreen(navController: NavHostController) {
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun EmptyFolderSAFRationaleView(onGrant: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(
+                modifier = Modifier.padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.FolderOpen,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+                Text(
+                    text = "Storage Access Needed",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "To find empty folders, DeDup needs you to select your storage root. " +
+                           "This is a one-time step — your choice is remembered.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(4.dp))
+                Button(
+                    onClick = onGrant,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) {
+                    Text("Select Storage Folder", fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    text = "Tip: pick \"Internal Storage\" from the folder picker to scan everything.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }
 

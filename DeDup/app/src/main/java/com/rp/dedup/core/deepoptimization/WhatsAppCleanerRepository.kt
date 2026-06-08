@@ -2,10 +2,8 @@ package com.rp.dedup.core.deepoptimization
 
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import android.provider.MediaStore
 import com.rp.dedup.core.model.*
-import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
 
@@ -23,7 +21,9 @@ class WhatsAppCleanerRepositoryImpl(private val context: Context) : WhatsAppClea
         allFiles += queryImages()
         allFiles += queryVideos()
         allFiles += queryDocuments()
-        allFiles += scanStatuses()
+        // .Statuses folder is a hidden directory not indexed by MediaStore and not accessible
+        // without MANAGE_EXTERNAL_STORAGE on Android 11+. Statuses are ephemeral by design;
+        // omitting them keeps the scanner Play-Store compliant.
 
         val withChecksums = computeChecksums(allFiles)
 
@@ -101,29 +101,6 @@ class WhatsAppCleanerRepositoryImpl(private val context: Context) : WhatsAppClea
         return result
     }
 
-    private fun scanStatuses(): List<WhatsAppFile> {
-        val result = mutableListOf<WhatsAppFile>()
-        val dirs = listOf(
-            File(Environment.getExternalStorageDirectory(), "WhatsApp/Media/.Statuses"),
-            File(Environment.getExternalStorageDirectory(), "Android/media/com.whatsapp/WhatsApp/Media/.Statuses")
-        )
-        dirs.forEach { dir ->
-            if (!dir.exists()) return@forEach
-            dir.listFiles()?.forEach { file ->
-                if (file.isFile) {
-                    result += WhatsAppFile(
-                        uri    = Uri.fromFile(file),
-                        name   = file.name,
-                        size   = file.length(),
-                        path   = file.absolutePath,
-                        folder = WhatsAppFolder.STATUSES
-                    )
-                }
-            }
-        }
-        return result
-    }
-
     private fun computeChecksums(files: List<WhatsAppFile>): List<WhatsAppFile> {
         val bySize = files.groupBy { it.size }
         return files.map { f ->
@@ -172,12 +149,7 @@ class WhatsAppCleanerRepositoryImpl(private val context: Context) : WhatsAppClea
         var count = 0
         uris.forEach { uri ->
             try {
-                if (uri.scheme == "file") {
-                    val file = File(uri.path ?: return@forEach)
-                    if (file.delete()) count++
-                } else {
-                    if (context.contentResolver.delete(uri, null, null) > 0) count++
-                }
+                if (context.contentResolver.delete(uri, null, null) > 0) count++
             } catch (_: Exception) {}
         }
         return count

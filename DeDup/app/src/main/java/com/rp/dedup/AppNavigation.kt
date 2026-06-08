@@ -213,37 +213,21 @@ fun AppNavHost(navController: NavHostController) {
                 composable(Screen.DeepOptimization.route) {
                     DeepSystemOptimizationScreen(navController)
                 }
+                // Social Media Cleaner uses MediaStore-only queries — no broad storage permission needed.
                 composable(Screen.SocialMediaCleaner.route) {
-                    AllFilesPermissionGatekeeper(
-                        rationaleTitle = "Storage Access Needed",
-                        rationaleMessage = "DeDup needs All Files Access to scan WhatsApp and Telegram media folders for duplicates."
-                    ) {
-                        SocialMediaCleanerScreen(navController)
-                    }
+                    SocialMediaCleanerScreen(navController)
                 }
+                // Empty Folder handles its own SAF grant on Android 11+ (see EmptyFolderScreen).
                 composable(Screen.EmptyFolder.route) {
-                    AllFilesPermissionGatekeeper(
-                        rationaleTitle = "Storage Access Needed",
-                        rationaleMessage = "DeDup needs All Files Access to find and remove empty directory trees."
-                    ) {
-                        EmptyFolderScreen(navController)
-                    }
+                    EmptyFolderScreen(navController)
                 }
+                // BigFileMap uses MediaStore on Android 11+; File API + READ_EXTERNAL_STORAGE on older.
                 composable(Screen.BigFileMap.route) {
-                    AllFilesPermissionGatekeeper(
-                        rationaleTitle = "Storage Access Needed",
-                        rationaleMessage = "DeDup needs All Files Access to build the storage map."
-                    ) {
-                        BigFileMapScreen(navController)
-                    }
+                    BigFileMapScreen(navController)
                 }
+                // WhatsApp Cleaner uses MediaStore for images/videos/documents — no raw filesystem access.
                 composable(Screen.WhatsAppCleaner.route) {
-                    AllFilesPermissionGatekeeper(
-                        rationaleTitle   = "Storage Access Needed",
-                        rationaleMessage = "DeDup needs All Files Access to scan WhatsApp media folders."
-                    ) {
-                        WhatsAppCleanerScreen(navController)
-                    }
+                    WhatsAppCleanerScreen(navController)
                 }
                 composable(
                     route = Screen.FileScanner.route,
