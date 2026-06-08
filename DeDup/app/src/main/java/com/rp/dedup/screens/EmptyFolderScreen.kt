@@ -23,10 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.rp.dedup.R
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.core.model.EmptyFolder
 import com.rp.dedup.core.model.EmptyFolderState
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,9 +39,11 @@ fun EmptyFolderScreen(navController: NavHostController) {
     val viewModel: EmptyFolderViewModel = viewModel(
         factory = EmptyFolderViewModel.factory(context)
     )
+    val profileViewModel = LocalUserProfileViewModel.current
     val state by viewModel.state.collectAsState()
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
     val selectedPaths = remember { mutableStateSetOf<String>() }
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("EmptyFolderRemover")
@@ -87,9 +92,13 @@ fun EmptyFolderScreen(navController: NavHostController) {
                         )
                         Button(
                             onClick = {
-                                val toDelete = results.folders.filter { it.path in selectedPaths }
-                                viewModel.deleteFolders(toDelete)
-                                selectedPaths.clear()
+                                if (profileViewModel.isGuest) {
+                                    showGuestSignInDialog = true
+                                } else {
+                                    val toDelete = results.folders.filter { it.path in selectedPaths }
+                                    viewModel.deleteFolders(toDelete)
+                                    selectedPaths.clear()
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) {
@@ -127,6 +136,18 @@ fun EmptyFolderScreen(navController: NavHostController) {
                 }
             }
         }
+    }
+
+    if (showGuestSignInDialog) {
+        GuestSignInDialog(
+            onDismiss = { showGuestSignInDialog = false },
+            onSignIn = {
+                showGuestSignInDialog = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                }
+            }
+        )
     }
 }
 

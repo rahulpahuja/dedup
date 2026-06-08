@@ -22,10 +22,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.rp.dedup.R
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.core.model.WhatsAppCleanerState
 import com.rp.dedup.core.model.WhatsAppFile
 import com.rp.dedup.core.model.WhatsAppScanResult
 import com.rp.dedup.core.ui.DeDupTopBar
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
@@ -37,7 +40,9 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
     val context = LocalContext.current
     val viewModel: WhatsAppCleanerViewModel =
         viewModel(factory = WhatsAppCleanerViewModel.factory(context))
+    val profileViewModel = LocalUserProfileViewModel.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -61,7 +66,10 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
                     WaResultsView(
                         modifier = Modifier,
                         data     = s.data,
-                        onDelete = viewModel::deleteFiles
+                        onDelete = { uris ->
+                            if (profileViewModel.isGuest) showGuestSignInDialog = true
+                            else viewModel.deleteFiles(uris)
+                        }
                     )
                 is WhatsAppCleanerState.Error ->
                     WaErrorView(
@@ -71,6 +79,18 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
                     )
             }
         }
+    }
+
+    if (showGuestSignInDialog) {
+        GuestSignInDialog(
+            onDismiss = { showGuestSignInDialog = false },
+            onSignIn = {
+                showGuestSignInDialog = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                }
+            }
+        )
     }
 }
 

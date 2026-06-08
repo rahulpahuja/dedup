@@ -42,8 +42,11 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.VideoScannerViewModelFactory
 import com.rp.dedup.core.model.ScannedVideo
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.viewmodels.VideoScannerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
@@ -71,9 +74,13 @@ fun VideoScannerScreen(navController: NavHostController) {
         analyticsManager.logScreenView("VideoScanner")
     }
 
+    val profileViewModel = LocalUserProfileViewModel.current
+    val isGuest = profileViewModel.isGuest
+
     val selectedUris = remember { mutableStateListOf<Uri>() }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var showBubblePermRationale by remember { mutableStateOf(false) }
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
     val bubblePermLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -132,6 +139,18 @@ fun VideoScannerScreen(navController: NavHostController) {
         )
     }
 
+    if (showGuestSignInDialog) {
+        GuestSignInDialog(
+            onDismiss = { showGuestSignInDialog = false },
+            onSignIn = {
+                showGuestSignInDialog = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             DeDupTopBar(
@@ -143,7 +162,10 @@ fun VideoScannerScreen(navController: NavHostController) {
                 },
                 actions = {
                     if (selectedUris.isNotEmpty()) {
-                        IconButton(onClick = { triggerDelete(selectedUris.toList()) }) {
+                        IconButton(onClick = {
+                            if (isGuest) showGuestSignInDialog = true
+                            else triggerDelete(selectedUris.toList())
+                        }) {
                             Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_selected_btn, selectedUris.size, ""), tint = MaterialTheme.colorScheme.error)
                         }
                     }

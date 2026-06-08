@@ -72,12 +72,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.rp.dedup.core.PaginationBar
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.R
 import com.rp.dedup.core.model.ContactDataEntry
 import com.rp.dedup.core.model.MergePreviewGroup
 import com.rp.dedup.core.model.ScannedContact
 import com.rp.dedup.core.viewmodels.ContactScannerViewModel
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.ui.theme.DarkCyan
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -102,9 +105,13 @@ fun DeduplicationScreen(navController: NavHostController) {
         if (duplicateGroups.isEmpty() && !isScanning) viewModel.startScanning()
     }
 
+    val profileViewModel = LocalUserProfileViewModel.current
+    val isGuest = profileViewModel.isGuest
+
     val selectedIds = remember { mutableStateListOf<String>() }
     val isPreparingMerge by viewModel.isPreparingMerge.collectAsState()
     val mergePreview by viewModel.mergePreview.collectAsState()
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
 
     // Primary contact IDs (index 0 of each group) must never be deleted.
     val primaryIds = remember(duplicateGroups) {
@@ -137,6 +144,18 @@ fun DeduplicationScreen(navController: NavHostController) {
             onDismiss = { viewModel.dismissMergePreview() },
             onConfirm = { keptDataIds ->
                 viewModel.executeConfirmedMerge(preview, keptDataIds) { selectedIds.clear() }
+            }
+        )
+    }
+
+    if (showGuestSignInDialog) {
+        GuestSignInDialog(
+            onDismiss = { showGuestSignInDialog = false },
+            onSignIn = {
+                showGuestSignInDialog = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                }
             }
         )
     }
@@ -175,7 +194,10 @@ fun DeduplicationScreen(navController: NavHostController) {
                     SelectionBar(
                         selectedCount = deletableSelected,
                         isLoading = isPreparingMerge,
-                        onMerge = { viewModel.prepareMergePreview(selectedIds.toList()) }
+                        onMerge = {
+                            if (isGuest) showGuestSignInDialog = true
+                            else viewModel.prepareMergePreview(selectedIds.toList())
+                        }
                     )
                 }
             }

@@ -27,10 +27,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.rp.dedup.R
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.core.model.SocialMediaFile
 import com.rp.dedup.core.model.SocialMediaCleanerState
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,8 +43,10 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
     val viewModel: SocialMediaCleanerViewModel = viewModel(
         factory = SocialMediaCleanerViewModel.factory(context)
     )
+    val profileViewModel = LocalUserProfileViewModel.current
     val state by viewModel.state.collectAsState()
     val selectedUris = remember { mutableStateSetOf<Uri>() }
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -72,8 +77,11 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                         )
                         Button(
                             onClick = {
-                                viewModel.deleteFiles(selectedUris.toList())
-                                selectedUris.clear()
+                                if (profileViewModel.isGuest) showGuestSignInDialog = true
+                                else {
+                                    viewModel.deleteFiles(selectedUris.toList())
+                                    selectedUris.clear()
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) {
@@ -118,6 +126,18 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                 )
             }
         }
+    }
+
+    if (showGuestSignInDialog) {
+        GuestSignInDialog(
+            onDismiss = { showGuestSignInDialog = false },
+            onSignIn = {
+                showGuestSignInDialog = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                }
+            }
+        )
     }
 }
 

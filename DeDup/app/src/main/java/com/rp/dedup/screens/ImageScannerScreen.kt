@@ -71,9 +71,12 @@ import com.canopas.lib.showcase.IntroShowcase
 import com.canopas.lib.showcase.component.ShowcaseStyle
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.ScannerViewModelFactory
 import com.rp.dedup.core.ScannerContent
 import com.rp.dedup.core.viewmodels.ScannerViewModel
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -103,9 +106,13 @@ fun ImageScannerScreen(navController: NavHostController) {
         analyticsManager.logScreenView("ImageScanner")
     }
 
+    val profileViewModel = LocalUserProfileViewModel.current
+    val isGuest = profileViewModel.isGuest
+
     val selectedForDeletion = remember { mutableStateListOf<Uri>() }
     var showAutoClearWarning by remember { mutableStateOf(false) }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
 
     // True if we have anything to show — either from cache or a completed scan.
     val hasResults = duplicateGroups.isNotEmpty()
@@ -246,8 +253,13 @@ fun ImageScannerScreen(navController: NavHostController) {
                         if (isScanning) viewModel.cancelScanning()
                         else viewModel.startScanning()
                     },
-                    onAutoClear = { showAutoClearWarning = true },
-                    onDeleteSelected = { triggerOSDeletionPrompt(selectedForDeletion.toList()) },
+                    onAutoClear = {
+                        if (isGuest) showGuestSignInDialog = true else showAutoClearWarning = true
+                    },
+                    onDeleteSelected = {
+                        if (isGuest) showGuestSignInDialog = true
+                        else triggerOSDeletionPrompt(selectedForDeletion.toList())
+                    },
                     onBubbleClick = onBubbleClick
                 )
 
@@ -270,7 +282,10 @@ fun ImageScannerScreen(navController: NavHostController) {
                             if (isSelected) selectedForDeletion.add(uri)
                             else selectedForDeletion.remove(uri)
                         },
-                        onDeleteImage = { triggerOSDeletionPrompt(listOf(it)) }
+                        onDeleteImage = {
+                            if (isGuest) showGuestSignInDialog = true
+                            else triggerOSDeletionPrompt(listOf(it))
+                        }
                     )
 
                     if (!isScanning && hasResults) {
@@ -344,6 +359,18 @@ fun ImageScannerScreen(navController: NavHostController) {
                 },
                 dismissButton = {
                     TextButton(onClick = { showAutoClearWarning = false }) { Text(stringResource(R.string.cancel)) }
+                }
+            )
+        }
+
+        if (showGuestSignInDialog) {
+            GuestSignInDialog(
+                onDismiss = { showGuestSignInDialog = false },
+                onSignIn = {
+                    showGuestSignInDialog = false
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Dashboard.route) { inclusive = false }
+                    }
                 }
             )
         }
@@ -535,6 +562,23 @@ private fun ScannerHeader(
     HorizontalDivider()
 }
 
+
+@Composable
+fun GuestSignInDialog(onDismiss: () -> Unit, onSignIn: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sign in required") },
+        text = {
+            Text("You're browsing as a guest. Sign in with Google to delete duplicates and free up storage.")
+        },
+        confirmButton = {
+            Button(onClick = onSignIn) { Text("Sign in with Google") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Not now") }
+        }
+    )
+}
 
 @Preview
 @Composable

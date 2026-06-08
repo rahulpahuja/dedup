@@ -35,10 +35,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.rp.dedup.R
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.core.model.SmartJunkState
 import com.rp.dedup.core.search.SmartJunkRepository
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SmartJunkViewModel
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -53,7 +56,9 @@ fun SmartJunkScreen(navController: NavHostController) {
         analyticsManager.logScreenView("SmartJunkCleanup")
     }
 
+    val profileViewModel = LocalUserProfileViewModel.current
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
 
     val deleteLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -104,7 +109,10 @@ fun SmartJunkScreen(navController: NavHostController) {
                             style = MaterialTheme.typography.bodySmall
                         )
                         Button(
-                            onClick = { triggerDelete(results.selectedUris.toList()) },
+                            onClick = {
+                                if (profileViewModel.isGuest) showGuestSignInDialog = true
+                                else triggerDelete(results.selectedUris.toList())
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -156,6 +164,18 @@ fun SmartJunkScreen(navController: NavHostController) {
                 }
             }
         }
+    }
+
+    if (showGuestSignInDialog) {
+        GuestSignInDialog(
+            onDismiss = { showGuestSignInDialog = false },
+            onSignIn = {
+                showGuestSignInDialog = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                }
+            }
+        )
     }
 }
 

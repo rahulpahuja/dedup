@@ -8,6 +8,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,6 +59,15 @@ fun LoginScreen(
 
     val onLoginSuccess = { method: String ->
         analyticsManager.logLogin(method)
+        profileViewModel.setGuestMode(false)
+        navController.navigate(Screen.Dashboard.route) {
+            popUpTo(Screen.Login.route) { inclusive = true }
+        }
+    }
+
+    val onContinueAsGuest = {
+        analyticsManager.logLogin("GUEST")
+        profileViewModel.setGuestMode(true)
         navController.navigate(Screen.Dashboard.route) {
             popUpTo(Screen.Login.route) { inclusive = true }
         }
@@ -189,7 +201,75 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(120.dp))
+            Spacer(Modifier.height(20.dp))
+
+            // Divider with OR label
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = Color.White.copy(alpha = 0.12f)
+                )
+                Text(
+                    text = "  or  ",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = Color.White.copy(alpha = 0.35f)
+                    )
+                )
+                HorizontalDivider(
+                    modifier = Modifier.weight(1f),
+                    color = Color.White.copy(alpha = 0.12f)
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Try as guest button
+            OutlinedButton(
+                onClick = { if (!isLoading) onContinueAsGuest() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White.copy(alpha = 0.03f),
+                    contentColor = Color.White.copy(alpha = 0.65f)
+                ),
+                enabled = !isLoading
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "Try scanning as guest",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 0.2.sp
+                        )
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Sign in to delete duplicates or merge contacts",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = Color.White.copy(alpha = 0.28f)
+                )
+            )
+
+            Spacer(Modifier.height(60.dp))
         }
     }
 }

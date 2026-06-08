@@ -3,11 +3,19 @@ package com.rp.dedup.screens
 import android.content.res.Configuration
 import android.net.Uri
 import android.text.format.Formatter
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.input.pointer.pointerInput
@@ -29,6 +37,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -66,6 +77,7 @@ import com.rp.dedup.core.viewmodels.DashboardViewModel
 import com.rp.dedup.core.viewmodels.ImageSearchViewModel
 import com.rp.dedup.core.model.MediaCounts
 import com.rp.dedup.core.model.StorageStats
+import com.rp.dedup.core.viewmodels.SettingsViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
@@ -79,6 +91,7 @@ fun DashboardScreen(
     navController: NavHostController,
     profileViewModel: UserProfileViewModel
 ) {
+    val isGuest = profileViewModel.isGuest
     val context = LocalContext.current
     val dashboardViewModel: DashboardViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
@@ -104,6 +117,11 @@ fun DashboardScreen(
     val searchError by searchViewModel.error.collectAsState()
 
     val dataStoreManager = remember { DataStoreManager(context) }
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.Factory(dataStoreManager)
+    )
+    val selectedCurrency by settingsViewModel.selectedCurrency.collectAsState()
+
     // Default true so tutorial doesn't flash before DataStore loads
     val tutorialShown by dataStoreManager.readData(DataStoreManager.TUTORIAL_SHOWN, false)
         .collectAsState(initial = true)
@@ -135,6 +153,7 @@ fun DashboardScreen(
         navController = navController,
         userName = profileViewModel.name,
         userImageUrl = profileViewModel.profileImageUrl,
+        isGuest = isGuest,
         storageStats = storageStats,
         totalReclaimable = totalReclaimable,
         mediaCounts = mediaCounts,
@@ -146,6 +165,7 @@ fun DashboardScreen(
         onClearSearch = { searchViewModel.clear() },
         analyticsManager = analyticsManager,
         showTutorial = !tutorialShown,
+        selectedCurrencyCode = selectedCurrency,
         onTutorialComplete = {
             analyticsManager.logTutorialInteraction("DASHBOARD", "COMPLETED")
             coroutineScope.launch {
@@ -161,6 +181,7 @@ fun DashboardScreenContent(
     navController: NavHostController,
     userName: String,
     userImageUrl: String,
+    isGuest: Boolean = false,
     storageStats: StorageStats,
     totalReclaimable: Long,
     mediaCounts: MediaCounts = MediaCounts(),
@@ -170,6 +191,7 @@ fun DashboardScreenContent(
     searchError: String?,
     onSearch: (String) -> Unit,
     onClearSearch: () -> Unit,
+    selectedCurrencyCode: String = "",
     analyticsManager: AnalyticsManager? = null,
     showTutorial: Boolean = false,
     onTutorialComplete: () -> Unit = {}
@@ -277,6 +299,17 @@ fun DashboardScreenContent(
                         .padding(horizontal = 16.dp),
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
+                    if (isGuest) {
+                        item {
+                            GuestBanner(
+                                onSignIn = {
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(Screen.Dashboard.route) { inclusive = false }
+                                    }
+                                }
+                            )
+                        }
+                    }
                     item {
                         Text(
                             stringResource(R.string.dashboard_title),
@@ -309,7 +342,7 @@ fun DashboardScreenContent(
                         Spacer(modifier = Modifier.height(24.dp))
                     }
                     item {
-                        SavingsCalculatorCard(reclaimableBytes = totalReclaimable)
+                        SavingsCalculatorCard(reclaimableBytes = totalReclaimable, overrideCurrencyCode = selectedCurrencyCode)
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                     item {
@@ -647,19 +680,68 @@ fun ContactDedupCard(onClick: () -> Unit) {
 }
 
 @Composable
-fun SavingsCalculatorCard(reclaimableBytes: Long) {
+fun SavingsCalculatorCard(reclaimableBytes: Long, overrideCurrencyCode: String = "") {
     val locale = Locale.getDefault()
     val currency = try {
-        Currency.getInstance(locale)
+        if (overrideCurrencyCode.isNotEmpty()) Currency.getInstance(overrideCurrencyCode)
+        else Currency.getInstance(locale)
     } catch (_: Exception) {
         Currency.getInstance("USD")
     }
     
+    // Approximate local cloud storage cost per GB (based on Google One 100 GB plan / 100)
     val costPerGb = when (currency.currencyCode) {
-        "INR" -> 5.0
-        "EUR" -> 0.05
-        "GBP" -> 0.04
-        else  -> 0.06
+        // Americas
+        "USD" -> 0.03   // $2.99 / 100 GB
+        "CAD" -> 0.04   // CA$3.99 / 100 GB
+        "MXN" -> 0.49   // MX$49 / 100 GB
+        "BRL" -> 0.04   // R$3.99 / 100 GB
+        "ARS" -> 3.00   // AR$299 / 100 GB
+        "CLP" -> 30.0   // CLP 2,990 / 100 GB
+        "COP" -> 130.0  // COP 12,900 / 100 GB
+        "PEN" -> 0.11   // PEN 10.99 / 100 GB
+        // Europe
+        "EUR" -> 0.02   // €0.99–1.99 / 100 GB (avg ~€1.99)
+        "GBP" -> 0.016  // £1.59 / 100 GB
+        "CHF" -> 0.011  // CHF 1.09 / 100 GB
+        "SEK" -> 0.29   // SEK 29 / 100 GB
+        "NOK" -> 0.29   // NOK 29 / 100 GB
+        "DKK" -> 0.15   // DKK 15 / 100 GB
+        "PLN" -> 0.05   // PLN 4.99 / 100 GB
+        "CZK" -> 0.49   // CZK 49 / 100 GB
+        "HUF" -> 9.90   // HUF 990 / 100 GB
+        "RON" -> 0.05   // RON 4.99 / 100 GB
+        "BGN" -> 0.04   // BGN 3.99 / 100 GB
+        "HRK" -> 0.15   // HRK 14.99 / 100 GB (pre-EUR adoption)
+        "TRY" -> 0.29   // TRY 29 / 100 GB
+        "RUB" -> 0.69   // RUB 69 / 100 GB
+        "UAH" -> 0.29   // UAH 29 / 100 GB
+        // Asia-Pacific
+        "INR" -> 1.30   // ₹130 / 100 GB
+        "JPY" -> 2.50   // ¥250 / 100 GB
+        "CNY" -> 0.20   // ¥20 / 100 GB
+        "KRW" -> 39.0   // ₩3,900 / 100 GB
+        "AUD" -> 0.045  // A$4.49 / 100 GB
+        "NZD" -> 0.05   // NZ$4.99 / 100 GB
+        "SGD" -> 0.04   // S$3.98 / 100 GB
+        "HKD" -> 0.23   // HK$23 / 100 GB
+        "TWD" -> 0.90   // NT$90 / 100 GB
+        "MYR" -> 0.13   // RM13 / 100 GB
+        "THB" -> 0.35   // ฿35 / 100 GB
+        "IDR" -> 490.0  // Rp49,000 / 100 GB
+        "PHP" -> 1.60   // ₱160 / 100 GB
+        "VND" -> 750.0  // ₫75,000 / 100 GB
+        "PKR" -> 8.49   // PKR 849 / 100 GB
+        "BDT" -> 3.49   // BDT 349 / 100 GB
+        // Middle East & Africa
+        "SAR" -> 0.11   // SAR 10.99 / 100 GB
+        "AED" -> 0.11   // AED 10.99 / 100 GB
+        "ILS" -> 0.11   // ILS 10.99 / 100 GB
+        "EGP" -> 0.49   // EGP 49 / 100 GB
+        "NGN" -> 19.0   // NGN 1,900 / 100 GB
+        "KES" -> 1.10   // KES 109 / 100 GB
+        "ZAR" -> 0.45   // ZAR 45 / 100 GB
+        else  -> 0.03   // USD fallback
     }
 
     val reclaimableGb = reclaimableBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
@@ -1050,7 +1132,7 @@ fun OptimizationCard(
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-    
+
     val selectedIndex = when {
         currentRoute == Screen.Dashboard.route -> 0
         currentRoute == Screen.Cleanup.route -> 1
@@ -1060,53 +1142,161 @@ fun BottomNavigationBar(navController: NavHostController) {
         else -> 0
     }
 
-    Surface(
+    data class NavEntry(val icon: ImageVector, val labelRes: Int, val route: String)
+    val items = listOf(
+        NavEntry(Icons.Default.GridView,    R.string.nav_dash,     Screen.Dashboard.route),
+        NavEntry(Icons.Default.Search,      R.string.nav_scan,     Screen.Cleanup.route),
+        NavEntry(Icons.Default.Description, R.string.nav_files,    Screen.FileBrowser.route),
+        NavEntry(Icons.Default.Videocam,    R.string.nav_video,    Screen.VideoScanner.route),
+        NavEntry(Icons.Default.Settings,    R.string.nav_settings, Screen.Settings.route),
+    )
+
+    val isDark = isSystemInDarkTheme()
+    // iOS glass palette
+    val glassBase  = if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.84f) else Color.White.copy(alpha = 0.78f)
+    val sheenColor = if (isDark) Color.White.copy(alpha = 0.055f)       else Color.White.copy(alpha = 0.52f)
+    val borderHi   = if (isDark) Color.White.copy(alpha = 0.14f)        else Color.White.copy(alpha = 0.80f)
+    val borderLo   = if (isDark) Color.White.copy(alpha = 0.03f)        else Color.White.copy(alpha = 0.12f)
+
+    val pillHeight = 46.dp
+    val barHeight  = 72.dp
+
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp)
-            .navigationBarsPadding(),
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-        tonalElevation = 8.dp,
-        shadowElevation = 10.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            .navigationBarsPadding()
     ) {
-        NavigationBar(
-            containerColor = Color.Transparent,
-            tonalElevation = 0.dp,
-            modifier = Modifier.height(72.dp)
+        val itemWidth = maxWidth / items.size
+        val pillWidth = 52.dp
+
+        // Spring-animated pill sliding between items
+        val pillOffset by animateDpAsState(
+            targetValue   = itemWidth * selectedIndex + (itemWidth - pillWidth) / 2,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness    = Spring.StiffnessMediumLow
+            ),
+            label = "glassNavPill"
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation    = 24.dp,
+                    shape        = RoundedCornerShape(28.dp),
+                    ambientColor = Color.Black.copy(alpha = 0.14f),
+                    spotColor    = Color.Black.copy(alpha = 0.20f)
+                )
+                .clip(RoundedCornerShape(28.dp))
+                // Layer 1: translucent base (frosted look)
+                .background(glassBase)
+                // Layer 2: top-to-bottom white sheen (glass highlight)
+                .background(Brush.verticalGradient(listOf(sheenColor, Color.Transparent)))
+                // Layer 3: border — bright at top, fades at bottom (glass edge)
+                .border(
+                    width = 0.8.dp,
+                    brush = Brush.verticalGradient(listOf(borderHi, borderLo)),
+                    shape = RoundedCornerShape(28.dp)
+                )
         ) {
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.GridView, contentDescription = null) },
-                label = { Text(stringResource(R.string.nav_dash), style = MaterialTheme.typography.labelSmall) },
-                selected = selectedIndex == 0,
-                onClick = { navController.navigate(Screen.Dashboard.route) }
+            // Sliding selection pill drawn behind the icons
+            Box(
+                modifier = Modifier
+                    .padding(vertical = (barHeight - pillHeight) / 2)
+                    .offset(x = pillOffset)
+                    .width(pillWidth)
+                    .height(pillHeight)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(
+                            alpha = if (isDark) 0.24f else 0.13f
+                        )
+                    )
             )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Search, contentDescription = null) },
-                label = { Text(stringResource(R.string.nav_scan), style = MaterialTheme.typography.labelSmall) },
-                selected = selectedIndex == 1,
-                onClick = { navController.navigate(Screen.Cleanup.route) }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Description, contentDescription = null) },
-                label = { Text(stringResource(R.string.nav_files), style = MaterialTheme.typography.labelSmall) },
-                selected = selectedIndex == 2,
-                onClick = { navController.navigate(Screen.FileBrowser.route) }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Videocam, contentDescription = null) },
-                label = { Text(stringResource(R.string.nav_video), style = MaterialTheme.typography.labelSmall) },
-                selected = selectedIndex == 3,
-                onClick = { navController.navigate(Screen.VideoScanner.route) }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                label = { Text(stringResource(R.string.nav_settings), style = MaterialTheme.typography.labelSmall) },
-                selected = selectedIndex == 4,
-                onClick = { navController.navigate(Screen.Settings.route) }
-            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(barHeight),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment     = Alignment.CenterVertically
+            ) {
+                items.forEachIndexed { index, entry ->
+                    GlassNavItem(
+                        icon     = entry.icon,
+                        label    = stringResource(entry.labelRes),
+                        selected = selectedIndex == index,
+                        onClick  = { navController.navigate(entry.route) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun GlassNavItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Color transition: primary when selected, muted when not
+    val iconColor by animateColorAsState(
+        targetValue   = if (selected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),
+        animationSpec = tween(180),
+        label         = "glassNavColor"
+    )
+    // Spring scale: compress on press, pop when selected
+    val contentScale by animateFloatAsState(
+        targetValue   = when {
+            isPressed -> 0.76f
+            selected  -> 1.12f
+            else      -> 1.00f
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness    = Spring.StiffnessMedium
+        ),
+        label = "glassNavScale"
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(
+                interactionSource = interactionSource,
+                indication        = null, // no ripple — iOS style
+                onClick           = onClick
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector        = icon,
+            contentDescription = label,
+            tint               = iconColor,
+            modifier           = Modifier
+                .size(22.dp)
+                .scale(contentScale)
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text     = label,
+            style    = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color      = iconColor
+            ),
+            modifier = Modifier.scale(contentScale)
+        )
     }
 }
 
@@ -1299,6 +1489,47 @@ private fun TutorialTooltip(title: String, body: String) {
             style = MaterialTheme.typography.labelSmall,
             color = Color(0xFF5FA3FF)
         )
+    }
+}
+
+@Composable
+private fun GuestBanner(onSignIn: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Guest mode",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = "Sign in to delete duplicates and merge contacts",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            TextButton(onClick = onSignIn) {
+                Text("Sign in", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+            }
+        }
     }
 }
 

@@ -28,6 +28,7 @@ class DataStoreManager(private val context: Context) {
         val AUTO_SCAN_ON_STARTUP = booleanPreferencesKey("auto_scan_on_startup")
         val SELECTED_LANGUAGE = stringPreferencesKey("selected_language")
         val LAST_IMAGE_SCAN_TIME = stringPreferencesKey("last_image_scan_time")
+        val SELECTED_CURRENCY = stringPreferencesKey("selected_currency")
     }
 
     suspend fun <T> writeData(key: Preferences.Key<T>, value: T) {

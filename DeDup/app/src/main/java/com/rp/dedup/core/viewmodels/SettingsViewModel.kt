@@ -26,6 +26,9 @@ class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
     val autoScanOnStartup: StateFlow<Boolean> = dataStoreManager.readData(DataStoreManager.AUTO_SCAN_ON_STARTUP, true)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
+    val selectedCurrency: StateFlow<String> = dataStoreManager.readData(DataStoreManager.SELECTED_CURRENCY, "")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
     private val _selectedLanguage = MutableStateFlow(getCurrentLanguageCode())
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
@@ -43,6 +46,12 @@ class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
     fun setAutoScanOnStartup(enabled: Boolean) {
         viewModelScope.launch {
             dataStoreManager.writeData(DataStoreManager.AUTO_SCAN_ON_STARTUP, enabled)
+        }
+    }
+
+    fun setCurrency(currencyCode: String) {
+        viewModelScope.launch {
+            dataStoreManager.writeData(DataStoreManager.SELECTED_CURRENCY, currencyCode)
         }
     }
 

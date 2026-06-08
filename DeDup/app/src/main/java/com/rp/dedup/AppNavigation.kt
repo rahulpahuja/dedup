@@ -51,6 +51,11 @@ import com.rp.dedup.ui.theme.DeDupTheme
 // Provides DrawerState to any composable in the tree without prop drilling
 val LocalDrawerState = compositionLocalOf<DrawerState> { error("No DrawerState provided") }
 
+// Provides the Activity-scoped UserProfileViewModel so guest-mode checks are consistent
+// across all NavGraph destinations (viewModel() inside composable{} would return a
+// NavBackStackEntry-scoped instance, which is a different object and always has isGuest=false)
+val LocalUserProfileViewModel = compositionLocalOf<UserProfileViewModel> { error("No UserProfileViewModel provided") }
+
 sealed class Screen(val route: String) {
     object Splash : Screen(ROUTE_SPLASH)
     object Login : Screen(ROUTE_LOGIN)
@@ -98,7 +103,10 @@ fun AppNavHost(navController: NavHostController) {
             || currentRoute == Screen.ContactDedup.route
             || currentRoute?.startsWith("file_scanner") == true
 
-    CompositionLocalProvider(LocalDrawerState provides drawerState) {
+    CompositionLocalProvider(
+        LocalDrawerState provides drawerState,
+        LocalUserProfileViewModel provides profileViewModel
+    ) {
         ModalNavigationDrawer(
             drawerState = drawerState,
             gesturesEnabled = currentRoute != Screen.Splash.route && currentRoute != Screen.Login.route,

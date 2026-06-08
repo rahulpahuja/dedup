@@ -43,8 +43,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
+import com.rp.dedup.LocalUserProfileViewModel
+import com.rp.dedup.Screen
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.FileScannerViewModel
+import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.ScanHistoryRepository
@@ -82,8 +85,10 @@ fun FileScannerScreen(
         analyticsManager.logScreenView("FileScanner_${scanType.uppercase()}")
     }
 
+    val profileViewModel = LocalUserProfileViewModel.current
     val selectedUris = remember { mutableStateListOf<Uri>() }
     var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var showGuestSignInDialog by remember { mutableStateOf(false) }
 
     val deleteLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
@@ -135,8 +140,23 @@ fun FileScannerScreen(
             if (selectedUris.contains(uri)) selectedUris.remove(uri)
             else selectedUris.add(uri)
         },
-        onDeleteSelected = { triggerDelete(selectedUris.toList()) }
+        onDeleteSelected = {
+            if (profileViewModel.isGuest) showGuestSignInDialog = true
+            else triggerDelete(selectedUris.toList())
+        }
     )
+
+    if (showGuestSignInDialog) {
+        GuestSignInDialog(
+            onDismiss = { showGuestSignInDialog = false },
+            onSignIn = {
+                showGuestSignInDialog = false
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

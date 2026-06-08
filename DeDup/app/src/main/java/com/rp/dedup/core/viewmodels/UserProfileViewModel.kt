@@ -59,6 +59,19 @@ class UserProfileViewModel(app: Application) : AndroidViewModel(app) {
     var profileImageUrl by mutableStateOf(prefs.getString("profile_image_url", "") ?: "")
         private set
 
+    // In-memory guest flag — not persisted so it resets when the app is killed
+    var isGuest by mutableStateOf(false)
+        private set
+
+    fun setGuestMode(guest: Boolean) {
+        isGuest = guest
+        if (guest) {
+            name = "Guest"
+            email = ""
+            profileImageUrl = ""
+        }
+    }
+
     fun update(newName: String, newEmail: String, newImageUrl: String? = null) {
         name = newName.trim().ifEmpty { "User" }
         email = newEmail.trim()
