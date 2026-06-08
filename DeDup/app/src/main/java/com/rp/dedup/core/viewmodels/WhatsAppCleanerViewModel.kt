@@ -6,8 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
-import com.rp.dedup.core.model.WhatsAppCleanerState
-import com.rp.dedup.core.model.WhatsAppScanResult
+import com.rp.dedup.core.model.state.WhatsAppCleanerState
 import com.rp.dedup.core.deepoptimization.WhatsAppCleanerRepository
 import com.rp.dedup.core.deepoptimization.WhatsAppCleanerRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher

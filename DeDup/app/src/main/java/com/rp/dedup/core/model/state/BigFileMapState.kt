@@ -1,4 +1,6 @@
-package com.rp.dedup.core.model
+package com.rp.dedup.core.model.state
+
+import com.rp.dedup.core.model.FolderNode
 
 sealed class BigFileMapState {
     object Idle : BigFileMapState()

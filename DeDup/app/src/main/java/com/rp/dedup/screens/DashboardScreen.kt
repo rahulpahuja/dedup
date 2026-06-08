@@ -15,7 +15,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.input.pointer.pointerInput
@@ -1151,7 +1151,9 @@ fun BottomNavigationBar(navController: NavHostController) {
         NavEntry(Icons.Default.Settings,    R.string.nav_settings, Screen.Settings.route),
     )
 
-    val isDark = isSystemInDarkTheme()
+    // Use actual active colorScheme luminance so app-level ThemeMode.DARK works correctly
+    // regardless of the system dark mode setting
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     // iOS glass palette
     val glassBase  = if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.84f) else Color.White.copy(alpha = 0.78f)
     val sheenColor = if (isDark) Color.White.copy(alpha = 0.055f)       else Color.White.copy(alpha = 0.52f)

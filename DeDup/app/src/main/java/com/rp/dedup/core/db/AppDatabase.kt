@@ -25,11 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
-
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    """
+        private val MIGRATION_1_2_SQL =    """
                     CREATE TABLE IF NOT EXISTS `scan_history` (
                         `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         `scanType` TEXT NOT NULL,
@@ -42,23 +38,25 @@ abstract class AppDatabase : RoomDatabase() {
                         `status` TEXT NOT NULL
                     )
                     """.trimIndent()
-                )
+
+        private val MIGRATION_2_3_SQL ="ALTER TABLE scanned_images ADD COLUMN exactHash INTEGER NOT NULL DEFAULT -1"
+        private val MIGRATION_3_4_SQL ="ALTER TABLE scanned_images ADD COLUMN groupKey TEXT NOT NULL DEFAULT ''"
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(MIGRATION_1_2_SQL)
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    "ALTER TABLE scanned_images ADD COLUMN exactHash INTEGER NOT NULL DEFAULT -1"
-                )
+                database.execSQL(MIGRATION_2_3_SQL)
             }
         }
 
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    "ALTER TABLE scanned_images ADD COLUMN groupKey TEXT NOT NULL DEFAULT ''"
-                )
+                database.execSQL(MIGRATION_3_4_SQL)
             }
         }
 
@@ -86,21 +84,22 @@ abstract class AppDatabase : RoomDatabase() {
                 db.openHelper.writableDatabase
                 db
             } catch (e: Exception) {
-                Log.e("AppDatabase", "Database initialization failed, attempting recovery", e)
-                
-                // Close any potential connections and delete the database file
+                Log.e("AppDatabase", "Database initialization failed", e)
+
+                // Only attempt file-level recovery: delete corrupted DB files and retry
+                // with the same key. If the failure was in KeyManager itself (KeyStore
+                // unavailable / corrupted master key), this second call will also throw
+                // and the exception propagates to the caller — do NOT silently reset keys.
                 try {
                     context.applicationContext.deleteDatabase(dbName)
-                    // Also delete auxiliary files explicitly
                     val dbFile = context.getDatabasePath(dbName)
                     File("${dbFile.path}-wal").delete()
                     File("${dbFile.path}-shm").delete()
                     File("${dbFile.path}-journal").delete()
                 } catch (ex: Exception) {
-                    Log.e("AppDatabase", "Error deleting database files", ex)
+                    Log.e("AppDatabase", "Error deleting database files during recovery", ex)
                 }
 
-                // Try one more time with a fresh start (KeyManager recovery should have happened)
                 val key = KeyManager.getOrCreateDatabaseKey(context)
                 builder.openHelperFactory(SupportOpenHelperFactory(key))
                 builder.build()

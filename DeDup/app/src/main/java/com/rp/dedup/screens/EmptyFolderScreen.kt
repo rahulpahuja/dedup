@@ -26,10 +26,9 @@ import com.rp.dedup.R
 import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
 import com.rp.dedup.core.model.EmptyFolder
-import com.rp.dedup.core.model.EmptyFolderState
+import com.rp.dedup.core.model.state.EmptyFolderState
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
-import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)

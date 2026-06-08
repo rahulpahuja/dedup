@@ -2,6 +2,7 @@ package com.rp.dedup.core.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.rp.dedup.core.common.Constants
 
 @Entity(tableName = "scanned_images")
 data class ScannedImage(
@@ -12,5 +13,5 @@ data class ScannedImage(
     val qualityScore: Float = 0f,
     val isAiSuggestion: Boolean = false,
     val exactHash: Long = -1L,
-    val groupKey: String = ""
+    val groupKey: String = Constants.EMPTY_STRING
 )

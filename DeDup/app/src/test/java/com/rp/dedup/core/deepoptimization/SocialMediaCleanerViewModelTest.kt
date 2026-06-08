@@ -4,7 +4,7 @@ import android.net.Uri
 import com.rp.dedup.core.model.SocialApp
 import com.rp.dedup.core.model.SocialMediaFile
 import com.rp.dedup.core.model.SocialMediaType
-import com.rp.dedup.core.model.SocialMediaCleanerState
+import com.rp.dedup.core.model.state.SocialMediaCleanerState
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery

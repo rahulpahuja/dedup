@@ -2,6 +2,7 @@ package com.rp.dedup
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -113,8 +114,43 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIntent(intent: Intent?) {
         intent?.getStringExtra("target_route")?.let { route ->
-            pendingDeepLinkRoute = route
+            if (isAllowedDeepLinkRoute(route)) {
+                pendingDeepLinkRoute = route
+            } else {
+                Log.w("MainActivity", "Rejected deep link to unauthorized route: $route")
+            }
         }
+    }
+
+    companion object {
+        // Explicit allowlist — any route not listed here is rejected regardless of source app.
+        // Excludes: splash, login (internal flow), results_media (requires prior scan context),
+        // and contact_test (dev-only screen).
+        private val ALLOWED_DEEP_LINK_ROUTES = setOf(
+            UIConstants.ROUTE_DASHBOARD,
+            UIConstants.ROUTE_CLEANUP,
+            UIConstants.ROUTE_IMAGE_SCANNER,
+            UIConstants.ROUTE_VIDEO_SCANNER,
+            UIConstants.ROUTE_ACTIVITY,
+            UIConstants.ROUTE_SETTINGS,
+            UIConstants.ROUTE_SCAN_HISTORY,
+            UIConstants.ROUTE_FILE_BROWSER,
+            UIConstants.ROUTE_CACHE_CLEANER,
+            UIConstants.ROUTE_SMART_JUNK,
+            UIConstants.ROUTE_DEEP_OPTIMIZATION,
+            UIConstants.ROUTE_SOCIAL_MEDIA_CLEANER,
+            UIConstants.ROUTE_EMPTY_FOLDER,
+            UIConstants.ROUTE_BIG_FILE_MAP,
+            UIConstants.ROUTE_WHATSAPP_CLEANER,
+            UIConstants.ROUTE_CONTACT_DEDUP,
+            UIConstants.ROUTE_ABOUT,
+            UIConstants.ROUTE_PRIVACY_POLICY,
+        )
+
+        private fun isAllowedDeepLinkRoute(route: String): Boolean =
+            route in ALLOWED_DEEP_LINK_ROUTES ||
+                route.startsWith("file_scanner/pdf") ||
+                route.startsWith("file_scanner/apk")
     }
 }
 

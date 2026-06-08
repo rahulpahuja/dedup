@@ -7,7 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.ai.GeminiClassifier
 import com.rp.dedup.core.analytics.AnalyticsManager
-import com.rp.dedup.core.model.SmartJunkState
+import com.rp.dedup.core.model.state.SmartJunkState
 import com.rp.dedup.core.search.SmartJunkRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

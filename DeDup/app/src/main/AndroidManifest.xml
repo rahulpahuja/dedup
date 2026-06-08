@@ -44,7 +44,18 @@
     <!-- ── Location (coarse — used for sunrise/sunset auto-theme; no active request) ── -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- ── All Files Access (API 30+) ── -->
+    <!--
+        MANAGE_EXTERNAL_STORAGE (API 30+) — required for five specific features that cannot
+        use scoped media permissions because they operate outside MediaStore-indexed paths:
+          • SocialMediaCleaner  — scans /Android/media/com.whatsapp/ and Telegram folders
+          • WhatsAppCleaner     — reads WhatsApp's media directory directly
+          • EmptyFolderRemover  — traverses arbitrary directory trees to find empty dirs
+          • BigFileMap          — builds a full storage tree across all directories
+          • FileBrowser         — user-facing file manager across all public storage
+        Image/video scanning uses READ_MEDIA_IMAGES/VIDEO (scoped) and does NOT request this.
+        tools:ignore="ScopedStorage" suppresses the policy-compliance lint; the Play Store
+        declaration of use must be kept up-to-date in the Play Console.
+    -->
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -64,9 +75,9 @@
         android:extractNativeLibs="false"
         android:enableOnBackInvokedCallback="true">
 
-        <!-- Facebook Metadata using Manifest Placeholders -->
+        <!-- Facebook App ID (required by Facebook SDK for content providers/activities) -->
+        <!-- ClientToken is set programmatically in DeDupApp via NativeLib to avoid APK exposure -->
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="${facebook_app_id}" />
-        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="${facebook_client_token}"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -129,10 +140,11 @@
         </receiver>
 
         <!-- Receiver for Storage Level Monitoring -->
-        <!-- Protected by checking the action and potentially the sender in code -->
+        <!-- exported="false": DEVICE_STORAGE_LOW/OK are protected broadcasts (system-only),
+             so the system still delivers them; third-party apps cannot target this receiver. -->
         <receiver
             android:name=".core.notifications.StorageLevelReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
                 <action android:name="android.intent.action.DEVICE_STORAGE_OK" />

@@ -3,6 +3,7 @@ package com.rp.dedup.core.firebase.notifications
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.rp.dedup.core.common.Constants
 import com.rp.dedup.core.notifications.AppNotificationManager
 
 class FirebaseMessageService : FirebaseMessagingService() {
@@ -18,7 +19,7 @@ class FirebaseMessageService : FirebaseMessagingService() {
         // Check if message contains a notification payload.
         message.notification?.let {
             val title = it.title ?: "DeDup"
-            val body = it.body ?: ""
+            val body = it.body ?: Constants.EMPTY_STRING
             
             // Show notification using our app manager
             val notificationManager = AppNotificationManager(applicationContext)

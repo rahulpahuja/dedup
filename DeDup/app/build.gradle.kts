@@ -37,18 +37,18 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Inject secrets into BuildConfig for Kotlin code access
-        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
-        buildConfigField("String", "FACEBOOK_APP_ID", "\"$facebookAppId\"")
-        buildConfigField("String", "FACEBOOK_CLIENT_TOKEN", "\"$facebookClientToken\"")
-
-        // Manifest placeholders for AndroidManifest.xml access
+        // Manifest placeholder for Facebook SDK (ApplicationId must be in manifest)
         manifestPlaceholders["facebook_app_id"] = facebookAppId
-        manifestPlaceholders["facebook_client_token"] = facebookClientToken
 
         externalNativeBuild {
             cmake {
                 cppFlags += ""
+                // Inject secrets into the native .so — keeps them out of DEX/BuildConfig
+                arguments += listOf(
+                    "-DGOOGLE_WEB_CLIENT_ID=$googleWebClientId",
+                    "-DFACEBOOK_APP_ID=$facebookAppId",
+                    "-DFACEBOOK_CLIENT_TOKEN=$facebookClientToken"
+                )
             }
         }
     }
@@ -65,9 +65,11 @@ android {
         create("dev") {
             dimension = "environment"
             versionNameSuffix = "-dev"
+            buildConfigField("Boolean", "IS_PROD", "false")
         }
         create("prod") {
             dimension = "environment"
+            buildConfigField("Boolean", "IS_PROD", "true")
         }
     }
 

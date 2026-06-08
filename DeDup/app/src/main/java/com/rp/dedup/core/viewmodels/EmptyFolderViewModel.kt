@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.model.EmptyFolder
-import com.rp.dedup.core.model.EmptyFolderState
+import com.rp.dedup.core.model.state.EmptyFolderState
 import com.rp.dedup.core.deepoptimization.EmptyFolderRepository
 import com.rp.dedup.core.deepoptimization.EmptyFolderRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher

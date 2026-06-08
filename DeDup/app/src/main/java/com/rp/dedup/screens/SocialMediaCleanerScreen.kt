@@ -29,11 +29,11 @@ import coil.compose.AsyncImage
 import com.rp.dedup.R
 import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
+import com.rp.dedup.core.common.Constants
 import com.rp.dedup.core.model.SocialMediaFile
-import com.rp.dedup.core.model.SocialMediaCleanerState
+import com.rp.dedup.core.model.state.SocialMediaCleanerState
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
-import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,7 +87,7 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.delete_selected_btn, selectedUris.size, "").split(" (")[0]) // Temporary hack to reuse string
+                            Text(stringResource(R.string.delete_selected_btn, selectedUris.size, Constants.EMPTY_STRING).split(" (")[0]) // Temporary hack to reuse string
                         }
                     }
                 }

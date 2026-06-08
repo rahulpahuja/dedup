@@ -24,11 +24,10 @@ import androidx.navigation.NavHostController
 import com.rp.dedup.R
 import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
-import com.rp.dedup.core.model.WhatsAppCleanerState
+import com.rp.dedup.core.model.state.WhatsAppCleanerState
 import com.rp.dedup.core.model.WhatsAppFile
 import com.rp.dedup.core.model.WhatsAppScanResult
 import com.rp.dedup.core.ui.DeDupTopBar
-import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 

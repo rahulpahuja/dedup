@@ -9,11 +9,14 @@
         h1, h2 { color: #2c3e50; }
         .date { color: #7f8c8d; font-style: italic; }
         .contact { background: #f9f9f9; padding: 15px; border-left: 5px solid #3498db; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+        th { background: #f2f2f2; }
     </style>
 </head>
 <body>
     <h1>Privacy Policy for DeDup</h1>
-    <p class="date">Last Updated: May 2026</p>
+    <p class="date">Last Updated: June 2026</p>
 
     <p>Rahul Pahuja ("we," "us," or "our") operates the <strong>DeDup</strong> mobile application. Your privacy is important to us, and this document explains how we handle your data.</p>
 
@@ -23,33 +26,53 @@
         <li><strong>Account Data:</strong> If you log in via Google or Facebook, we collect your name, email, and profile picture to personalize your experience.</li>
         <li><strong>Device Information:</strong> We collect model, OS version, and unique identifiers (via Firebase Analytics) to improve app performance.</li>
         <li><strong>Crash Reports:</strong> We use Firebase Crashlytics to collect logs when the app crashes to help us fix bugs.</li>
+        <li><strong>Feedback & Error Reports:</strong> If you submit feedback or the app encounters an error, a report is sent to our Firebase database. This report contains only app-state information (error type, message) and never includes file names, file contents, or personal files.</li>
     </ul>
 
     <h2>2. Permissions and Data Usage</h2>
-    <p>To provide its core functionality as a storage optimization tool, DeDup requires access to your device's storage. We handle this access with the highest regard for your privacy:</p>
+    <p>DeDup requests only the permissions required by each specific feature. The table below explains each permission, which feature uses it, and what we do with the access.</p>
 
-    <ul>
-        <li><strong>All Files Access (MANAGE_EXTERNAL_STORAGE):</strong>
-            <br><em>Why:</em> This is the core permission of the app. It allows us to scan your entire storage (including non-media files) to identify duplicate documents, zip files, and other "junk" that consumes space.
-            <br><em>Usage:</em> We use this to calculate file hashes locally for comparison. We <strong>do not</strong> read the content of your personal documents for any purpose other than deduplication.
-        </li>
-        <li><strong>Media Permissions (Images, Video, Audio):</strong>
-            <br><em>Why:</em> These granular permissions allow us to specifically scan your gallery and music library for duplicate photos, videos, and songs.
-            <br><em>Usage:</em> Used to generate thumbnails for your preview and to perform bit-by-bit comparisons to find exact duplicates.
-        </li>
-        <li><strong>Notifications:</strong>
-            <br><em>Why:</em> To alert you when your device storage is running low or when a scanning task is complete.
-            <br><em>Usage:</em> Purely for functional alerts; no marketing notifications are sent without your explicit consent.
-        </li>
-    </ul>
+    <table>
+        <tr>
+            <th>Permission</th>
+            <th>Used by</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td><strong>All Files Access</strong><br>(MANAGE_EXTERNAL_STORAGE, Android 11+)</td>
+            <td>Social Media Cleaner, WhatsApp Cleaner, Empty Folder Remover, Storage Map, File Browser</td>
+            <td>These features must access directories outside MediaStore (e.g., <code>/Android/media/com.whatsapp/</code>, arbitrary folder trees). Access is requested at the time you open one of these features. Image and video scanning do <em>not</em> use this permission.</td>
+        </tr>
+        <tr>
+            <td><strong>Read Media Images / Videos / Audio</strong></td>
+            <td>Photo scanner, Video scanner, Audio scanner</td>
+            <td>Scoped media permissions used to read only photos, videos, and audio files. No broad filesystem access is granted or needed for these scanners.</td>
+        </tr>
+        <tr>
+            <td><strong>Read/Write Contacts</strong></td>
+            <td>Contact Deduplication</td>
+            <td>Reads your contacts to detect and merge duplicates. Contact data is processed entirely on-device and never transmitted.</td>
+        </tr>
+        <tr>
+            <td><strong>Notifications</strong></td>
+            <td>Storage level alerts, scan completion</td>
+            <td>Functional alerts only. No marketing notifications are sent without your explicit consent.</td>
+        </tr>
+        <tr>
+            <td><strong>Coarse Location</strong></td>
+            <td>Sunrise/sunset auto-theme</td>
+            <td>Used only to calculate local sunrise/sunset times for automatic light/dark theme switching. Location is never stored or transmitted.</td>
+        </tr>
+    </table>
 
     <p><strong>Local Processing Guarantee:</strong> All file scanning, hashing, and duplicate detection happen <strong>entirely on your device</strong>. No file names, file contents, or metadata from your storage are ever transmitted to our servers or any third parties.</p>
 
     <h2>3. Third-Party Services</h2>
-    <p>We use the following third-party services that may collect data:</p>
+    <p>We use the following third-party services that may collect data as described in their own privacy policies:</p>
     <ul>
-        <li>Google Play Services / Firebase (Analytics, Crashlytics, Auth)</li>
-        <li>Facebook Login SDK</li>
+        <li><strong>Google Firebase</strong> (Analytics, Crashlytics, Authentication, Cloud Messaging, Realtime Database) — <a href="https://policies.google.com/privacy">Google Privacy Policy</a></li>
+        <li><strong>Facebook Login SDK</strong> — <a href="https://www.facebook.com/privacy/policy/">Facebook Privacy Policy</a></li>
+        <li><strong>Google Play Integrity API</strong> — used to verify that the app is running on an unmodified device. No personal data is included in integrity checks.</li>
     </ul>
 
     <h2>4. Facebook Data Deletion</h2>
@@ -59,7 +82,7 @@
         <li>Contact us at the email below to request manual deletion of your account data.</li>
     </ol>
 
-    <h2>5. International Data Protection Rights (GDPR & DPDP)</h2>
+    <h2>5. International Data Protection Rights (GDPR &amp; DPDP)</h2>
     <p>We respect your rights regarding your personal data. Depending on your location (such as the European Union under GDPR or India under the DPDP Act), you have the following rights:</p>
     <ul>
         <li><strong>Right to Access:</strong> You can request a copy of the personal data we hold about you (e.g., your account profile).</li>
@@ -79,7 +102,14 @@
     </ul>
 
     <h2>7. Security</h2>
-    <p>We use industry-standard encryption (SQLCipher) to protect your local scan history and settings stored on your device.</p>
+    <p>We apply the following technical measures to protect data stored on your device:</p>
+    <ul>
+        <li><strong>Encrypted local database:</strong> Your scan history and app data are stored in a SQLCipher-encrypted Room database. The encryption key is generated randomly per-device and protected by the Android Keystore (hardware-backed where available).</li>
+        <li><strong>No cloud backup of sensitive data:</strong> Your scan history, encrypted database, and app settings are explicitly excluded from Google cloud backups and device-to-device transfers. Only your app preferences (theme, language, currency) are eligible for backup, and those contain no personal data.</li>
+        <li><strong>Credential protection:</strong> Authentication tokens and third-party SDK credentials are not stored in easily accessible parts of the app binary. They reside in the compiled native layer of the application.</li>
+        <li><strong>Network security:</strong> All network communication uses HTTPS with system certificate authorities. Cleartext (HTTP) traffic is blocked at the network layer.</li>
+        <li><strong>Device integrity:</strong> DeDup uses the Google Play Integrity API to verify the app is running on an unmodified Android device and a genuine build of the app.</li>
+    </ul>
 
     <h2>8. Disclaimer of Warranties and Limitation of Liability</h2>
     <p>The DeDup application is provided on an "AS IS" and "AS AVAILABLE" basis. Rahul Pahuja makes no representations or warranties of any kind, express or implied, as to the operation of the app, the accuracy of the duplicate detection, or the information, content, or materials included in the app.</p>
@@ -87,7 +117,7 @@
     <p><strong>Limitation of Liability:</strong> In no event shall Rahul Pahuja be liable for any damages of any kind arising from the use of the app, including, but not limited to, direct, indirect, incidental, punitive, and consequential damages, or any loss of data resulting from the use of the file deletion features.</p>
 
     <div class="contact">
-        <h2>9. Contact & Grievance Redressal</h2>
+        <h2>9. Contact &amp; Grievance Redressal</h2>
         <p>If you have any questions, data requests, or grievances, please contact our Data Protection/Grievance Officer:</p>
         <p><strong>Name:</strong> Rahul Pahuja</p>
         <p><strong>Email:</strong> therahulpahuja@gmail.com</p>

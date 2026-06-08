@@ -34,6 +34,7 @@ import com.facebook.login.LoginResult
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthProvider
+import com.rp.dedup.core.common.Constants
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.notifications.AppNotificationManager
 import com.rp.dedup.core.notifications.SnackbarManager
@@ -42,9 +43,9 @@ import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
 
 // ── Test credentials (removed for security) ───────────────────
-private const val TEST_GOOGLE_EMAIL    = ""
-private const val TEST_EMAIL_PASSWORD  = ""
-private const val TEST_PHONE_NUMBER    = ""
+private const val TEST_GOOGLE_EMAIL    = Constants.EMPTY_STRING
+private const val TEST_EMAIL_PASSWORD  = Constants.EMPTY_STRING
+private const val TEST_PHONE_NUMBER    = Constants.EMPTY_STRING
 
 class DemotestActivity : ComponentActivity() {
 

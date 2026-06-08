@@ -2,7 +2,7 @@ package com.rp.dedup.core.utils
 
 import android.content.Context
 import android.util.Log
-import com.rp.dedup.core.model.CleaningProgress
+import com.rp.dedup.core.model.state.CleaningProgress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

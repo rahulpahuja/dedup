@@ -247,8 +247,21 @@ fun FileCleanupScreen(navController: NavHostController) {
                     iconTint = file.iconTint,
                     isCountType = file.isCountType,
                     onClick = {
-                        if (file.title == context.getString(R.string.large_app_downloads)) {
-                            navController.navigate(Screen.FileScanner.createRoute("apk"))
+                        when (file.title) {
+                            context.getString(R.string.unused_video_assets) -> {
+                                navController.navigate(Screen.VideoScanner.route)
+                            }
+                            context.getString(R.string.large_app_downloads) -> {
+                                navController.navigate(Screen.FileScanner.createRoute("apk"))
+                            }
+                            context.getString(R.string.obsolete_archives) -> {
+                                // Archives usually handled in file scanner or browser
+                                // For now, navigate to File Browser to let user manage them
+                                navController.navigate(Screen.FileBrowser.route)
+                            }
+                            context.getString(R.string.old_downloads) -> {
+                                navController.navigate(Screen.FileBrowser.route)
+                            }
                         }
                     }
                 )

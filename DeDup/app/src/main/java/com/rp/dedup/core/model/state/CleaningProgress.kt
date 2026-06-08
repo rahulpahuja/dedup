@@ -1,4 +1,4 @@
-package com.rp.dedup.core.model
+package com.rp.dedup.core.model.state
 
 sealed class CleaningProgress {
     data class Scanning(val filesFound: Int) : CleaningProgress()

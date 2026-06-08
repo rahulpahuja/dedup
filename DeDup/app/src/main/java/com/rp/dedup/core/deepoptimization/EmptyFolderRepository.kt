@@ -2,6 +2,7 @@ package com.rp.dedup.core.deepoptimization
 
 import android.content.Context
 import android.os.Environment
+import com.rp.dedup.core.common.Constants
 import com.rp.dedup.core.model.EmptyFolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,7 +26,7 @@ class EmptyFolderRepositoryImpl(private val context: Context) : EmptyFolderRepos
                 EmptyFolder(
                     path = dir.absolutePath,
                     name = dir.name,
-                    parentPath = dir.parent ?: ""
+                    parentPath = dir.parent ?: Constants.EMPTY_STRING
                 )
             }
             .sortedByDescending { it.path.length } // deepest first for safe deletion

@@ -34,7 +34,7 @@ import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.core.model.FolderNode
 import com.rp.dedup.core.deepoptimization.TreemapLayoutCalculator
 import com.rp.dedup.core.deepoptimization.TreemapLayoutCalculator.TreemapCell
-import com.rp.dedup.core.model.BigFileMapState
+import com.rp.dedup.core.model.state.BigFileMapState
 import com.rp.dedup.core.viewmodels.BigFileMapViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
 import androidx.compose.ui.res.stringResource

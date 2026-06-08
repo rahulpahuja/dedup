@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
-import com.rp.dedup.core.model.SocialMediaCleanerState
+import com.rp.dedup.core.model.state.SocialMediaCleanerState
 import com.rp.dedup.core.model.SocialMediaFile
 import com.rp.dedup.core.deepoptimization.SocialMediaCleanerRepository
 import com.rp.dedup.core.deepoptimization.SocialMediaCleanerRepositoryImpl

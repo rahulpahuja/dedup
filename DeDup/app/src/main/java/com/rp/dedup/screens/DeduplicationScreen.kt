@@ -18,23 +18,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -50,8 +48,8 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,6 +69,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.lazy.rememberLazyListState
+import com.rp.dedup.BuildConfig
 import com.rp.dedup.core.PaginationBar
 import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
@@ -80,7 +79,6 @@ import com.rp.dedup.core.model.ContactDataEntry
 import com.rp.dedup.core.model.MergePreviewGroup
 import com.rp.dedup.core.model.ScannedContact
 import com.rp.dedup.core.viewmodels.ContactScannerViewModel
-import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.ui.theme.DarkCyan
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -108,7 +106,10 @@ fun DeduplicationScreen(navController: NavHostController) {
     val profileViewModel = LocalUserProfileViewModel.current
     val isGuest = profileViewModel.isGuest
 
-    val selectedIds = remember { mutableStateListOf<String>() }
+    // SnapshotStateMap gives Compose fine-grained, direct observability — reads of
+    // selectedIds[id] inside composables automatically trigger recomposition when that
+    // entry changes, unlike Set<String> which requires passing a new value reference.
+    val selectedIds = remember { mutableStateMapOf<String, Boolean>() }
     val isPreparingMerge by viewModel.isPreparingMerge.collectAsState()
     val mergePreview by viewModel.mergePreview.collectAsState()
     var showGuestSignInDialog by remember { mutableStateOf(false) }
@@ -116,6 +117,13 @@ fun DeduplicationScreen(navController: NavHostController) {
     // Primary contact IDs (index 0 of each group) must never be deleted.
     val primaryIds = remember(duplicateGroups) {
         duplicateGroups.mapNotNull { it.firstOrNull()?.id }.toSet()
+    }
+
+    // Derived state ensures the bottomBar (inside Scaffold's SubcomposeLayout slot)
+    // always reacts to selectedIds changes — raw map reads inside subcompose lambdas
+    // can be silently skipped if the slot's scope isn't re-entered by Compose.
+    val deletableSelectedCount by remember {
+        derivedStateOf { selectedIds.count { (k, v) -> v && k !in primaryIds } }
     }
 
     // Pagination State
@@ -170,12 +178,14 @@ fun DeduplicationScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { navController.navigate(UIConstants.ROUTE_CONTACT_TEST) }) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = "Test Lab",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    if (!(BuildConfig.IS_PROD && !BuildConfig.DEBUG)) {
+                        IconButton(onClick = { navController.navigate(UIConstants.ROUTE_CONTACT_TEST) }) {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = "Test Lab",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             )
@@ -189,14 +199,15 @@ fun DeduplicationScreen(navController: NavHostController) {
                         onPageChange = { currentPage = it }
                     )
                 }
-                val deletableSelected = selectedIds.count { it !in primaryIds }
-                if (deletableSelected > 0) {
+                if (deletableSelectedCount > 0) {
                     SelectionBar(
-                        selectedCount = deletableSelected,
+                        selectedCount = deletableSelectedCount,
                         isLoading = isPreparingMerge,
                         onMerge = {
                             if (isGuest) showGuestSignInDialog = true
-                            else viewModel.prepareMergePreview(selectedIds.toList())
+                            else viewModel.prepareMergePreview(
+                                selectedIds.filter { it.value }.keys.toList()
+                            )
                         }
                     )
                 }
@@ -290,58 +301,45 @@ fun DeduplicationScreen(navController: NavHostController) {
                             title = stringResource(R.string.identical_name),
                             subtitle = stringResource(R.string.identical_name_desc),
                             onSelectAll = {
-                                // Only select non-primary (index > 0) contacts in each group.
                                 duplicateGroups.forEach { group ->
                                     group.drop(1).forEach { contact ->
-                                        if (!selectedIds.contains(contact.id)) {
-                                            selectedIds.add(contact.id)
-                                        }
+                                        selectedIds[contact.id] = true
                                     }
                                 }
                             }
                         )
                     }
-                    items(pageGroups) { group ->
-                        DuplicateContactGroup(
-                            group = group,
-                            selectedIds = selectedIds,
-                            onToggleSelect = { id ->
-                                // Silently refuse to select a primary contact.
-                                if (id in primaryIds) return@DuplicateContactGroup
-                                if (selectedIds.contains(id)) selectedIds.remove(id)
-                                else selectedIds.add(id)
-                            }
-                        )
+                    items(
+                        items = pageGroups,
+                        key = { group -> group.map { it.id }.sorted().joinToString(",") }
+                    ) { group ->
+                        group.forEachIndexed { index, contact ->
+                            val isPrimary = index == 0
+                            ContactCard(
+                                id = contact.id,
+                                initials = contact.name.initials().ifEmpty { "?" },
+                                name = contact.name,
+                                phone = contact.phoneNumbers.firstOrNull(),
+                                badge = if (isPrimary) stringResource(R.string.primary_record) else stringResource(R.string.duplicate),
+                                badgeColor = if (isPrimary) LightCyan else MaterialTheme.colorScheme.surface,
+                                badgeTextColor = if (isPrimary) DarkCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                                isSelected = selectedIds[contact.id] == true,
+                                isSelectable = !isPrimary,
+                                onToggleSelect = { id ->
+                                    if (!isPrimary) {
+                                        if (selectedIds[id] == true) selectedIds.remove(id)
+                                        else selectedIds[id] = true
+                                    }
+                                }
+                            )
+                            if (index < group.lastIndex) Spacer(modifier = Modifier.height(8.dp))
+                        }
                         Spacer(modifier = Modifier.height(24.dp))
                     }
                     item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DuplicateContactGroup(
-    group: List<ScannedContact>,
-    selectedIds: List<String>,
-    onToggleSelect: (String) -> Unit
-) {
-    group.forEachIndexed { index, contact ->
-        val isPrimary = index == 0
-        ContactCard(
-            id = contact.id,
-            initials = contact.name.initials().ifEmpty { "?" },
-            name = contact.name,
-            phone = contact.phoneNumbers.firstOrNull(),
-            badge = if (isPrimary) stringResource(R.string.primary_record) else stringResource(R.string.duplicate),
-            badgeColor = if (isPrimary) LightCyan else MaterialTheme.colorScheme.surface,
-            badgeTextColor = if (isPrimary) DarkCyan else MaterialTheme.colorScheme.onSurfaceVariant,
-            isSelected = selectedIds.contains(contact.id),
-            isSelectable = !isPrimary,
-            onToggleSelect = onToggleSelect
-        )
-        if (index < group.lastIndex) Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -477,10 +475,14 @@ fun ContactCard(
                 }
             }
             if (isSelectable) {
-                Checkbox(
-                    checked = isSelected,
-                    onCheckedChange = { onToggleSelect(id) },
-                    modifier = Modifier.align(Alignment.TopEnd)
+                // Icon has no touch target — taps pass through to Card's clickable,
+                // avoiding the 48dp minimum-touch-target absorption that Checkbox adds.
+                Icon(
+                    imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                    contentDescription = null,
+                    tint = if (isSelected) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.align(Alignment.TopEnd).size(24.dp)
                 )
             }
         }

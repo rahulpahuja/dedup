@@ -1,4 +1,4 @@
-package com.rp.dedup.core.model
+package com.rp.dedup.core.model.state
 
 import android.net.Uri
 import com.rp.dedup.core.search.SmartJunkRepository

@@ -10,73 +10,55 @@ import java.security.KeyStore
 import java.security.SecureRandom
 import androidx.core.content.edit
 
-/**
- * Manages the generation and retrieval of secure keys for database encryption.
- * Uses EncryptedSharedPreferences to securely store a randomly generated key.
- */
 object KeyManager {
     private const val PREFS_NAME = "secure_prefs"
     private const val DB_KEY_ALIAS = "db_encryption_key"
 
     /**
-     * Retrieves an existing database key or generates a new one if it doesn't exist.
-     * The key is stored securely using EncryptedSharedPreferences.
+     * Retrieves or generates the database encryption key.
+     * Throws if the AndroidKeyStore is unavailable or corrupted — callers must
+     * surface a meaningful error rather than silently resetting.
      */
     fun getOrCreateDatabaseKey(context: Context): ByteArray {
-        return try {
-            getOrGenerateKey(context)
+        return getOrGenerateKey(context)
+    }
+
+    /**
+     * Explicit, user-triggered reset path only — destroys all encrypted data.
+     * Call this only in response to a deliberate "reset app data" user action,
+     * never automatically on error.
+     */
+    fun resetEncryptionKey(context: Context) {
+        Log.w("KeyManager", "Explicit encryption key reset requested — all encrypted data will be lost")
+        try {
+            val keyStore = KeyStore.getInstance("AndroidKeyStore")
+            keyStore.load(null)
+            keyStore.deleteEntry("_androidx_security_master_key_")
+            keyStore.deleteEntry(DB_KEY_ALIAS)
         } catch (e: Exception) {
-            Log.e("KeyManager", "Failed to get or create database key, attempting recovery", e)
-            
-            // Serious failure, likely KeyStore corruption or master key mismatch.
-            // Wipe everything and start over.
-            try {
-                val keyStore = KeyStore.getInstance("AndroidKeyStore")
-                keyStore.load(null)
-                keyStore.deleteEntry("_androidx_security_master_key_")
-                keyStore.deleteEntry(DB_KEY_ALIAS) // Just in case
-            } catch (ex: Exception) {
-                Log.e("KeyManager", "Failed to delete master key from KeyStore", ex)
-            }
-            
-            try {
-                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
-                // Manually delete the preferences file to be absolutely sure
-                val prefsFile = File(context.filesDir.parent, "shared_prefs/$PREFS_NAME.xml")
-                if (prefsFile.exists()) {
-                    prefsFile.delete()
-                }
-            } catch (ex: Exception) {
-                Log.e("KeyManager", "Failed to clear shared preferences", ex)
-            }
-            
-            // Try one last time. If it fails now, we let the exception bubble up.
-            getOrGenerateKey(context)
+            Log.e("KeyManager", "Failed to delete entries from AndroidKeyStore during reset", e)
+        }
+        try {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+            val prefsFile = File(context.filesDir.parent, "shared_prefs/$PREFS_NAME.xml")
+            if (prefsFile.exists()) prefsFile.delete()
+        } catch (e: Exception) {
+            Log.e("KeyManager", "Failed to clear shared preferences during reset", e)
         }
     }
 
     private fun getOrGenerateKey(context: Context): ByteArray {
-        val masterKey = try {
-            MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-        } catch (e: Exception) {
-            Log.e("KeyManager", "Failed to create MasterKey", e)
-            throw e
-        }
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
 
-        val sharedPreferences = try {
-            EncryptedSharedPreferences.create(
-                context,
-                PREFS_NAME,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
-        } catch (e: Exception) {
-            Log.e("KeyManager", "Failed to create EncryptedSharedPreferences", e)
-            throw e
-        }
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            context,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+        )
 
         val encodedKey = sharedPreferences.getString(DB_KEY_ALIAS, null)
         return if (encodedKey != null) {
@@ -84,8 +66,7 @@ object KeyManager {
         } else {
             val newKey = ByteArray(32)
             SecureRandom().nextBytes(newKey)
-            val base64Key = Base64.encodeToString(newKey, Base64.DEFAULT)
-            sharedPreferences.edit { putString(DB_KEY_ALIAS, base64Key) }
+            sharedPreferences.edit { putString(DB_KEY_ALIAS, Base64.encodeToString(newKey, Base64.DEFAULT)) }
             newKey
         }
     }

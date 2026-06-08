@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+    <!-- EncryptedSharedPreferences key store — contains DB encryption key -->
     <exclude domain="sharedpref" path="secure_prefs.xml"/>
+    <!-- DataStore preferences (settings, currency, theme, etc.) -->
+    <exclude domain="file" path="datastore/"/>
+    <!-- Room database and its WAL/SHM journal files -->
+    <exclude domain="database" path="dedup_database"/>
+    <exclude domain="database" path="dedup_database-shm"/>
+    <exclude domain="database" path="dedup_database-wal"/>
 </full-backup-content>
