@@ -21,6 +21,7 @@ class DataStoreManager(private val context: Context) {
     companion object {
         val LAST_SCAN_TIME = stringPreferencesKey(Constants.LAST_SCAN_TIME)
         val THEME_MODE = stringPreferencesKey(Constants.THEME_MODE)
+        val SELECTED_PALETTE = stringPreferencesKey(Constants.SELECTED_PALETTE)
         val TUTORIAL_SHOWN = booleanPreferencesKey("tutorial_shown")
         val LONG_PRESS_TUTORIAL_SHOWN = booleanPreferencesKey("long_press_tutorial_shown")
         val SIMILARITY_THRESHOLD = stringPreferencesKey("similarity_threshold") // Stores int as string for simpler generic logic

@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.model.AppPalette
 import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.theme.SolarThemeCalculator
 import kotlinx.coroutines.delay
@@ -29,9 +30,26 @@ class ThemeViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
         initialValue = ThemeMode.AUTO
     )
 
+    val appPalette: StateFlow<AppPalette> = dataStoreManager.readData(
+        DataStoreManager.SELECTED_PALETTE,
+        AppPalette.OCEAN.name
+    ).map { name ->
+        try { AppPalette.valueOf(name) } catch (_: Exception) { AppPalette.OCEAN }
+    }.stateIn(
+        scope          = viewModelScope,
+        started        = SharingStarted.WhileSubscribed(5000),
+        initialValue   = AppPalette.OCEAN
+    )
+
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
             dataStoreManager.writeData(DataStoreManager.THEME_MODE, mode.name)
+        }
+    }
+
+    fun setPalette(palette: AppPalette) {
+        viewModelScope.launch {
+            dataStoreManager.writeData(DataStoreManager.SELECTED_PALETTE, palette.name)
         }
     }
 

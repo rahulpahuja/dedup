@@ -4,9 +4,11 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -43,6 +45,8 @@ import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.firebase.db.FirebaseDbManager
 import com.rp.dedup.core.i18n.LocaleManager
+import androidx.compose.ui.draw.clip
+import com.rp.dedup.core.model.AppPalette
 import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.core.ui.DeDupTopBar
@@ -74,6 +78,7 @@ fun SettingsScreen(navController: NavHostController) {
     )
 
     val currentThemeMode by themeViewModel.themeMode.collectAsState()
+    val currentPalette by themeViewModel.appPalette.collectAsState()
     val similarityThreshold by settingsViewModel.similarityThreshold.collectAsState()
     val excludedFolders by settingsViewModel.excludedFolders.collectAsState()
     val autoScanOnStartup by settingsViewModel.autoScanOnStartup.collectAsState()
@@ -131,7 +136,7 @@ fun SettingsScreen(navController: NavHostController) {
                     icon = Icons.Default.Palette,
                     iconColor = UIConstants.ColorIconPalette,
                     title = stringResource(R.string.theme_setting),
-                    trailing = { ThemeBadge(currentThemeMode) },
+                    trailing = { ThemeBadge(currentThemeMode, currentPalette) },
                     onClick = { showThemeDialog = true }
                 )
 
@@ -330,12 +335,16 @@ fun SettingsScreen(navController: NavHostController) {
 
     if (showThemeDialog) {
         ThemePickerDialog(
-            currentMode = currentThemeMode,
-            onDismiss = { showThemeDialog = false },
-            onSelect = { mode ->
+            currentMode    = currentThemeMode,
+            currentPalette = currentPalette,
+            onDismiss      = { showThemeDialog = false },
+            onSelectMode   = { mode ->
                 analyticsManager.logSettingChanged("THEME", mode.name)
                 themeViewModel.setThemeMode(mode)
-                showThemeDialog = false
+            },
+            onSelectPalette = { palette ->
+                analyticsManager.logSettingChanged("THEME_PALETTE", palette.name)
+                themeViewModel.setPalette(palette)
             }
         )
     }
@@ -850,118 +859,257 @@ private fun SettingsRow(
     }
 }
 
+// ── Palette metadata (UI layer — colours intentionally hardcoded here) ────────
+private data class PaletteOption(
+    val palette:   AppPalette,
+    val name:      String,
+    val primary:   Color,
+    val secondary: Color,
+    val accent:    Color
+)
+
+private val PALETTE_OPTIONS = listOf(
+    PaletteOption(AppPalette.OCEAN,      "Ocean",    Color(0xFF0056D2), Color(0xFF00838F), Color(0xFF80DEEA)),
+    PaletteOption(AppPalette.MIDNIGHT,   "Midnight", Color(0xFF7C4DFF), Color(0xFF9C8FFF), Color(0xFFCF6679)),
+    PaletteOption(AppPalette.FOREST,     "Forest",   Color(0xFF2E7D32), Color(0xFF388E3C), Color(0xFF81C784)),
+    PaletteOption(AppPalette.SUNSET,     "Sunset",   Color(0xFFE65100), Color(0xFFEF6C00), Color(0xFFFF8F00)),
+    PaletteOption(AppPalette.ROSE,       "Rose",     Color(0xFFAD1457), Color(0xFFC2185B), Color(0xFFFF80AB)),
+    PaletteOption(AppPalette.MONOCHROME, "Mono",     Color(0xFF424242), Color(0xFF616161), Color(0xFF9E9E9E)),
+)
+
 @Composable
-private fun ThemeBadge(mode: ThemeMode) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-    ) {
-        Text(
-            text = mode.name.lowercase().replaceFirstChar { it.uppercaseChar() },
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelMedium.copy(
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
+private fun ThemeBadge(mode: ThemeMode, palette: AppPalette) {
+    val opt = PALETTE_OPTIONS.find { it.palette == palette } ?: PALETTE_OPTIONS.first()
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(opt.primary)
         )
+        Spacer(Modifier.width(6.dp))
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = opt.primary.copy(alpha = 0.15f)
+        ) {
+            Text(
+                text = opt.name,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color      = opt.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
     }
 }
 
 @Composable
 private fun ThemePickerDialog(
-    currentMode: ThemeMode,
-    onDismiss: () -> Unit,
-    onSelect: (ThemeMode) -> Unit
+    currentMode:     ThemeMode,
+    currentPalette:  AppPalette,
+    onDismiss:       () -> Unit,
+    onSelectMode:    (ThemeMode) -> Unit,
+    onSelectPalette: (AppPalette) -> Unit
 ) {
-    val themeOptions = listOf(
-        Triple(ThemeMode.LIGHT, Icons.Default.LightMode,          UIConstants.ColorThemeLight),
-        Triple(ThemeMode.DARK,  Icons.Default.DarkMode,           UIConstants.ColorThemeDark),
-        Triple(ThemeMode.AUTO,  Icons.Default.SettingsBrightness, UIConstants.ColorThemeAuto)
+    val modeOptions = listOf(
+        Triple(ThemeMode.LIGHT, Icons.Default.LightMode,          "Light"),
+        Triple(ThemeMode.DARK,  Icons.Default.DarkMode,           "Dark"),
+        Triple(ThemeMode.AUTO,  Icons.Default.SettingsBrightness, "Auto")
     )
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            tonalElevation = 6.dp
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .wrapContentHeight(),
+            shape          = RoundedCornerShape(28.dp),
+            color          = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+            border         = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
+
+                // ── Header ──────────────────────────────────────────────────
                 Text(
-                    "Choose Theme",
+                    "Appearance",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "Controls the app's color scheme",
+                    "Personalize how DeDup looks and feels",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(24.dp))
 
-                themeOptions.forEach { (mode, icon, tint) ->
-                    val selected = currentMode == mode
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clickable { onSelect(mode) },
-                        shape = RoundedCornerShape(14.dp),
-                        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        border = BorderStroke(
-                            1.dp,
-                            if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                            else MaterialTheme.colorScheme.outlineVariant
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = tint.copy(alpha = 0.18f),
-                                modifier = Modifier.size(36.dp)
+                // ── Brightness mode ──────────────────────────────────────────
+                Text(
+                    "MODE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight    = FontWeight.Bold,
+                        letterSpacing = 2.sp,
+                        color         = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                Spacer(Modifier.height(10.dp))
+
+                Surface(
+                    shape    = RoundedCornerShape(14.dp),
+                    border   = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                        modeOptions.forEachIndexed { index, (mode, icon, label) ->
+                            val selected = currentMode == mode
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .background(
+                                        if (selected) MaterialTheme.colorScheme.primary
+                                        else Color.Transparent
+                                    )
+                                    .clickable { onSelectMode(mode) }
+                                    .padding(vertical = 14.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(icon, null, tint = tint, modifier = Modifier.size(18.dp))
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        icon,
+                                        contentDescription = label,
+                                        tint = if (selected) Color.White
+                                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        label,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (selected) Color.White
+                                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    )
                                 }
                             }
-                            Spacer(Modifier.width(14.dp))
-                            Text(
-                                text = mode.name.lowercase().replaceFirstChar { it.uppercaseChar() },
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                                ),
-                                color = if (selected) MaterialTheme.colorScheme.onSurface
-                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            if (selected) {
-                                Icon(
-                                    Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
+                            if (index < modeOptions.lastIndex) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(1.dp)
+                                        .fillMaxHeight()
+                                        .background(MaterialTheme.colorScheme.outlineVariant)
                                 )
                             }
                         }
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(24.dp))
+
+                // ── Color palette grid ───────────────────────────────────────
+                Text(
+                    "COLOR PALETTE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight    = FontWeight.Bold,
+                        letterSpacing = 2.sp,
+                        color         = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                Spacer(Modifier.height(10.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf(PALETTE_OPTIONS.take(3), PALETTE_OPTIONS.drop(3)).forEach { row ->
+                        Row(
+                            modifier             = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            row.forEach { opt ->
+                                PaletteSwatchCard(
+                                    option   = opt,
+                                    selected = currentPalette == opt.palette,
+                                    onClick  = { onSelectPalette(opt.palette) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
                         Text(
-                            stringResource(R.string.cancel),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            "Done",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaletteSwatchCard(
+    option:   PaletteOption,
+    selected: Boolean,
+    onClick:  () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .aspectRatio(0.88f)
+            .clickable(onClick = onClick),
+        shape  = RoundedCornerShape(16.dp),
+        color  = if (selected) option.primary.copy(alpha = 0.10f)
+                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) option.primary
+                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier             = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
+            horizontalAlignment  = Alignment.CenterHorizontally,
+            verticalArrangement  = Arrangement.Center
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                listOf(option.primary, option.secondary, option.accent).forEach { color ->
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                option.name,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    color      = if (selected) option.primary
+                                 else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+            if (selected) {
+                Spacer(Modifier.height(4.dp))
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint               = option.primary,
+                    modifier           = Modifier.size(14.dp)
+                )
             }
         }
     }

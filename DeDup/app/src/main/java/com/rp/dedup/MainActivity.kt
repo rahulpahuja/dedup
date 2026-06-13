@@ -63,7 +63,8 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             val scope = rememberCoroutineScope()
-            DeDupTheme(darkTheme = themeViewModel.isDarkTheme()) {
+            val palette by themeViewModel.appPalette.collectAsState()
+            DeDupTheme(darkTheme = themeViewModel.isDarkTheme(), palette = palette) {
 
                 if (rootResult.isRooted) {
                     RootedDeviceScreen(triggeredChecks = rootResult.triggeredChecks)
