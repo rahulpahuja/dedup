@@ -19,7 +19,7 @@ class CleanupViewModelTest {
 
     private val repository = mockk<FileScannerRepository>(relaxed = true)
 
-    private fun uri(s: String): Uri = mockk { every { toString() } returns s }
+    private fun uri(s: String): Uri = Uri.parse(s)
 
     private fun file(name: String, size: Long, ext: String = "mp4") = ScannedFile(
         uri = uri("content://$name"),

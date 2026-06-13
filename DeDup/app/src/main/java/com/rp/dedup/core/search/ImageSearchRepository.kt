@@ -5,172 +5,156 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.label.ImageLabeling
-import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.resume
 
 class ImageSearchRepository(private val context: Context) {
 
     companion object {
         private const val TAG = "ImageSearchRepo"
+        private const val MAX_RESULTS = 500
     }
-
-    private val labeler = ImageLabeling.getClient(
-        ImageLabelerOptions.Builder()
-            .setConfidenceThreshold(0.45f) // Lowered slightly to improve recall for semantic matches
-            .build()
-    )
-
-    // Semantic map for "Human" queries to ML Kit labels
-    private val semanticMap = mapOf(
-        "pet" to listOf("dog", "cat", "animal", "canine", "feline", "bird", "hamster", "rabbit", "paw"),
-        "food" to listOf("dish", "meal", "cuisine", "vegetable", "fruit", "drink", "tableware", "pizza", "burger", "cake", "bread", "cooking"),
-        "nature" to listOf("tree", "mountain", "sky", "grass", "water", "lake", "ocean", "forest", "flower", "sunset", "sunrise", "beach", "desert"),
-        "document" to listOf("text", "paper", "font", "receipt", "whiteboard", "document", "identity document", "handwriting"),
-        "vehicle" to listOf("car", "bus", "truck", "motorcycle", "bicycle", "aircraft", "boat", "train", "wheel", "automotive"),
-        "portrait" to listOf("person", "face", "smile", "selfie", "human", "man", "woman", "child", "boy", "girl"),
-        "interior" to listOf("room", "furniture", "table", "chair", "wall", "building", "home", "bedroom", "kitchen", "living room"),
-        "landscape" to listOf("view", "horizon", "scenery", "outdoor", "valley", "cliff", "hill"),
-        "sports" to listOf("ball", "player", "game", "stadium", "jersey", "running", "soccer", "basketball", "tennis", "gym"),
-        "art" to listOf("painting", "drawing", "illustration", "sculpture", "mural", "sketch", "sketching", "graphic design")
-    )
-
-    // In-memory label cache for the app session: uri → list of label strings
-    private val labelCache = ConcurrentHashMap<String, List<String>>()
 
     data class SearchResult(
         val uri: Uri,
         val matchedLabels: List<String>
     )
 
-    /** Loads up to [limit] most-recent images from MediaStore. */
-    fun loadRecentImages(limit: Int = 200): List<Uri> {
-        val uris = mutableListOf<Uri>()
-        val projection = arrayOf(MediaStore.Images.Media._ID)
-        context.contentResolver.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            null, null,
-            "${MediaStore.Images.Media.DATE_ADDED} DESC"
-        )?.use { cursor ->
-            val col = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-            var count = 0
-            while (cursor.moveToNext() && count < limit) {
-                uris.add(
-                    ContentUris.withAppendedId(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        cursor.getLong(col)
-                    )
-                )
-                count++
-            }
-        }
-        return uris
-    }
-
-    /** Runs ML Kit image labeling on a single URI. Results are cached. */
-    private suspend fun labelImage(uri: Uri): List<String> {
-        labelCache[uri.toString()]?.let { return it }
-        return suspendCancellableCoroutine { cont ->
-            try {
-                val image = InputImage.fromFilePath(context, uri)
-                labeler.process(image)
-                    .addOnSuccessListener { labels ->
-                        val result = labels.map { it.text.lowercase() }
-                        labelCache[uri.toString()] = result
-                        if (cont.isActive) cont.resume(result)
-                    }
-                    .addOnFailureListener {
-                        if (cont.isActive) cont.resume(emptyList())
-                    }
-            } catch (_: Exception) {
-                if (cont.isActive) cont.resume(emptyList())
-            }
-        }
-    }
+    // Maps user-facing query terms to folder/file name patterns that MediaStore will match.
+    // Keys are stemmed lowercase tokens; values are the LIKE patterns (without '%' — added at query time).
+    private val semanticExpansions: Map<String, List<String>> = mapOf(
+        "screenshot"  to listOf("screenshot"),
+        "screen"      to listOf("screenshot"),
+        "whatsapp"    to listOf("whatsapp"),
+        "telegram"    to listOf("telegram"),
+        "instagram"   to listOf("instagram"),
+        "facebook"    to listOf("facebook"),
+        "twitter"     to listOf("twitter"),
+        "snapchat"    to listOf("snapchat"),
+        "tiktok"      to listOf("tiktok"),
+        "camera"      to listOf("camera", "dcim"),
+        "download"    to listOf("download"),
+        "document"    to listOf("document", "doc", "scan"),
+        "social"      to listOf("instagram", "facebook", "twitter", "snapchat", "tiktok"),
+        "edited"      to listOf("snapseed", "lightroom", "vsco", "picsart", "edited"),
+        "selfie"      to listOf("selfie", "front"),
+        "burst"       to listOf("burst"),
+        "received"    to listOf("received", "shared"),
+        "backup"      to listOf("backup"),
+        "raw"         to listOf(".dng", ".raw", ".arw"),
+        "video"       to listOf("video"),
+    )
 
     /**
-     * Labels all [images] concurrently (up to [concurrency] at a time) and
-     * returns those whose labels match at least one [queryTokens] term.
-     * Calls [onProgress] after each batch.
+     * Searches MediaStore images whose DISPLAY_NAME, BUCKET_DISPLAY_NAME, or RELATIVE_PATH
+     * contains any of the expanded terms derived from [query].
+     * Returns results ordered by most-recently-added.
      */
     suspend fun search(
         query: String,
         onProgress: (labeled: Int, total: Int) -> Unit
-    ): List<SearchResult> = coroutineScope {
-        Log.d(TAG, "Starting search for query: '$query'")
+    ): List<SearchResult> {
         val tokens = tokenize(query)
         if (tokens.isEmpty()) {
-            Log.d(TAG, "No valid tokens found in query. Aborting search.")
-            return@coroutineScope emptyList()
+            Log.d(TAG, "No valid tokens in query '$query'")
+            return emptyList()
         }
-        Log.d(TAG, "Tokenized query: $tokens")
 
-        val images = loadRecentImages()
-        Log.d(TAG, "Loaded ${images.size} recent images for scanning")
-        
+        val searchTerms = expandTokens(tokens)
+        Log.d(TAG, "Query '$query' → tokens $tokens → terms $searchTerms")
+
+        val results = queryMediaStore(searchTerms)
+        onProgress(results.size, results.size)
+        Log.d(TAG, "Found ${results.size} results")
+        return results
+    }
+
+    private fun expandTokens(tokens: List<String>): List<String> {
+        return tokens.flatMap { token ->
+            val expansions = semanticExpansions[token]
+            if (expansions != null) expansions else listOf(token)
+        }.distinct()
+    }
+
+    private fun queryMediaStore(terms: List<String>): List<SearchResult> {
+        val projection = arrayOf(
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.DISPLAY_NAME,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+            MediaStore.Images.Media.RELATIVE_PATH
+        )
+
+        // Build: (DISPLAY_NAME LIKE ? OR BUCKET_DISPLAY_NAME LIKE ? OR RELATIVE_PATH LIKE ?)
+        // for each term, all joined with OR.
+        val searchColumns = listOf(
+            MediaStore.Images.Media.DISPLAY_NAME,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+            MediaStore.Images.Media.RELATIVE_PATH
+        )
+
+        val selectionClauses = terms.flatMap { _ -> searchColumns.map { col -> "$col LIKE ?" } }
+        val selection = selectionClauses.joinToString(" OR ")
+        val selectionArgs = terms.flatMap { term -> List(searchColumns.size) { "%$term%" } }.toTypedArray()
+
         val results = mutableListOf<SearchResult>()
-        var labeledCount = 0
 
-        // Process in batches of 8 to avoid hitting ML Kit concurrency limits
-        images.chunked(8).forEach { batch ->
-            batch.map { uri ->
-                async { labelImage(uri) to uri }
-            }.awaitAll().forEach { (labels, uri) ->
-                labeledCount++
-                
-                val matched = labels.filter { label ->
-                    val lowerLabel = label.lowercase()
-                    tokens.any { token ->
-                        // 1. Exact match with label
-                        val isExactMatch = lowerLabel == token
-                        // 2. Exact semantic match (e.g. user search "pet", label is "dog")
-                        val isSemanticMatch = semanticMap[token]?.contains(lowerLabel) == true
-                        // 3. Partial match (e.g. user search "bike", label is "bicycle")
-                        val isPartialMatch = lowerLabel.contains(token)
-                        // 4. Reverse semantic match (e.g. user search "dog", token is in "pet" list)
-                        val isReverseSemanticMatch = semanticMap.entries.any { 
-                            it.key == lowerLabel && it.value.contains(token) 
-                        }
+        context.contentResolver.query(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            projection,
+            selection,
+            selectionArgs,
+            "${MediaStore.Images.Media.DATE_ADDED} DESC"
+        )?.use { cursor ->
+            val idCol     = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+            val nameCol   = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
+            val bucketCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
 
-                        if (isExactMatch || isSemanticMatch || isPartialMatch || isReverseSemanticMatch) {
-                            Log.v(TAG, "Match found! Uri: $uri | Token: '$token' | Label: '$lowerLabel' " +
-                                "(Exact: $isExactMatch, Sem: $isSemanticMatch, Part: $isPartialMatch, Rev: $isReverseSemanticMatch)")
-                            true
-                        } else {
-                            false
-                        }
-                    }
+            var count = 0
+            while (cursor.moveToNext() && count < MAX_RESULTS) {
+                val id     = cursor.getLong(idCol)
+                val name   = cursor.getString(nameCol).orEmpty()
+                val bucket = cursor.getString(bucketCol).orEmpty()
+
+                val uri = ContentUris.withAppendedId(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id
+                )
+
+                // Show bucket first (most informative), then filename as secondary label.
+                val labels = buildList {
+                    if (bucket.isNotBlank()) add(bucket)
+                    if (name.isNotBlank()) add(name)
                 }
-                if (matched.isNotEmpty()) {
-                    results.add(SearchResult(uri, matched))
-                }
+
+                results.add(SearchResult(uri, labels))
+                count++
             }
-            onProgress(labeledCount, images.size)
         }
-        
-        Log.d(TAG, "Search finished. Found ${results.size} matches out of $labeledCount images.")
-        results
+
+        return results
     }
 
     private fun tokenize(query: String): List<String> {
         val stopwords = setOf(
             "a", "an", "the", "my", "i", "me", "find", "show", "get",
             "with", "in", "on", "at", "of", "is", "are", "was", "were",
-            "and", "or", "for", "to", "image", "photo", "picture", "pic"
+            "and", "or", "for", "to",
+            "image", "images", "photo", "photos", "picture", "pictures", "pic", "pics"
         )
-        val tokens = query.lowercase()
+        return query.lowercase()
             .split(" ", ",", ".", ";", "'")
             .map { it.trim() }
             .filter { it.isNotEmpty() && it !in stopwords }
-        
-        // Limit to 10 tokens to prevent excessive processing or potential library limits
-        return tokens.take(10)
+            .map { stem(it) }
+            .filter { it.isNotEmpty() && it !in stopwords }
+            .distinct()
+            .take(10)
+    }
+
+    // Strips trailing 's' to handle plurals: "screenshots" → "screenshot", "downloads" → "download".
+    // Guard: only when result ≥ 3 chars and word doesn't end in "ss" (e.g. "class" stays "class").
+    private fun stem(word: String): String {
+        return if (word.length > 3 && word.endsWith('s') && !word.endsWith("ss")) {
+            word.dropLast(1)
+        } else {
+            word
+        }
     }
 }

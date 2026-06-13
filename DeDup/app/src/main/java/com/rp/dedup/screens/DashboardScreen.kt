@@ -515,7 +515,7 @@ fun AiSearchIcon() {
 
 @Composable
 fun SearchSuggestionsRow(onSuggestionClick: (String) -> Unit) {
-    val suggestions = listOf("Pet", "Food", "Nature", "Document", "Vehicle", "Portrait")
+    val suggestions = listOf("Screenshots", "WhatsApp", "Camera", "Downloads", "Telegram", "Instagram")
     Row(
         modifier = Modifier
             .fillMaxWidth()

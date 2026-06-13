@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.kotlinx.kover)
 }
 
 // Load local.properties safely
@@ -152,8 +153,11 @@ dependencies {
     // Coil for Jetpack Compose
     implementation(libs.coil.compose)
 
-    // ML Kit on-device image labeling
+    // ML Kit on-device image labeling (used by SmartJunkRepository)
     implementation(libs.image.labeling)
+
+    // MediaPipe Text Embedder — on-device semantic search
+    implementation(libs.mediapipe.tasks.text)
     implementation(libs.face.detection)
 
     // Intro showcase / first-run tutorial
@@ -161,7 +165,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation("androidx.documentfile:documentfile:1.0.1")
+    implementation("androidx.documentfile:documentfile:1.1.0")
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(enforcedPlatform(libs.androidx.compose.bom))

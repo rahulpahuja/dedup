@@ -148,13 +148,13 @@
     <string name="large_file_finder">Large File Finder</string>
     <string name="large_file_finder_desc">Target massive storage consumers</string>
 
-    <string name="search_placeholder">Find \"pet\", \"nature\", \"receipts\"…</string>
-    <string name="search_desc">Describe what you\'re looking for</string>
-    <string name="search_example">e.g. \"wearing a red shirt\" or \"sunset beach\"</string>
-    <string name="analyzing_images">Analyzing images…</string>
-    <string name="analyzing_images_progress">Analyzing images… %1$d / %2$d</string>
+    <string name="search_placeholder">Search by source or date…</string>
+    <string name="search_desc">Search by album, app, or date</string>
+    <string name="search_example">e.g. \"WhatsApp\", \"screenshots\", \"January 2024\"</string>
+    <string name="analyzing_images">Searching your library…</string>
+    <string name="analyzing_images_progress">Searching… %1$d / %2$d</string>
     <string name="no_matching_images">No matching images found</string>
-    <string name="try_different_words">Try different words or check gallery permissions</string>
+    <string name="try_different_words">Try an album name, app name, or month and year</string>
     <string name="images_matched">%1$d images matched</string>
     <string name="image_matched">%1$d image matched</string>
     <string name="smart_ai_cleanup_title">Smart AI Cleanup</string>
@@ -206,8 +206,8 @@
     <string name="auto_clear_confirm_btn">Yes, Auto Clear</string>
 
     <!-- Tutorial Tooltips -->
-    <string name="tut_search_title">Smart AI Search</string>
-    <string name="tut_search_body">Search for things like \"pets\", \"food\", or \"docs\". AI understands what\'s inside your photos.</string>
+    <string name="tut_search_title">Search Your Library</string>
+    <string name="tut_search_body">Find photos by album, app, or date — try \"WhatsApp\", \"screenshots\", or \"March 2024\".</string>
     <string name="tut_storage_title">Storage Overview</string>
     <string name="tut_storage_body">See your total device usage. Tap here for a deep visual map of your storage.</string>
     <string name="tut_quick_scan_title">Quick Scan</string>

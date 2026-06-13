@@ -2,6 +2,7 @@ package com.rp.dedup.core.viewmodels
 
 import android.net.Uri
 import com.rp.dedup.core.search.ImageSearchRepository
+import com.rp.dedup.core.search.SemanticSearchRepository
 import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -19,7 +20,7 @@ class ImageSearchViewModelTest {
     @get:Rule
     val coroutineRule = MainDispatcherRule()
 
-    private val repository = mockk<ImageSearchRepository>(relaxed = true)
+    private val repository = mockk<SemanticSearchRepository>(relaxed = true)
     private lateinit var viewModel: ImageSearchViewModel
 
     private fun result(label: String) = ImageSearchRepository.SearchResult(
@@ -46,7 +47,7 @@ class ImageSearchViewModelTest {
         assertEquals(0 to 0, viewModel.progress.value)
     }
 
-    // ── search with blank query ────────────────────────────────────────────────
+    // ── blank query ────────────────────────────────────────────────────────────
 
     @Test
     fun `search with blank query clears results without searching`() = runTest {
@@ -89,14 +90,13 @@ class ImageSearchViewModelTest {
         assertNull(viewModel.error.value)
     }
 
-    // ── search — verified against repository stub on Main dispatcher ───────────
+    // ── search happy path ──────────────────────────────────────────────────────
 
     @Test
-    fun `search non-blank query sets isSearching briefly then false`() = runTest {
+    fun `search non-blank query completes and clears isSearching`() = runTest {
         coEvery { repository.search(any(), any()) } returns emptyList()
-        viewModel.search("cats")
+        viewModel.search("whatsapp")
         advanceUntilIdle()
-        // After completion isSearching is false
         assertFalse(viewModel.isSearching.value)
     }
 
@@ -106,5 +106,25 @@ class ImageSearchViewModelTest {
         viewModel.search("no-results")
         advanceUntilIdle()
         assertTrue(viewModel.results.value.isEmpty())
+    }
+
+    @Test
+    fun `search propagates results from repository`() = runTest {
+        val expected = listOf(result("Screenshots"), result("Camera"))
+        coEvery { repository.search(any(), any()) } returns expected
+        viewModel.search("screenshots")
+        advanceUntilIdle()
+        assertEquals(expected, viewModel.results.value)
+    }
+
+    // ── error handling ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `search exposes error on repository exception`() = runTest {
+        coEvery { repository.search(any(), any()) } throws RuntimeException("db error")
+        viewModel.search("anything")
+        advanceUntilIdle()
+        assertNotNull(viewModel.error.value)
+        assertFalse(viewModel.isSearching.value)
     }
 }

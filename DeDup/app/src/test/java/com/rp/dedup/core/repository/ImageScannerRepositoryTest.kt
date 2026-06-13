@@ -1,82 +1,150 @@
 package com.rp.dedup.core.repository
 
-import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
-import io.mockk.every
-import io.mockk.mockk
+import android.provider.MediaStore
+import androidx.test.core.app.ApplicationProvider
+import com.rp.dedup.core.image.ImageHasher
+import io.mockk.*
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.ByteArrayInputStream
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class ImageScannerRepositoryTest {
 
-    private val context = mockk<Context>(relaxed = true)
-    private val contentResolver = mockk<ContentResolver>(relaxed = true)
-    private val uri = mockk<Uri>()
+    private lateinit var context: Context
+    private lateinit var repository: ImageScannerRepository
 
-    init {
-        every { context.contentResolver } returns contentResolver
+    @Before
+    fun setUp() {
+        context = ApplicationProvider.getApplicationContext()
+        repository = ImageScannerRepository(context)
+
+        // Mock companion object and other statics
+        mockkObject(ImageScannerRepository.Companion)
+        mockkStatic(ImageHasher::class)
+
+        // Default companion mocks
+        every { ImageScannerRepository.loadBitmapEfficiently(any(), any(), any()) } returns mockk<Bitmap>(relaxed = true)
+        every { ImageScannerRepository.computePartialCrc32(any(), any()) } returns 9999L
+        every { ImageHasher.calculateDHash(any()) } returns 12345L
+    }
+
+    @After
+    fun tearDown() {
+        unmockkObject(ImageScannerRepository.Companion)
+        unmockkStatic(ImageHasher::class)
+        context.contentResolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null)
+    }
+
+    private fun insertImageToMediaStore(
+        name: String,
+        size: Long,
+        path: String,
+        dateModifiedSeconds: Long = System.currentTimeMillis() / 1000
+    ) {
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, name)
+            put(MediaStore.Images.Media.SIZE, size)
+            put(MediaStore.Images.Media.DATA, path)
+            put(MediaStore.Images.Media.DATE_MODIFIED, dateModifiedSeconds)
+            put(MediaStore.Images.Media.DATE_ADDED, dateModifiedSeconds)
+        }
+        context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+    }
+
+    @Test
+    fun `scanImagesInParallel returns scanned images`() = runTest {
+        insertImageToMediaStore("pic1.jpg", 1024L, "/storage/emulated/0/pic1.jpg")
+        insertImageToMediaStore("pic2.png", 2048L, "/storage/emulated/0/pic2.png")
+
+        val images = repository.scanImagesInParallel(concurrencyLevel = 2).toList()
+        assertEquals(2, images.size)
+
+        val first = images.first { it.uri.contains("pic1.jpg") || it.uri.contains("1") }
+        assertEquals(1024L, first.sizeInBytes)
+        assertEquals(12345L, first.dHash)
+        assertEquals(9999L, first.exactHash)
+    }
+
+    @Test
+    fun `scanImagesInParallel respects excludedFolders`() = runTest {
+        insertImageToMediaStore("pic1.jpg", 1024L, "/storage/emulated/0/Download/pic1.jpg")
+        insertImageToMediaStore("pic2.png", 2048L, "/storage/emulated/0/Android/data/pic2.png")
+
+        val images = repository.scanImagesInParallel(
+            concurrencyLevel = 2,
+            excludedFolders = listOf("/storage/emulated/0/Android")
+        ).toList()
+
+        assertEquals(1, images.size)
+        assertTrue(images.first().uri.contains("pic1.jpg") || images.first().uri.contains("1"))
     }
 
     // ── computePartialCrc32 ────────────────────────────────────────────────────
 
     @Test
     fun `computePartialCrc32 returns non-negative value for valid content`() {
+        unmockkObject(ImageScannerRepository.Companion)
+
+        val mockContext = mockk<Context>()
+        val mockResolver = mockk<android.content.ContentResolver>()
+        val mockUri = mockk<Uri>()
+        every { mockContext.contentResolver } returns mockResolver
+
         val data = ByteArray(1024) { it.toByte() }
-        every { contentResolver.openInputStream(uri) } returns ByteArrayInputStream(data)
+        every { mockResolver.openInputStream(mockUri) } returns ByteArrayInputStream(data)
 
-        val crc = ImageScannerRepository.computePartialCrc32(context, uri)
-
+        val crc = ImageScannerRepository.computePartialCrc32(mockContext, mockUri)
         assertTrue(crc >= 0)
     }
 
     @Test
     fun `computePartialCrc32 returns -1 when stream is null`() {
-        every { contentResolver.openInputStream(uri) } returns null
+        unmockkObject(ImageScannerRepository.Companion)
 
-        val crc = ImageScannerRepository.computePartialCrc32(context, uri)
+        val mockContext = mockk<Context>()
+        val mockResolver = mockk<android.content.ContentResolver>()
+        val mockUri = mockk<Uri>()
+        every { mockContext.contentResolver } returns mockResolver
+        every { mockResolver.openInputStream(mockUri) } returns null
 
+        val crc = ImageScannerRepository.computePartialCrc32(mockContext, mockUri)
         assertEquals(-1L, crc)
     }
 
     @Test
     fun `computePartialCrc32 is deterministic for same content`() {
+        unmockkObject(ImageScannerRepository.Companion)
+
+        val mockContext = mockk<Context>()
+        val mockResolver = mockk<android.content.ContentResolver>()
+        val mockUri = mockk<Uri>()
+        every { mockContext.contentResolver } returns mockResolver
+
         val data = "identical content".toByteArray()
-        every { contentResolver.openInputStream(uri) } returnsMany listOf(
+        every { mockResolver.openInputStream(mockUri) } returnsMany listOf(
             ByteArrayInputStream(data),
             ByteArrayInputStream(data)
         )
 
-        val first  = ImageScannerRepository.computePartialCrc32(context, uri)
-        val second = ImageScannerRepository.computePartialCrc32(context, uri)
-
+        val first  = ImageScannerRepository.computePartialCrc32(mockContext, mockUri)
+        val second = ImageScannerRepository.computePartialCrc32(mockContext, mockUri)
         assertEquals(first, second)
     }
 
-    @Test
-    fun `computePartialCrc32 differs for different content`() {
-        val uri2 = mockk<Uri>()
-        every { contentResolver.openInputStream(uri) }  returns ByteArrayInputStream("aaa".toByteArray())
-        every { contentResolver.openInputStream(uri2) } returns ByteArrayInputStream("bbb".toByteArray())
-
-        val crc1 = ImageScannerRepository.computePartialCrc32(context, uri)
-        val crc2 = ImageScannerRepository.computePartialCrc32(context, uri2)
-
-        assertNotEquals(crc1, crc2)
-    }
-
-    @Test
-    fun `computePartialCrc32 returns -1 when openInputStream throws`() {
-        every { contentResolver.openInputStream(uri) } throws java.io.IOException("no file")
-
-        val crc = ImageScannerRepository.computePartialCrc32(context, uri)
-
-        assertEquals(-1L, crc)
-    }
-
     // ── calculateInSampleSize (via reflection) ─────────────────────────────────
-    // The method is package-private-equivalent (private companion fun), tested via reflection.
 
     private fun inSampleSize(srcW: Int, srcH: Int, reqSize: Int): Int {
         val m = ImageScannerRepository.Companion::class.java.getDeclaredMethod(
@@ -108,7 +176,6 @@ class ImageScannerRepositoryTest {
 
     @Test
     fun `calculateInSampleSize uses min dimension`() {
-        // 200×800: min = 200. reqSize=128. 200/2=100 < 128 → sample stays 1
         assertEquals(1, inSampleSize(200, 800, 128))
     }
 

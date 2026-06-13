@@ -7,12 +7,15 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import com.rp.dedup.BuildConfig
 import com.rp.dedup.core.security.NativeLib
+import com.rp.dedup.core.work.ImageIndexWorker
 
 class DeDupApp : Application() {
     override fun onCreate() {
         super.onCreate()
         try {
             System.loadLibrary("sqlcipher")
+        } catch (_: UnsatisfiedLinkError) {
+            // Expected in unit tests or if library is missing
         } catch (_: Exception) {
             // Native library already loaded or unavailable
         }
@@ -37,5 +40,9 @@ class DeDupApp : Application() {
 
         // Subscribe to a general topic for announcements
         FirebaseMessaging.getInstance().subscribeToTopic("all_users")
+
+        // Kick off background semantic indexing of on-device images.
+        // KEEP policy: no-ops if already running or enqueued.
+        ImageIndexWorker.enqueue(this)
     }
 }
