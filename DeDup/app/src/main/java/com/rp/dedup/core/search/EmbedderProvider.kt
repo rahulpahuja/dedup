@@ -35,8 +35,8 @@ class EmbedderProvider(context: Context) {
                 return@lazy null
             }
             emb
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load TextEmbedder — is the model in assets/?", e)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to load TextEmbedder — is the model in assets/?", t)
             null
         }
     }
