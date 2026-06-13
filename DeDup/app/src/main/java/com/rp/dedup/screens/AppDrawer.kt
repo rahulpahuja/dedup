@@ -1,6 +1,7 @@
 package com.rp.dedup.screens
 
 import android.app.Application
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
@@ -153,6 +158,59 @@ private fun AppDrawerContentUI(
     }
 
     ModalDrawerSheet {
+        // ── DeDup branding header ─────────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.85f)
+                        )
+                    )
+                )
+                .padding(horizontal = 20.dp, vertical = 20.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    Text(
+                        text = "DeDup",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 22.sp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            letterSpacing = (-0.5).sp
+                        )
+                    )
+                    Text(
+                        text = "Clean · Deduplicate · Reclaim",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f),
+                            letterSpacing = 0.sp
+                        )
+                    )
+                }
+            }
+        }
+
         ProfileHeader(
             name = userName,
             email = userEmail,

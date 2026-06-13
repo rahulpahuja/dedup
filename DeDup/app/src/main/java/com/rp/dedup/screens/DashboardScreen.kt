@@ -1,9 +1,15 @@
 package com.rp.dedup.screens
 
+import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.text.format.Formatter
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -176,6 +182,7 @@ fun DashboardScreen(
         searchError = searchError,
         onSearch = { searchViewModel.search(it) },
         onClearSearch = { searchViewModel.clear() },
+        onDeleteSearchResult = { searchViewModel.removeDeletedResult(it) },
         analyticsManager = analyticsManager,
         showTutorial = !tutorialShown,
         selectedCurrencyCode = selectedCurrency,
@@ -204,6 +211,7 @@ fun DashboardScreenContent(
     searchError: String?,
     onSearch: (String) -> Unit,
     onClearSearch: () -> Unit,
+    onDeleteSearchResult: (Uri) -> Unit = {},
     selectedCurrencyCode: String = "",
     analyticsManager: AnalyticsManager? = null,
     showTutorial: Boolean = false,
@@ -211,9 +219,39 @@ fun DashboardScreenContent(
 ) {
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var showSearchSheet by rememberSaveable { mutableStateOf(false) }
+
+    // Delete flow for search results
+    var pendingDeleteUri by remember { mutableStateOf<Uri?>(null) }
+    var showGuestDeleteDialog by remember { mutableStateOf(false) }
+
+    val deleteLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            pendingDeleteUri?.let { onDeleteSearchResult(it) }
+            pendingDeleteUri = null
+        }
+    }
+
+    fun requestDelete(uri: Uri) {
+        if (isGuest) {
+            showGuestDeleteDialog = true
+            return
+        }
+        pendingDeleteUri = uri
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val pi = MediaStore.createDeleteRequest(context.contentResolver, listOf(uri))
+            deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+        } else {
+            context.contentResolver.delete(uri, null, null)
+            onDeleteSearchResult(uri)
+            pendingDeleteUri = null
+        }
+    }
 
     val tutorialStyle = ShowcaseStyle.Default.copy(
         backgroundColor = Color(0xFF090F20),
@@ -496,11 +534,56 @@ fun DashboardScreenContent(
                         results = searchResults,
                         isSearching = isSearching,
                         progress = searchProgress,
-                        error = searchError
+                        error = searchError,
+                        onDeleteRequest = { uri -> requestDelete(uri) }
                     )
                 }
             }
         }
+    }
+
+    if (showGuestDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showGuestDeleteDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    "Sign in to delete",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+            },
+            text = {
+                Text(
+                    "Deleting files is only available to signed-in users. Sign in with Google to unlock delete and other premium actions.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showGuestDeleteDialog = false
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Dashboard.route) { inclusive = false }
+                    }
+                }) {
+                    Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Sign in with Google")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGuestDeleteDialog = false }) {
+                    Text("Not now")
+                }
+            }
+        )
     }
 
     } // end IntroShowcase
@@ -1520,7 +1603,8 @@ fun ImageSearchContent(
     results: List<ImageSearchRepository.SearchResult>,
     isSearching: Boolean,
     progress: Pair<Int, Int>,
-    error: String?
+    error: String?,
+    onDeleteRequest: (Uri) -> Unit = {}
 ) {
     when {
         query.isBlank() -> {
@@ -1629,7 +1713,7 @@ fun ImageSearchContent(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(results) { result ->
-                        ImageSearchResultItem(result)
+                        ImageSearchResultItem(result, onDeleteRequest = onDeleteRequest)
                     }
                 }
             }
@@ -1638,7 +1722,10 @@ fun ImageSearchContent(
 }
 
 @Composable
-private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
+private fun ImageSearchResultItem(
+    result: ImageSearchRepository.SearchResult,
+    onDeleteRequest: (Uri) -> Unit = {}
+) {
     var showPreview by remember { mutableStateOf(false) }
 
     Box(
@@ -1655,6 +1742,8 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
+        // Bottom label bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1670,6 +1759,25 @@ private fun ImageSearchResultItem(result: ImageSearchRepository.SearchResult) {
                 ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        // Delete button — top-right corner
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+                .size(26.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.55f))
+                .clickable { onDeleteRequest(result.uri) },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.DeleteOutline,
+                contentDescription = "Delete",
+                tint = Color.White,
+                modifier = Modifier.size(15.dp)
             )
         }
     }

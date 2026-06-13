@@ -77,6 +77,10 @@ class ImageSearchViewModel(
         }
     }
 
+    fun removeDeletedResult(uri: android.net.Uri) {
+        _results.value = _results.value.filter { it.uri != uri }
+    }
+
     fun clear() {
         queryState.value = ""
         searchJob?.cancel()
