@@ -1,5 +1,6 @@
 package com.rp.dedup.screens
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
 import android.text.format.Formatter
@@ -9,6 +10,17 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -401,6 +413,8 @@ fun DashboardScreenContent(
                         ContactDedupCard(
                             onClick = { navController.navigate(Screen.ContactDedup.route) }
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ShareAppCard()
                         Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
@@ -674,6 +688,65 @@ fun ContactDedupCard(onClick: () -> Unit) {
                 Icons.Default.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+@Composable
+fun ShareAppCard() {
+    val context = LocalContext.current
+    val shareMessage = stringResource(R.string.share_app_message)
+    val chooserTitle = stringResource(R.string.share_app_chooser_title)
+
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable {
+            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, shareMessage)
+            }
+            context.startActivity(Intent.createChooser(sendIntent, chooserTitle))
+        },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                modifier = Modifier.size(52.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.Share,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.share_app_title),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    stringResource(R.string.share_app_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
             )
         }
     }
@@ -1151,17 +1224,46 @@ fun BottomNavigationBar(navController: NavHostController) {
         NavEntry(Icons.Default.Settings,    R.string.nav_settings, Screen.Settings.route),
     )
 
-    // Use actual active colorScheme luminance so app-level ThemeMode.DARK works correctly
-    // regardless of the system dark mode setting
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    // iOS glass palette
-    val glassBase  = if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.84f) else Color.White.copy(alpha = 0.78f)
-    val sheenColor = if (isDark) Color.White.copy(alpha = 0.055f)       else Color.White.copy(alpha = 0.52f)
-    val borderHi   = if (isDark) Color.White.copy(alpha = 0.14f)        else Color.White.copy(alpha = 0.80f)
-    val borderLo   = if (isDark) Color.White.copy(alpha = 0.03f)        else Color.White.copy(alpha = 0.12f)
+    val isDark   = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val primary  = MaterialTheme.colorScheme.primary
 
-    val pillHeight = 46.dp
-    val barHeight  = 72.dp
+    // ── Glass colour tokens ────────────────────────────────────────────────
+    val glassBase    = if (isDark) Color(0xFF1C1C1E).copy(alpha = 0.78f) else Color(0xFFF5F5F7).copy(alpha = 0.82f)
+    val topSheen     = if (isDark) Color.White.copy(alpha = 0.09f)       else Color.White.copy(alpha = 0.60f)
+    val bottomTint   = if (isDark) Color.Black.copy(alpha = 0.10f)       else Color.Black.copy(alpha = 0.04f)
+    val borderBright = if (isDark) Color.White.copy(alpha = 0.22f)       else Color.White.copy(alpha = 0.90f)
+    val borderDim    = if (isDark) Color.White.copy(alpha = 0.04f)       else Color.White.copy(alpha = 0.14f)
+    val shimmer      = if (isDark) Color.White.copy(alpha = 0.075f)      else Color.White.copy(alpha = 0.45f)
+    val shadowColor  = if (isDark) Color.Black.copy(alpha = 0.55f)       else Color.Black.copy(alpha = 0.12f)
+
+    // ── Continuous glass animations ────────────────────────────────────────
+    val glass = rememberInfiniteTransition(label = "glass")
+
+    // Slow diagonal light sweep — like sunlight crossing a glass surface
+    val sweep by glass.animateFloat(
+        initialValue  = 0f,
+        targetValue   = 1f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(7000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "sweep"
+    )
+    // Specular highlight breathing — top edge gently pulses in brightness
+    val specular by glass.animateFloat(
+        initialValue  = 0.55f,
+        targetValue   = 1.00f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(2800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "specular"
+    )
+
+    val barHeight    = 72.dp
+    val pillHeight   = 46.dp
+    val pillWidth    = 52.dp
+    val cornerRadius = 28.dp
 
     BoxWithConstraints(
         modifier = Modifier
@@ -1170,52 +1272,139 @@ fun BottomNavigationBar(navController: NavHostController) {
             .navigationBarsPadding()
     ) {
         val itemWidth = maxWidth / items.size
-        val pillWidth = 52.dp
 
-        // Spring-animated pill sliding between items
-        val pillOffset by animateDpAsState(
+        val pillOffsetX by animateDpAsState(
             targetValue   = itemWidth * selectedIndex + (itemWidth - pillWidth) / 2,
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
                 stiffness    = Spring.StiffnessMediumLow
             ),
-            label = "glassNavPill"
+            label = "pill"
         )
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
-                    elevation    = 24.dp,
-                    shape        = RoundedCornerShape(28.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.14f),
-                    spotColor    = Color.Black.copy(alpha = 0.20f)
+                    elevation    = 36.dp,
+                    shape        = RoundedCornerShape(cornerRadius),
+                    clip         = false,
+                    ambientColor = shadowColor,
+                    spotColor    = shadowColor
                 )
-                .clip(RoundedCornerShape(28.dp))
-                // Layer 1: translucent base (frosted look)
-                .background(glassBase)
-                // Layer 2: top-to-bottom white sheen (glass highlight)
-                .background(Brush.verticalGradient(listOf(sheenColor, Color.Transparent)))
-                // Layer 3: border — bright at top, fades at bottom (glass edge)
-                .border(
-                    width = 0.8.dp,
-                    brush = Brush.verticalGradient(listOf(borderHi, borderLo)),
-                    shape = RoundedCornerShape(28.dp)
-                )
+                .clip(RoundedCornerShape(cornerRadius))
+                .drawWithContent {
+                    val w = size.width
+                    val h = size.height
+
+                    // ── 1. Frosted solid base ───────────────────────────────
+                    drawRect(glassBase)
+
+                    // ── 2. Vertical inner sheen (top light → bottom dark) ───
+                    drawRect(
+                        Brush.verticalGradient(listOf(topSheen, Color.Transparent, bottomTint))
+                    )
+
+                    // ── 3. Subtle radial centre glow for depth ───────────────
+                    drawRect(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = if (isDark) 0.04f else 0.18f),
+                                Color.Transparent
+                            ),
+                            center = Offset(w / 2f, h / 2f),
+                            radius = w * 0.55f
+                        )
+                    )
+
+                    // ── 4. Pill + icon content ──────────────────────────────
+                    drawContent()
+
+                    // ── 5. Animated diagonal shimmer sweep on top ───────────
+                    val sw = w * 0.30f
+                    val sx = -sw + (w + sw * 2f) * sweep
+                    drawRect(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                shimmer,
+                                shimmer.copy(alpha = shimmer.alpha * 0.45f),
+                                Color.Transparent
+                            ),
+                            start = Offset(sx, 0f),
+                            end   = Offset(sx + sw, h)
+                        )
+                    )
+
+                    // ── 6. Specular top line — animated brightness ───────────
+                    val specAlpha = borderBright.alpha * specular
+                    drawLine(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                borderBright.copy(alpha = specAlpha * 0.5f),
+                                borderBright.copy(alpha = specAlpha),
+                                borderBright.copy(alpha = specAlpha),
+                                borderBright.copy(alpha = specAlpha * 0.5f),
+                                Color.Transparent
+                            )
+                        ),
+                        start       = Offset(0f, 0.8f),
+                        end         = Offset(w, 0.8f),
+                        strokeWidth = 1.5f
+                    )
+
+                    // ── 7. Perimeter border (bright top → dim bottom) ────────
+                    val bs = 1.4f
+                    drawRoundRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                borderBright.copy(alpha = borderBright.alpha * specular),
+                                borderDim
+                            )
+                        ),
+                        topLeft      = Offset(bs / 2f, bs / 2f),
+                        size         = Size(w - bs, h - bs),
+                        cornerRadius = CornerRadius(cornerRadius.toPx()),
+                        style        = Stroke(width = bs)
+                    )
+                }
         ) {
-            // Sliding selection pill drawn behind the icons
+            // ── Glass selection pill (glass-within-glass) ───────────────────
             Box(
                 modifier = Modifier
                     .padding(vertical = (barHeight - pillHeight) / 2)
-                    .offset(x = pillOffset)
+                    .offset(x = pillOffsetX)
                     .width(pillWidth)
                     .height(pillHeight)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(
-                            alpha = if (isDark) 0.24f else 0.13f
+                    .drawWithContent {
+                        val w = size.width
+                        val h = size.height
+                        drawRect(primary.copy(alpha = if (isDark) 0.26f else 0.14f))
+                        drawRect(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = if (isDark) 0.18f else 0.42f),
+                                    Color.Transparent
+                                )
+                            )
                         )
-                    )
+                        drawContent()
+                        val ps = 1.0f
+                        drawRoundRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = if (isDark) 0.28f else 0.65f),
+                                    Color.White.copy(alpha = if (isDark) 0.06f else 0.12f)
+                                )
+                            ),
+                            topLeft      = Offset(ps / 2f, ps / 2f),
+                            size         = Size(w - ps, h - ps),
+                            cornerRadius = CornerRadius(14.dp.toPx()),
+                            style        = Stroke(width = ps)
+                        )
+                    }
             )
 
             Row(
@@ -1250,25 +1439,29 @@ private fun GlassNavItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    // Color transition: primary when selected, muted when not
     val iconColor by animateColorAsState(
         targetValue   = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),
-        animationSpec = tween(180),
-        label         = "glassNavColor"
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.40f),
+        animationSpec = tween(200),
+        label         = "navColor"
     )
-    // Spring scale: compress on press, pop when selected
-    val contentScale by animateFloatAsState(
+    // Radial glow fades in on selection, fades out on deselection
+    val glowAlpha by animateFloatAsState(
+        targetValue   = if (selected) 1f else 0f,
+        animationSpec = tween(300, easing = FastOutSlowInEasing),
+        label         = "glow"
+    )
+    val scale by animateFloatAsState(
         targetValue   = when {
-            isPressed -> 0.76f
-            selected  -> 1.12f
+            isPressed -> 0.78f
+            selected  -> 1.14f
             else      -> 1.00f
         },
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness    = Spring.StiffnessMedium
         ),
-        label = "glassNavScale"
+        label = "scale"
     )
 
     Column(
@@ -1276,28 +1469,46 @@ private fun GlassNavItem(
             .fillMaxHeight()
             .clickable(
                 interactionSource = interactionSource,
-                indication        = null, // no ripple — iOS style
+                indication        = null,
                 onClick           = onClick
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector        = icon,
-            contentDescription = label,
-            tint               = iconColor,
-            modifier           = Modifier
-                .size(22.dp)
-                .scale(contentScale)
-        )
-        Spacer(Modifier.height(3.dp))
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier         = Modifier
+                .size(36.dp)
+                .scale(scale)
+                .drawBehind {
+                    if (glowAlpha > 0f) {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    iconColor.copy(alpha = 0.30f * glowAlpha),
+                                    iconColor.copy(alpha = 0.10f * glowAlpha),
+                                    Color.Transparent
+                                ),
+                                radius = size.minDimension * 0.8f
+                            )
+                        )
+                    }
+                }
+        ) {
+            Icon(
+                imageVector        = icon,
+                contentDescription = label,
+                tint               = iconColor,
+                modifier           = Modifier.size(22.dp)
+            )
+        }
+        Spacer(Modifier.height(2.dp))
         Text(
-            text     = label,
-            style    = MaterialTheme.typography.labelSmall.copy(
+            text  = label,
+            style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                 color      = iconColor
-            ),
-            modifier = Modifier.scale(contentScale)
+            )
         )
     }
 }

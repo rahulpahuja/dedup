@@ -288,4 +288,10 @@
     <string name="delete_all">Delete All</string>
     <string name="large_files">Large Files</string>
     <string name="duplicate_groups">Duplicate Groups</string>
+
+    <!-- Share App -->
+    <string name="share_app_title">Share DeDup</string>
+    <string name="share_app_desc">Recommend it to a friend — help them reclaim storage too</string>
+    <string name="share_app_message">Hey! I\'ve been using DeDup to remove duplicate photos, videos, and files. It saved me a ton of storage! Give it a try:\nhttps://play.google.com/store/apps/details?id=com.rp.dedup</string>
+    <string name="share_app_chooser_title">Share DeDup via</string>
 </resources>
