@@ -68,7 +68,13 @@ fun VideoScannerScreen(navController: NavHostController) {
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val scannedCount by viewModel.scannedCount.collectAsState()
+    val cacheLoaded by viewModel.cacheLoaded.collectAsState()
+    val resumedCount by viewModel.resumedCount.collectAsState()
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+
+    // True when the DB has results from a previous interrupted scan ready to show
+    val hasCachedResults = cacheLoaded && duplicateGroups.isNotEmpty() && !isScanning
+    val wasInterrupted = cacheLoaded && scannedCount > 0 && !isScanning && resumedCount == 0
 
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("VideoScanner")
@@ -179,6 +185,85 @@ fun VideoScannerScreen(navController: NavHostController) {
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            // ── Resume banner ──────────────────────────────────────────────
+            if (hasCachedResults && resumedCount == 0) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    tonalElevation = 2.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.RestoreFromTrash,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Previous scan saved",
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                "Tap Scan to resume where you left off, or Rescan to start fresh.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(
+                            onClick = {
+                                selectedUris.clear()
+                                viewModel.clearCache()
+                            }
+                        ) {
+                            Text(
+                                "Clear",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── Resuming indicator ─────────────────────────────────────────
+            if (isScanning && resumedCount > 0) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Replay,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Resuming — skipped $resumedCount already-scanned videos",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
+
             // Header + scan button
             Row(
                 modifier = Modifier
@@ -224,12 +309,29 @@ fun VideoScannerScreen(navController: NavHostController) {
                     Spacer(Modifier.width(8.dp))
                 }
 
+                // Show "Rescan" (force-fresh) alongside "Stop"/"Scan" when cached results exist
+                if (hasCachedResults && !isScanning) {
+                    OutlinedButton(
+                        onClick = {
+                            selectedUris.clear()
+                            viewModel.startScanning(deepScan = true, forceRescan = true)
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Rescan")
+                    }
+                }
+
                 Button(
                     onClick = {
                         if (isScanning) viewModel.cancelScanning()
                         else {
                             selectedUris.clear()
-                            viewModel.startScanning(deepScan = true)
+                            // Resume by default (skips already-scanned URIs from cache)
+                            viewModel.startScanning(deepScan = true, forceRescan = false)
                         }
                     },
                     shape = RoundedCornerShape(12.dp)
@@ -240,7 +342,13 @@ fun VideoScannerScreen(navController: NavHostController) {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text(if (isScanning) stringResource(R.string.stop_btn) else stringResource(R.string.scan_btn))
+                    Text(
+                        when {
+                            isScanning -> stringResource(R.string.stop_btn)
+                            hasCachedResults -> "Resume"
+                            else -> stringResource(R.string.scan_btn)
+                        }
+                    )
                 }
             }
 

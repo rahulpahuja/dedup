@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.repository.VideoScannerRepository
 import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.model.ScannedVideo
+import com.rp.dedup.core.model.toEntity
+import com.rp.dedup.core.repository.ScannedVideoRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.image.ImageHasher
@@ -22,8 +24,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
+private const val CHECKPOINT_INTERVAL = 5  // persist every N newly scanned videos
+
 class VideoScannerViewModel(
     private val repository: VideoScannerRepository,
+    private val videoRepository: ScannedVideoRepository? = null,
     private val historyRepository: ScanHistoryRepository? = null,
     private val analyticsManager: AnalyticsManager? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -41,31 +46,93 @@ class VideoScannerViewModel(
     private val _scannedCount = MutableStateFlow(0)
     val scannedCount: StateFlow<Int> = _scannedCount.asStateFlow()
 
+    /** True once the initial cache-load attempt has finished (whether results exist or not). */
+    private val _cacheLoaded = MutableStateFlow(false)
+    val cacheLoaded: StateFlow<Boolean> = _cacheLoaded.asStateFlow()
+
+    /**
+     * Number of videos that were already persisted from a previous interrupted scan.
+     * Non-zero means we are resuming and should show a "Resuming" indicator.
+     */
+    private val _resumedCount = MutableStateFlow(0)
+    val resumedCount: StateFlow<Int> = _resumedCount.asStateFlow()
+
     private var scanJob: Job? = null
 
-    fun startScanning(deepScan: Boolean = true) {
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            loadCachedResults()
+        }
+    }
+
+    private suspend fun loadCachedResults() {
+        val repo = videoRepository ?: run { _cacheLoaded.value = true; return }
+        val cachedGroups = repo.getCachedDuplicateGroups()
+        if (cachedGroups.isNotEmpty()) {
+            _duplicateGroups.value = cachedGroups
+            _scannedCount.value = repo.getTotalScannedCount()
+        }
+        _cacheLoaded.value = true
+    }
+
+    /**
+     * @param deepScan  whether to extract frame hashes for near-duplicate detection
+     * @param forceRescan  if true, clears all cached data and starts from scratch
+     */
+    fun startScanning(deepScan: Boolean = true, forceRescan: Boolean = false) {
         if (_isScanning.value) return
         val startTime = System.currentTimeMillis()
         var wasCancelled = false
-        _isScanning.value = true
-        _scannedCount.value = 0
-        _videos.value = emptyList()
-        _duplicateGroups.value = emptyList()
-
-        analyticsManager?.logScanStarted("VIDEO")
 
         scanJob = viewModelScope.launch(defaultDispatcher) {
+            // ── 1. Optionally wipe cache for a full rescan ──────────────────
+            if (forceRescan) {
+                withContext(Dispatchers.IO) { videoRepository?.clearAll() }
+                _videos.value = emptyList()
+                _duplicateGroups.value = emptyList()
+                _scannedCount.value = 0
+                _resumedCount.value = 0
+            }
+
+            // ── 2. Load already-scanned URIs so we can skip them ───────────
+            val alreadyScannedUris: Set<Uri> = withContext(Dispatchers.IO) {
+                videoRepository?.getScannedUris() ?: emptySet()
+            }
+            _resumedCount.value = alreadyScannedUris.size
+
+            analyticsManager?.logScanStarted("VIDEO")
+            _isScanning.value = true
+
+            // ── 3. Pre-populate in-memory structures from cached groups ─────
             val allVideos = mutableListOf<ScannedVideo>()
-            // Incremental state
             val sizeIndex = mutableMapOf<Long, MutableList<ScannedVideo>>()
             val frameHashVideos = mutableListOf<ScannedVideo>()
             val uriToGroupIdx = mutableMapOf<Uri, Int>()
             val runningGroups = mutableListOf<MutableList<ScannedVideo>>()
 
+            // Rebuild the in-memory dedup structures from cached results so
+            // newly scanned videos can be merged into existing groups correctly.
+            _duplicateGroups.value.forEach { group ->
+                val groupIdx = runningGroups.size
+                runningGroups.add(group.toMutableList())
+                group.forEach { v ->
+                    uriToGroupIdx[v.uri] = groupIdx
+                    sizeIndex.getOrPut(v.sizeInBytes) { mutableListOf() }.add(v)
+                    if (v.frameHashes.isNotEmpty()) frameHashVideos.add(v)
+                    allVideos.add(v)
+                }
+            }
+            _scannedCount.value = allVideos.size
+
             try {
+                var checkpointCounter = 0
+
                 repository.scanVideos(deepScan = deepScan)
                     .buffer(capacity = Channel.BUFFERED)
                     .collect { video ->
+                        // Skip videos processed in a previous session
+                        if (video.uri in alreadyScannedUris) return@collect
+
                         allVideos.add(video)
                         _scannedCount.value = allVideos.size
 
@@ -74,6 +141,13 @@ class VideoScannerViewModel(
 
                         if (allVideos.size % 10 == 0) {
                             _videos.value = allVideos.toList()
+                        }
+
+                        // ── Checkpoint: persist progress so resume is possible ──
+                        checkpointCounter++
+                        if (checkpointCounter >= CHECKPOINT_INTERVAL) {
+                            checkpointCounter = 0
+                            persistCheckpoint(allVideos, uriToGroupIdx, runningGroups)
                         }
                     }
 
@@ -93,15 +167,18 @@ class VideoScannerViewModel(
                 _videos.value = allVideos.toList()
             } finally {
                 _isScanning.value = false
-                val totalCount = _scannedCount.value
+
                 withContext(NonCancellable + Dispatchers.IO) {
+                    // Final persist — captures complete group assignments
+                    persistCheckpoint(allVideos, uriToGroupIdx, runningGroups)
+
                     val groups = _duplicateGroups.value
                     historyRepository?.insert(
                         ScanHistory(
                             scanType = "VIDEO",
                             timestamp = startTime,
                             durationMs = System.currentTimeMillis() - startTime,
-                            totalScanned = totalCount,
+                            totalScanned = _scannedCount.value,
                             duplicateGroups = groups.size,
                             totalDuplicates = groups.sumOf { it.size - 1 },
                             reclaimableBytes = groups.sumOf { group ->
@@ -115,7 +192,50 @@ class VideoScannerViewModel(
         }
     }
 
-    // Checks the new video against already-seen videos and merges it into a group on match.
+    /** Clears the persisted cache and resets in-memory state. */
+    fun clearCache() {
+        viewModelScope.launch(Dispatchers.IO) {
+            videoRepository?.clearAll()
+        }
+        _videos.value = emptyList()
+        _duplicateGroups.value = emptyList()
+        _scannedCount.value = 0
+        _resumedCount.value = 0
+        _cacheLoaded.value = true
+    }
+
+    // ── Persistence helpers ─────────────────────────────────────────────────
+
+    private suspend fun persistCheckpoint(
+        allVideos: List<ScannedVideo>,
+        uriToGroupIdx: Map<Uri, Int>,
+        groups: List<MutableList<ScannedVideo>>
+    ) = withContext(Dispatchers.IO) {
+        val entities = allVideos.map { video ->
+            val groupKey = deriveGroupKey(video, uriToGroupIdx, groups)
+            video.toEntity(groupKey)
+        }
+        videoRepository?.insertVideos(entities)
+    }
+
+    /**
+     * Derives a stable, content-based group key so that re-loading from DB
+     * produces the same grouping without re-running the dedup algorithm.
+     */
+    private fun deriveGroupKey(
+        video: ScannedVideo,
+        uriToGroupIdx: Map<Uri, Int>,
+        groups: List<MutableList<ScannedVideo>>
+    ): String {
+        val idx = uriToGroupIdx[video.uri] ?: return ""
+        val group = groups.getOrNull(idx) ?: return ""
+        if (group.size < 2) return ""
+        val rep = group.first()
+        return "s:${rep.sizeInBytes}_${rep.frameHashes.firstOrNull() ?: 0}"
+    }
+
+    // ── Incremental dedup logic ─────────────────────────────────────────────
+
     private fun addVideoIncrementally(
         video: ScannedVideo,
         sizeIndex: MutableMap<Long, MutableList<ScannedVideo>>,
@@ -125,7 +245,6 @@ class VideoScannerViewModel(
     ) {
         var joinedIdx: Int? = null
 
-        // Phase 1: exact size match
         if (video.sizeInBytes > 0) {
             sizeIndex[video.sizeInBytes]?.forEach { existing ->
                 val existIdx = uriToGroupIdx[existing.uri]
@@ -150,7 +269,6 @@ class VideoScannerViewModel(
             }
         }
 
-        // Phase 2: frame hash similarity match (only when no exact size match)
         if (joinedIdx == null && video.frameHashes.isNotEmpty()) {
             for (existing in frameHashVideos) {
                 if (!isFrameSimilar(video, existing)) continue
@@ -193,7 +311,6 @@ class VideoScannerViewModel(
         return matchCount >= 2
     }
 
-    // Used only by removeDeletedVideosFromUI — full re-check on the remaining set.
     private fun findDuplicates(allVideos: List<ScannedVideo>): List<List<ScannedVideo>> {
         val resultGroups = mutableListOf<MutableList<ScannedVideo>>()
         val processed = mutableSetOf<Int>()
@@ -224,6 +341,8 @@ class VideoScannerViewModel(
         return resultGroups
     }
 
+    // ── Public API ──────────────────────────────────────────────────────────
+
     fun cancelScanning() {
         scanJob?.cancel()
     }
@@ -237,6 +356,11 @@ class VideoScannerViewModel(
             _videos.value = currentVideos
             _duplicateGroups.value = findDuplicates(currentVideos)
             _scannedCount.value = currentVideos.size
+
+            // Remove from persisted cache too
+            withContext(Dispatchers.IO) {
+                deletedUris.forEach { videoRepository?.deleteByUri(it.toString()) }
+            }
 
             analyticsManager?.logFilesDeleted("VIDEO", deletedUris.size, freedBytes)
         }

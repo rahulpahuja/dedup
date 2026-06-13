@@ -11,24 +11,28 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.rp.dedup.core.common.Constants
 import com.rp.dedup.core.dao.ImageEmbeddingDao
 import com.rp.dedup.core.dao.ScannedImageDao
+import com.rp.dedup.core.dao.ScannedVideoDao
 import com.rp.dedup.core.dao.ScanHistoryDao
 import com.rp.dedup.core.model.ScannedImage
+import com.rp.dedup.core.model.ScannedVideoEntity
 import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.search.FloatArrayConverter
 import com.rp.dedup.core.search.ImageEmbeddingEntity
+import com.rp.dedup.core.search.LongListConverter
 import com.rp.dedup.core.security.KeyManager
 import com.rp.dedup.core.analytics.AnalyticsManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 
 @Database(
-    entities = [ScannedImage::class, ScanHistory::class, ImageEmbeddingEntity::class],
-    version = 5,
+    entities = [ScannedImage::class, ScanHistory::class, ImageEmbeddingEntity::class, ScannedVideoEntity::class],
+    version = 6,
     exportSchema = false
 )
-@TypeConverters(FloatArrayConverter::class)
+@TypeConverters(FloatArrayConverter::class, LongListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun scannedImageDao(): ScannedImageDao
+    abstract fun scannedVideoDao(): ScannedVideoDao
     abstract fun scanHistoryDao(): ScanHistoryDao
     abstract fun imageEmbeddingDao(): ImageEmbeddingDao
 
@@ -88,6 +92,26 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `scanned_videos` (
+                        `uri`          TEXT    NOT NULL,
+                        `name`         TEXT    NOT NULL,
+                        `sizeInBytes`  INTEGER NOT NULL,
+                        `durationMs`   INTEGER NOT NULL,
+                        `mimeType`     TEXT    NOT NULL,
+                        `frameHashes`  TEXT    NOT NULL DEFAULT '',
+                        `path`         TEXT,
+                        `groupKey`     TEXT    NOT NULL DEFAULT '',
+                        PRIMARY KEY(`uri`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
@@ -101,7 +125,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 dbName
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .fallbackToDestructiveMigration(dropAllTables = true)
 
             return try {
