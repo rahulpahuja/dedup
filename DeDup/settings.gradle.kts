@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "DeDup"
 include(":app")
+include(":feature:voice-storage")

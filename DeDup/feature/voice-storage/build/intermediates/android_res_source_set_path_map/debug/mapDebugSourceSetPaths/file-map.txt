@@ -1,0 +1,9 @@
+com.rp.dedup.feature.voicestorage.voice-storage-pngs-0 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/build/generated/res/pngs/debug
+com.rp.dedup.feature.voicestorage.voice-storage-updated_navigation_xml-1 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/build/generated/updated_navigation_xml/debug
+com.rp.dedup.feature.voicestorage.voice-storage-mergeDebugResources-2 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
+com.rp.dedup.feature.voicestorage.voice-storage-mergeDebugResources-3 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
+com.rp.dedup.feature.voicestorage.voice-storage-debug-4 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/build/intermediates/merged_res/debug/mergeDebugResources
+com.rp.dedup.feature.voicestorage.voice-storage-debug-5 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/build/intermediates/packaged_res/debug/packageDebugResources
+com.rp.dedup.feature.voicestorage.voice-storage-debug-6 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/src/debug/res
+com.rp.dedup.feature.voicestorage.voice-storage-main-7 /Users/rahulpahuja/AndroidStudioProjects/dedup/DeDup/feature/voice-storage/src/main/res
+gradleHome-0 /Users/rahulpahuja/.gradle

@@ -41,6 +41,8 @@ import com.rp.dedup.UIConstants.ROUTE_WHATSAPP_CLEANER
 import com.rp.dedup.UIConstants.ROUTE_CONTACT_TEST
 import com.rp.dedup.UIConstants.ROUTE_CONTACT_DEDUP
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
+import com.rp.dedup.UIConstants.ROUTE_VOICE_STORAGE
+import com.rp.dedup.feature.voicestorage.presentation.VoiceStorageScreen
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
 import com.rp.dedup.core.permissions.PermissionManager
@@ -82,6 +84,7 @@ sealed class Screen(val route: String) {
     object BigFileMap : Screen(ROUTE_BIG_FILE_MAP)
     object WhatsAppCleaner : Screen(ROUTE_WHATSAPP_CLEANER)
     object ContactTest : Screen(ROUTE_CONTACT_TEST)
+    object VoiceStorage : Screen(ROUTE_VOICE_STORAGE)
 }
 
 @Composable
@@ -229,6 +232,9 @@ fun AppNavHost(navController: NavHostController) {
                 composable(Screen.WhatsAppCleaner.route) {
                     WhatsAppCleanerScreen(navController)
                 }
+                composable(Screen.VoiceStorage.route) {
+                    VoiceStorageGatekeeper(navController)
+                }
                 composable(
                     route = Screen.FileScanner.route,
                     arguments = listOf(navArgument("type") { type = NavType.StringType })
@@ -285,6 +291,17 @@ fun FileBrowserGatekeeper(navController: NavHostController) {
         rationaleMessage = "DeDup needs storage access to browse and manage files on your device."
     ) {
         FileBrowserScreen(navController = navController)
+    }
+}
+
+@Composable
+fun VoiceStorageGatekeeper(navController: NavHostController) {
+    PermissionGate(
+        permissions      = (PermissionManager.IMAGE + PermissionManager.VIDEO).distinct(),
+        rationaleTitle   = "Media Access Needed",
+        rationaleMessage = "Voice Storage needs access to your photos and videos to search and manage them by voice."
+    ) {
+        VoiceStorageScreen(onNavigateUp = { navController.navigateUp() })
     }
 }
 

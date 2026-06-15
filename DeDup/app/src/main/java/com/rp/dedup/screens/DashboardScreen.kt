@@ -1166,6 +1166,16 @@ fun QuickScanGrid(
                 onClick = { navController.navigate(Screen.ScanHistory.route) }
             )
         }
+        Row {
+            ScanCategoryCard(
+                title = "Voice Storage",
+                count = "Search & delete by voice",
+                icon = Icons.Default.Mic,
+                color = UIConstants.ColorIconPalette,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate(Screen.VoiceStorage.route) }
+            )
+        }
     }
 }
 

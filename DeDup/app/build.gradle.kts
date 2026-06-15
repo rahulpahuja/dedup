@@ -190,6 +190,7 @@ dependencies {
     implementation(libs.sqlcipher)
     implementation(libs.play.integrity)
     implementation(libs.androidx.profileinstaller)
+    implementation(project(":feature:voice-storage"))
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

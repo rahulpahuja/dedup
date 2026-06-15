@@ -29,6 +29,7 @@ object UIConstants {
     const val ROUTE_WHATSAPP_CLEANER        = "whatsapp_cleaner"
     const val ROUTE_CONTACT_DEDUP          = "deduplication"
     const val ROUTE_CONTACT_TEST           = "contact_test"
+    const val ROUTE_VOICE_STORAGE          = "voice_storage"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
