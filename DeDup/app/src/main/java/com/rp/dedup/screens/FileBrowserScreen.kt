@@ -52,6 +52,8 @@ import com.rp.dedup.core.ui.DeDupTopBar
 fun FileBrowserScreen(navController: NavHostController) {
     val vm: FileBrowserViewModel = viewModel()
     val context = LocalContext.current
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    LaunchedEffect(Unit) { analytics.logScreenView("FileBrowser") }
 
     val items by vm.items.collectAsState()
     val currentDir by vm.currentDir.collectAsState()

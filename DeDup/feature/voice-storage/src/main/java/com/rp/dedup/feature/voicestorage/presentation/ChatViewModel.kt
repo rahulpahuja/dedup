@@ -2,9 +2,11 @@ package com.rp.dedup.feature.voicestorage.presentation
 
 import android.content.Context
 import android.os.Build
+import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import com.google.firebase.analytics.FirebaseAnalytics
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.lifecycle.ViewModel
@@ -76,6 +78,12 @@ class ChatViewModel(
     private var listenJob: Job? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    private val fa = FirebaseAnalytics.getInstance(appContext)
+
+    private fun track(event: String, block: (Bundle.() -> Unit)? = null) {
+        val bundle = if (block != null) Bundle().apply(block) else null
+        fa.logEvent(event, bundle)
+    }
 
     private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         (appContext.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
@@ -119,6 +127,7 @@ class ChatViewModel(
     fun toggleVibration() {
         val enabling = !_state.value.isVibrationEnabled
         _state.update { it.copy(isVibrationEnabled = enabling) }
+        track("ai_vibration_toggled") { putString("enabled", enabling.toString()) }
         // Give tactile confirmation when turning on: simulate a few typing pulses
         if (enabling) viewModelScope.launch {
             repeat(4) { haptic(Haptic.TYPING); delay(60) }
@@ -126,6 +135,7 @@ class ChatViewModel(
     }
 
     init {
+        track("ai_chat_opened")
         val history = repository.load()
         _state.update { it.copy(messages = history.ifEmpty { listOf(WELCOME_MSG) }) }
         if (history.isEmpty()) repository.save(listOf(WELCOME_MSG))
@@ -153,6 +163,7 @@ class ChatViewModel(
     fun toggleTts() {
         val enabling = !_state.value.isTtsEnabled
         _state.update { it.copy(isTtsEnabled = enabling) }
+        track("ai_tts_toggled") { putString("enabled", enabling.toString()) }
         if (!enabling) {
             tts?.stop()
             _state.update { it.copy(isTtsSpeaking = false) }
@@ -172,6 +183,10 @@ class ChatViewModel(
             delay(300)
             val storageQuery = detectStorageQuery(text.trim())
             val (response, nextSuggestions) = if (storageQuery != null) {
+                track("ai_storage_query") {
+                    putString("intent", storageQuery.mode)
+                    putString("label", storageQuery.label)
+                }
                 val items = runCatching {
                     storageRepo.queryFiles("", storageQuery.config).first()
                 }.getOrDefault(emptyList())
@@ -179,6 +194,7 @@ class ChatViewModel(
                 _state.update { it.copy(previewItems = previewable, isPreviewExpanded = false, selectedUris = emptySet()) }
                 formatStorageResult(items, storageQuery)
             } else {
+                track("ai_chat_message_sent")
                 _state.update { it.copy(previewItems = emptyList()) }
                 buildResponse(text.trim(), _state.value.messages)
             }
@@ -251,7 +267,10 @@ class ChatViewModel(
         repository.save(listOf(WELCOME_MSG))
     }
 
-    fun expandPreview()   = _state.update { it.copy(isPreviewExpanded = true) }
+    fun expandPreview() {
+        track("ai_file_preview_opened") { putInt("file_count", _state.value.previewItems.size) }
+        _state.update { it.copy(isPreviewExpanded = true) }
+    }
     fun collapsePreview() = _state.update { it.copy(isPreviewExpanded = false, selectedUris = emptySet()) }
 
     fun toggleSelectItem(uri: Uri) = _state.update { s ->
@@ -264,10 +283,18 @@ class ChatViewModel(
 
     fun onDeletionResult(granted: Boolean) {
         if (granted) {
+            val deleted = _state.value.selectedUris.size
+            val freedBytes = _state.value.previewItems
+                .filter { it.uri in _state.value.selectedUris }
+                .sumOf { it.sizeInBytes }
+            track("ai_files_deleted") {
+                putInt("deleted_count", deleted)
+                putLong("freed_bytes", freedBytes)
+            }
             _state.update { s ->
                 s.copy(
-                    previewItems          = s.previewItems.filterNot { it.uri in s.selectedUris },
-                    selectedUris          = emptySet(),
+                    previewItems           = s.previewItems.filterNot { it.uri in s.selectedUris },
+                    selectedUris           = emptySet(),
                     showDeleteConfirmation = false,
                 )
             }

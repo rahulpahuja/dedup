@@ -42,6 +42,8 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
     val profileViewModel = LocalUserProfileViewModel.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showGuestSignInDialog by remember { mutableStateOf(false) }
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    LaunchedEffect(Unit) { analytics.logScreenView("WhatsAppCleaner") }
 
     Scaffold(
         topBar = {
@@ -67,7 +69,10 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
                         data     = s.data,
                         onDelete = { uris ->
                             if (profileViewModel.isGuest) showGuestSignInDialog = true
-                            else viewModel.deleteFiles(uris)
+                            else {
+                                analytics.logFilesDeleted("WHATSAPP", uris.size, 0L)
+                                viewModel.deleteFiles(uris)
+                            }
                         }
                     )
                 is WhatsAppCleanerState.Error ->

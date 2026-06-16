@@ -80,6 +80,11 @@ fun VideoScannerScreen(navController: NavHostController) {
         analyticsManager.logScreenView("VideoScanner")
     }
 
+    LaunchedEffect(isScanning) {
+        if (isScanning) analyticsManager.logScanStarted("VIDEO")
+        else if (cacheLoaded) analyticsManager.logScanCompleted("VIDEO", scannedCount, duplicateGroups.size, 0L)
+    }
+
     val profileViewModel = LocalUserProfileViewModel.current
     val isGuest = profileViewModel.isGuest
 
@@ -105,6 +110,7 @@ fun VideoScannerScreen(navController: NavHostController) {
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
+            analyticsManager.logFilesDeleted("VIDEO", pendingDeleteUris.size, 0L)
             viewModel.removeDeletedVideosFromUI(pendingDeleteUris)
             selectedUris.removeAll(pendingDeleteUris)
             pendingDeleteUris = emptyList()
@@ -119,6 +125,7 @@ fun VideoScannerScreen(navController: NavHostController) {
             deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
         } else {
             uris.forEach { context.contentResolver.delete(it, null, null) }
+            analyticsManager.logFilesDeleted("VIDEO", uris.size, 0L)
             viewModel.removeDeletedVideosFromUI(uris)
             selectedUris.removeAll(uris)
         }

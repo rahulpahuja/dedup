@@ -33,5 +33,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     // ViewModel integration for Compose — version tracks lifecycle-runtime-ktx
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
+    // Firebase Analytics — feature module tracks AI chat interactions directly
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

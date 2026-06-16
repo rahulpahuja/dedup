@@ -92,7 +92,8 @@ private fun String.initials(): String =
 @Composable
 fun DeduplicationScreen(navController: NavHostController) {
     val context = LocalContext.current
-    
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+
     val viewModel: ContactScannerViewModel = viewModel(
         factory = ContactScannerViewModel.factory(context)
     )
@@ -100,6 +101,7 @@ fun DeduplicationScreen(navController: NavHostController) {
     val isScanning by viewModel.isScanning.collectAsState()
 
     LaunchedEffect(Unit) {
+        analytics.logScreenView("ContactDedup")
         if (duplicateGroups.isEmpty() && !isScanning) viewModel.startScanning()
     }
 
@@ -151,6 +153,7 @@ fun DeduplicationScreen(navController: NavHostController) {
             groups = preview,
             onDismiss = { viewModel.dismissMergePreview() },
             onConfirm = { keptDataIds ->
+                analytics.logContactMerge(preview.size)
                 viewModel.executeConfirmedMerge(preview, keptDataIds) { selectedIds.clear() }
             }
         )

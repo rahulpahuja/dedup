@@ -47,6 +47,8 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
     val state by viewModel.state.collectAsState()
     val selectedUris = remember { mutableStateSetOf<Uri>() }
     var showGuestSignInDialog by remember { mutableStateOf(false) }
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    LaunchedEffect(Unit) { analytics.logScreenView("SocialMediaCleaner") }
 
     Scaffold(
         topBar = {
@@ -79,6 +81,7 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                             onClick = {
                                 if (profileViewModel.isGuest) showGuestSignInDialog = true
                                 else {
+                                    analytics.logFilesDeleted("SOCIAL_MEDIA", selectedUris.size, 0L)
                                     viewModel.deleteFiles(selectedUris.toList())
                                     selectedUris.clear()
                                 }
