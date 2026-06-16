@@ -84,20 +84,17 @@ class ChatViewModel(
         appContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
-    private enum class Haptic { SEND, BOT_START, BOT_DONE, MIC_ON, MIC_RESULT, ERROR }
+    private enum class Haptic { SEND, TYPING, MIC_ON, MIC_RESULT, ERROR }
 
     private fun haptic(h: Haptic) {
         if (!_state.value.isVibrationEnabled) return
         if (!vibrator.hasVibrator()) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val effect = when (h) {
-                // Short crisp tap — message sent
+                // Crisp tap — message sent
                 Haptic.SEND       -> VibrationEffect.createOneShot(28, 180)
-                // Soft nudge — AI starts typing
-                Haptic.BOT_START  -> VibrationEffect.createOneShot(18, 90)
-                // Satisfying double-click — response complete
-                Haptic.BOT_DONE   -> VibrationEffect.createWaveform(
-                    longArrayOf(0, 25, 40, 45), intArrayOf(0, 130, 0, 210), -1)
+                // Feather-light key-press feel — fires per character during AI response
+                Haptic.TYPING     -> VibrationEffect.createOneShot(7, 48)
                 // Medium pulse — mic activated
                 Haptic.MIC_ON     -> VibrationEffect.createOneShot(35, 160)
                 // Quick double-tap — voice captured
@@ -111,9 +108,8 @@ class ChatViewModel(
         } else {
             @Suppress("DEPRECATION")
             when (h) {
-                Haptic.SEND, Haptic.MIC_ON -> vibrator.vibrate(30)
-                Haptic.BOT_START           -> vibrator.vibrate(18)
-                Haptic.BOT_DONE            -> vibrator.vibrate(longArrayOf(0, 25, 40, 45), -1)
+                Haptic.SEND, Haptic.MIC_ON -> vibrator.vibrate(28)
+                Haptic.TYPING              -> vibrator.vibrate(7)
                 Haptic.MIC_RESULT          -> vibrator.vibrate(longArrayOf(0, 22, 32, 22), -1)
                 Haptic.ERROR               -> vibrator.vibrate(longArrayOf(0, 55, 75, 55), -1)
             }
@@ -123,7 +119,10 @@ class ChatViewModel(
     fun toggleVibration() {
         val enabling = !_state.value.isVibrationEnabled
         _state.update { it.copy(isVibrationEnabled = enabling) }
-        if (enabling) haptic(Haptic.BOT_DONE) // confirm the toggle with a feel
+        // Give tactile confirmation when turning on: simulate a few typing pulses
+        if (enabling) viewModelScope.launch {
+            repeat(4) { haptic(Haptic.TYPING); delay(60) }
+        }
     }
 
     init {
@@ -184,12 +183,17 @@ class ChatViewModel(
                 buildResponse(text.trim(), _state.value.messages)
             }
             _state.update { it.copy(isStreaming = true, streamingText = "") }
-            haptic(Haptic.BOT_START)
 
             var streamed = ""
+            var typingPulse = 0
             for (char in response) {
                 streamed += char
                 _state.update { it.copy(streamingText = streamed) }
+                // Typing haptic: every 3rd letter/digit feels like keyboard key-presses
+                if (char.isLetterOrDigit()) {
+                    typingPulse++
+                    if (typingPulse % 3 == 0) haptic(Haptic.TYPING)
+                }
                 delay(when (char) {
                     '.', '!', '?' -> 35L
                     ','           -> 18L
@@ -199,7 +203,6 @@ class ChatViewModel(
             }
             commit(ChatMessage(text = response, isUser = false))
             _state.update { it.copy(isStreaming = false, streamingText = "", suggestions = nextSuggestions) }
-            haptic(Haptic.BOT_DONE)
 
             if (_state.value.isTtsEnabled && ttsReady) {
                 tts?.speak(response, TextToSpeech.QUEUE_FLUSH, null, "bot_response")
