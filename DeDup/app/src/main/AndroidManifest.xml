@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- ── Haptic feedback ── -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- ── Internet / Network ── -->
     <uses-feature
         android:name="android.hardware.telephony"

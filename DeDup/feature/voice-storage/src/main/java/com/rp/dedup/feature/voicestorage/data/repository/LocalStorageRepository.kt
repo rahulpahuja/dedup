@@ -89,7 +89,8 @@ class LocalStorageRepository(private val context: Context) {
             selectionArgs += it.toString()
         }
         filters.mimeTypeFilter?.let {
-            selectionClauses += "${MediaStore.MediaColumns.MIME_TYPE} = ?"
+            val op = if (it.contains('%')) "LIKE" else "="
+            selectionClauses += "${MediaStore.MediaColumns.MIME_TYPE} $op ?"
             selectionArgs += it
         }
         // MediaStore DATE_ADDED is in seconds; FilterConfig carries epoch millis

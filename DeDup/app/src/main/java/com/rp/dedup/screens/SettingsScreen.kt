@@ -110,7 +110,7 @@ fun SettingsScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = stringResource(R.string.settings_title),
+                title = "DeDup",
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
@@ -127,7 +127,12 @@ fun SettingsScreen(navController: NavHostController) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.settings_title),
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(top = 10.dp, bottom = 2.dp),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
 
             SettingsSectionHeader(stringResource(R.string.appearance_section))
 

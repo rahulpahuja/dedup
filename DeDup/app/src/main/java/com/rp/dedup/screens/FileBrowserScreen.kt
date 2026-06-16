@@ -144,15 +144,9 @@ fun FileBrowserContent(
                             )
                         } else {
                             Text(
-                                currentDir.name.let { name ->
-                                    if (currentDir.absolutePath == "/storage/emulated/0"
-                                    ) UIConstants.FILE_BROWSER_ROOT_LABEL else name
-                                },
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
+                                "DeDup",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     },
@@ -186,8 +180,8 @@ fun FileBrowserContent(
                     }
                 )
 
-                // Breadcrumb path bar
-                BreadcrumbBar(breadcrumbs)
+                // Only show breadcrumb trail when navigated into a subfolder
+                if (breadcrumbs.size > 1) BreadcrumbBar(breadcrumbs)
 
                 if (isLoading) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -205,6 +199,17 @@ fun FileBrowserContent(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            // Page title — shows current dir name (root = "Internal Storage", subfolders = dir name)
+            item {
+                Text(
+                    text = if (currentDir.absolutePath == "/storage/emulated/0")
+                        UIConstants.FILE_BROWSER_ROOT_LABEL else currentDir.name,
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+
             // Stats row
             item {
                 if (!isLoading) {

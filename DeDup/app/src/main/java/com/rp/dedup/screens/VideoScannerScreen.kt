@@ -160,7 +160,7 @@ fun VideoScannerScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             DeDupTopBar(
-                title = stringResource(R.string.video_scanner_title),
+                title = "DeDup",
                 navigationIcon = {
                     IconButton(onClick = { scope.launch { drawerState.open() } }) {
                         Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
@@ -185,6 +185,12 @@ fun VideoScannerScreen(navController: NavHostController) {
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            Text(
+                text = stringResource(R.string.video_scanner_title),
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = androidx.compose.ui.Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
             // ── Resume banner ──────────────────────────────────────────────
             if (hasCachedResults && resumedCount == 0) {
                 Surface(

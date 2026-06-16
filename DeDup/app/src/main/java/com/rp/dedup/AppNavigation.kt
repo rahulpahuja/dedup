@@ -42,7 +42,7 @@ import com.rp.dedup.UIConstants.ROUTE_CONTACT_TEST
 import com.rp.dedup.UIConstants.ROUTE_CONTACT_DEDUP
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_VOICE_STORAGE
-import com.rp.dedup.feature.voicestorage.presentation.VoiceStorageScreen
+import com.rp.dedup.feature.voicestorage.presentation.DeDupChatScreen
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
 import com.rp.dedup.core.permissions.PermissionManager
@@ -296,13 +296,7 @@ fun FileBrowserGatekeeper(navController: NavHostController) {
 
 @Composable
 fun VoiceStorageGatekeeper(navController: NavHostController) {
-    PermissionGate(
-        permissions      = (PermissionManager.IMAGE + PermissionManager.VIDEO).distinct(),
-        rationaleTitle   = "Media Access Needed",
-        rationaleMessage = "Voice Storage needs access to your photos and videos to search and manage them by voice."
-    ) {
-        VoiceStorageScreen(onNavigateUp = { navController.navigateUp() })
-    }
+    DeDupChatScreen(onNavigateUp = { navController.navigateUp() })
 }
 
 @Composable
