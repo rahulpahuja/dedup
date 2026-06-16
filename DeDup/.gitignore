@@ -1,16 +1,39 @@
+# Build output — all modules
+**/build/
+/build/
+/captures/
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Android Studio / IntelliJ
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
+/.idea/caches/
+/.idea/libraries/
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+/.idea/.name
+/.idea/deploymentTargetDropDown.xml
+
+# Local config — never commit
 local.properties
+/local.properties
+
+# Native build
+.externalNativeBuild/
+.cxx/
+
+# macOS
+.DS_Store
+
+# Secrets
 /app/google-services.json
+
+# Compiled artifacts (shouldn't appear, but belt-and-suspenders)
+*.class
+*.dex
+*.ap_

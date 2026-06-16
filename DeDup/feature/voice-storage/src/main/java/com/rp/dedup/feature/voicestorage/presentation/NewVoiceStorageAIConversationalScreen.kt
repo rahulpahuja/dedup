@@ -34,6 +34,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -240,10 +241,22 @@ private fun ChatHeader(
         IconButton(onClick = onNavigateUp) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onBackground)
         }
-        Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(6.dp))
-        Text("Talk to My Storage", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        Column(modifier = Modifier.weight(1f).padding(start = 4.dp)) {
+            Text(
+                "DeDup",
+                color      = MaterialTheme.colorScheme.onBackground,
+                fontSize   = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(10.dp))
+                Text(
+                    "Talk to My Storage",
+                    color    = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                    fontSize = 11.sp,
+                )
+            }
+        }
 
         @Suppress("DEPRECATION")
         val volIcon = if (isTtsEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff
@@ -718,10 +731,10 @@ private fun ChatInputBar(
     val onSurface  = MaterialTheme.colorScheme.onSurface
 
     Row(
-        modifier          = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
+        modifier          = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(32.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
-            .padding(horizontal = 4.dp, vertical = 2.dp),
+            .padding(horizontal = 4.dp, vertical = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onMicClick, enabled = !isStreaming,
@@ -734,22 +747,25 @@ private fun ChatInputBar(
                               else         -> onSurface },
             )
         }
-        TextField(
+        BasicTextField(
             value         = text,
             onValueChange = onTextChange,
             enabled       = !isStreaming,
-            modifier      = Modifier.weight(1f),
-            placeholder   = {
-                Text(when { isListening -> "Listening…"; isStreaming -> "Responding…"; else -> "Ask me anything…" },
-                    color = onSurface.copy(alpha = 0.45f))
+            modifier      = Modifier.weight(1f).padding(vertical = 12.dp),
+            textStyle     = MaterialTheme.typography.bodyLarge.copy(color = onSurface),
+            maxLines      = 4,
+            decorationBox = { innerTextField ->
+                Box {
+                    if (text.isEmpty()) {
+                        Text(
+                            when { isListening -> "Listening…"; isStreaming -> "Responding…"; else -> "Ask me anything…" },
+                            color = onSurface.copy(alpha = 0.45f),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                    innerTextField()
+                }
             },
-            colors   = TextFieldDefaults.colors(
-                focusedContainerColor   = Color.Transparent, unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor  = Color.Transparent, focusedIndicatorColor   = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent, disabledIndicatorColor  = Color.Transparent,
-                focusedTextColor = onSurface, unfocusedTextColor = onSurface,
-            ),
-            maxLines = 4,
         )
         if (text.isNotBlank() && !isStreaming) {
             IconButton(onClick = onSend,
