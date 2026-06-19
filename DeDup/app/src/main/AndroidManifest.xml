@@ -174,13 +174,12 @@
                 android:value="true" />
         </service>
 
-        <!-- Android 17 Handoff Receiver -->
+        <!-- Internal-only deep-link receiver: exported=false so only this app can trigger it -->
         <receiver
             android:name=".core.handoff.HandoffReceiver"
-            android:exported="true"
-            android:permission="android.permission.ACCEPT_HANDOFF">
+            android:exported="false">
             <intent-filter>
-                <action android:name="android.intent.action.HANDOFF_RECEIVED" />
+                <action android:name="com.rp.dedup.action.NAVIGATE" />
             </intent-filter>
         </receiver>
 

@@ -5,11 +5,13 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.rp.dedup.core.common.Constants
 import com.rp.dedup.core.notifications.AppNotificationManager
+import java.util.concurrent.atomic.AtomicInteger
 
 class FirebaseMessageService : FirebaseMessagingService() {
 
     companion object {
         private const val TAG = "FirebaseMessageService"
+        private val notifIdCounter = AtomicInteger(0)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -24,7 +26,7 @@ class FirebaseMessageService : FirebaseMessagingService() {
             // Show notification using our app manager
             val notificationManager = AppNotificationManager(applicationContext)
             notificationManager.showSimpleNotification(
-                id = System.currentTimeMillis().toInt(),
+                id = notifIdCounter.getAndIncrement(),
                 title = title,
                 message = body
             )

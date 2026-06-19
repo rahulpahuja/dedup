@@ -20,8 +20,10 @@ import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val historyRepository: ScanHistoryRepository,
-    private val context: Context
+    context: Context
 ) : ViewModel() {
+
+    private val context: Context = context.applicationContext
 
     private val _storageStats = MutableStateFlow(StorageStats())
     val storageStats: StateFlow<StorageStats> = _storageStats.asStateFlow()

@@ -1,10 +1,14 @@
 package com.rp.dedup.core.search
 
+import android.Manifest
 import android.content.ContentUris
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.rp.dedup.core.dao.ImageEmbeddingDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,10 +47,23 @@ class ImageIndexRepository(
             return@withContext
         }
 
+        // Abort if storage permission was revoked mid-session. Without this guard an
+        // empty allUris list would cause deleteStale([]) to wipe the entire index table.
+        val readPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            Manifest.permission.READ_MEDIA_IMAGES
+        else
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        if (ContextCompat.checkSelfPermission(context, readPermission) != PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "Storage permission not granted — aborting indexing run")
+            return@withContext
+        }
+
         val allUris      = loadAllImageUris()
         val existingUris = dao.getAllUris().toHashSet()
 
-        // Remove embeddings for images no longer on the device
+        // deleteStale uses NOT IN — calling it with an empty list deletes everything.
+        // The permission check above ensures 0 results means "device has no images",
+        // not "permission denied", so skipping is still correct here.
         if (allUris.isNotEmpty()) {
             dao.deleteStale(allUris.map { it.toString() })
         }

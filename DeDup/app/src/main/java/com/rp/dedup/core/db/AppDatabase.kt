@@ -20,7 +20,6 @@ import com.rp.dedup.core.search.FloatArrayConverter
 import com.rp.dedup.core.search.ImageEmbeddingEntity
 import com.rp.dedup.core.search.LongListConverter
 import com.rp.dedup.core.security.KeyManager
-import com.rp.dedup.core.analytics.AnalyticsManager
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 
@@ -120,23 +119,13 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun buildDatabase(context: Context): AppDatabase {
             val dbName = Constants.DATABASE_NAME
-            val builder = Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                dbName
-            )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-                .fallbackToDestructiveMigration(dropAllTables = true)
-
             return try {
-                val key = KeyManager.getOrCreateDatabaseKey(context)
-                builder.openHelperFactory(SupportOpenHelperFactory(key))
-                val db = builder.build()
-                // Force opening the database to catch encryption issues early
-                db.openHelper.writableDatabase
-                db
+                createBuilder(context, dbName).build().also { db ->
+                    // Force opening the database to catch encryption issues early
+                    db.openHelper.writableDatabase
+                }
             } catch (e: Exception) {
-                Log.e("AppDatabase", "Database initialization failed", e)
+                Log.e("AppDatabase", "Database initialization failed, attempting file-level recovery", e)
 
                 // Only attempt file-level recovery: delete corrupted DB files and retry
                 // with the same key. If the failure was in KeyManager itself (KeyStore
@@ -152,10 +141,29 @@ abstract class AppDatabase : RoomDatabase() {
                     Log.e("AppDatabase", "Error deleting database files during recovery", ex)
                 }
 
-                val key = KeyManager.getOrCreateDatabaseKey(context)
-                builder.openHelperFactory(SupportOpenHelperFactory(key))
-                builder.build()
+                // Fresh builder — the old one was already built and cannot be reused.
+                createBuilder(context, dbName).build()
             }
+        }
+
+        /**
+         * Creates a fresh, unbuilt RoomDatabase.Builder with encryption and migrations.
+         * Must be called once per build attempt — Room forbids calling build() twice.
+         */
+        private fun createBuilder(context: Context, dbName: String): RoomDatabase.Builder<AppDatabase> {
+            val key = KeyManager.getOrCreateDatabaseKey(context)
+            return Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                dbName
+            )
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .apply {
+                    if (com.rp.dedup.BuildConfig.DEBUG) {
+                        fallbackToDestructiveMigration(dropAllTables = true)
+                    }
+                }
+                .openHelperFactory(SupportOpenHelperFactory(key))
         }
     }
 }

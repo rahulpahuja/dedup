@@ -27,7 +27,7 @@ object TreemapLayoutCalculator {
         colorOffset: Int,
         result: MutableList<TreemapCell>
     ) {
-        if (nodes.isEmpty() || bounds.width < 4f || bounds.height < 4f) return
+        if (nodes.isEmpty()) return
 
         val total = nodes.sumOf { it.sizeBytes }.toFloat()
         val splitHorizontally = bounds.width >= bounds.height
@@ -55,10 +55,12 @@ object TreemapLayoutCalculator {
                     rect.left + padding, rect.top + padding,
                     rect.right - padding, rect.bottom - padding
                 )
-                val sortedChildren = node.children
-                    .filter { it.sizeBytes > 0 }
-                    .sortedByDescending { it.sizeBytes }
-                layout(sortedChildren, inner, currentDepth + 1, maxDepth, colorOffset + nodes.size, result)
+                if (inner.width >= 4f && inner.height >= 4f) {
+                    val sortedChildren = node.children
+                        .filter { it.sizeBytes > 0 }
+                        .sortedByDescending { it.sizeBytes }
+                    layout(sortedChildren, inner, currentDepth + 1, maxDepth, colorOffset + nodes.size, result)
+                }
             }
         }
     }

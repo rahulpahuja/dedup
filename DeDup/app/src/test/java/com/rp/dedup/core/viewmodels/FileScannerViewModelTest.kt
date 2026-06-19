@@ -22,7 +22,7 @@ class FileScannerViewModelTest {
     private val repository        = mockk<FileScannerRepository>(relaxed = true)
     private val historyRepository = mockk<ScanHistoryRepository>(relaxed = true)
 
-    private fun uri(s: String): Uri = mockk { every { toString() } returns s }
+    private fun uri(@Suppress("UNUSED_PARAMETER") s: String): Uri = mockk(relaxed = true)
 
     private fun file(name: String, size: Long, checksum: String? = null) = ScannedFile(
         uri       = uri("content://$name"),
@@ -47,7 +47,13 @@ class FileScannerViewModelTest {
         historyRepository: ScanHistoryRepository?,
         scanTypeName: String,
         ioDispatcher: kotlinx.coroutines.CoroutineDispatcher
-    ) = FileScannerViewModel(repository, historyRepository, scanTypeName)
+    ) = FileScannerViewModel(
+        repository = repository,
+        historyRepository = historyRepository,
+        scanTypeName = scanTypeName,
+        defaultDispatcher = ioDispatcher,
+        ioDispatcher = ioDispatcher
+    )
 
     // ── initial state ──────────────────────────────────────────────────────────
 

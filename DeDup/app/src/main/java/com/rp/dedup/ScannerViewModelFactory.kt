@@ -14,13 +14,14 @@ class ScannerViewModelFactory(private val context: Context) : ViewModelProvider.
         if (modelClass.isAssignableFrom(ScannerViewModel::class.java)) {
             val db = AppDatabase.getDatabase(context)
             @Suppress("UNCHECKED_CAST")
+            val appContext = context.applicationContext
             return ScannerViewModel(
-                context = context.applicationContext,
-                repository = ImageScannerRepository(context),
+                context = appContext,
+                repository = ImageScannerRepository(appContext),
                 historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
                 scannedImageRepository = ScannedImageRepository(db.scannedImageDao()),
-                dataStoreManager = com.rp.dedup.core.caching.DataStoreManager(context),
-                analyticsManager = com.rp.dedup.core.analytics.AnalyticsManager(context)
+                dataStoreManager = com.rp.dedup.core.caching.DataStoreManager(appContext),
+                analyticsManager = com.rp.dedup.core.analytics.AnalyticsManager(appContext)
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

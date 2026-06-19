@@ -21,7 +21,9 @@ class FileScannerViewModel(
     private val repository: FileScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
     private val scanTypeName: String = "FILE",
-    private val analyticsManager: AnalyticsManager? = null
+    private val analyticsManager: AnalyticsManager? = null,
+    private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
+    private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private val _files = MutableStateFlow<List<ScannedFile>>(emptyList())
@@ -45,7 +47,7 @@ class FileScannerViewModel(
 
         analyticsManager?.logScanStarted(scanTypeName)
 
-        scanJob = viewModelScope.launch(Dispatchers.Default) {
+        scanJob = viewModelScope.launch(defaultDispatcher) {
             try {
                 val allFiles = mutableListOf<ScannedFile>()
                 repository.scanFilesByExtension(extensions).collect { file ->
@@ -74,7 +76,7 @@ class FileScannerViewModel(
                 }
             } finally {
                 _isScanning.value = false
-                withContext(NonCancellable + Dispatchers.IO) {
+                withContext(NonCancellable + ioDispatcher) {
                     val groups = _duplicateGroups.value
                     historyRepository?.insert(
                         ScanHistory(

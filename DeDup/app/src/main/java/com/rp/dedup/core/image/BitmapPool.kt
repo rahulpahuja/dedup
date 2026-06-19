@@ -18,7 +18,10 @@ object BitmapPool {
 
     fun acquire(width: Int, height: Int, config: Bitmap.Config): Bitmap {
         val pooled = pool.poll()
-        if (pooled != null && !pooled.isRecycled) return pooled
+        if (pooled != null && !pooled.isRecycled
+            && pooled.width == width && pooled.height == height && pooled.config == config
+        ) return pooled
+        pooled?.recycle()
         return Bitmap.createBitmap(width, height, config)
     }
 

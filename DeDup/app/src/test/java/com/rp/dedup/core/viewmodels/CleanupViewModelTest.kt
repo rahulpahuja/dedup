@@ -19,7 +19,7 @@ class CleanupViewModelTest {
 
     private val repository = mockk<FileScannerRepository>(relaxed = true)
 
-    private fun uri(s: String): Uri = Uri.parse(s)
+    private fun uri(s: String): Uri = mockk()
 
     private fun file(name: String, size: Long, ext: String = "mp4") = ScannedFile(
         uri = uri("content://$name"),
@@ -51,8 +51,8 @@ class CleanupViewModelTest {
     @Test
     fun `videos smaller than 10MB are excluded`() = runTest {
         val small = file("small.mp4", 5 * 1024 * 1024L)
-        every { repository.scanFilesByExtension(listOf("mp4", "mkv", "mov", "avi")) } returns flowOf(small)
         every { repository.scanFilesByExtension(any()) } returns flowOf()
+        every { repository.scanFilesByExtension(listOf("mp4", "mkv", "mov", "avi")) } returns flowOf(small)
         every { repository.scanOldFiles(any(), any()) } returns flowOf()
 
         val vm = makeViewModel()
@@ -63,8 +63,8 @@ class CleanupViewModelTest {
     @Test
     fun `videos larger than 10MB are included`() = runTest {
         val large = file("large.mp4", 15 * 1024 * 1024L)
-        every { repository.scanFilesByExtension(listOf("mp4", "mkv", "mov", "avi")) } returns flowOf(large)
         every { repository.scanFilesByExtension(any()) } returns flowOf()
+        every { repository.scanFilesByExtension(listOf("mp4", "mkv", "mov", "avi")) } returns flowOf(large)
         every { repository.scanOldFiles(any(), any()) } returns flowOf()
 
         val vm = makeViewModel()

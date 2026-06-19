@@ -1,6 +1,7 @@
 package com.rp.dedup
 
 import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.model.AppPalette
 import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.util.MainDispatcherRule
@@ -31,6 +32,8 @@ class ThemeViewModelTest {
     private fun setup(storedValue: String = ThemeMode.AUTO.name) {
         every { dataStore.readData(DataStoreManager.THEME_MODE, ThemeMode.AUTO.name) } returns
                 flowOf(storedValue)
+        every { dataStore.readData(DataStoreManager.SELECTED_PALETTE, AppPalette.OCEAN.name) } returns
+                flowOf(AppPalette.OCEAN.name)
         viewModel = ThemeViewModel(dataStore)
     }
 

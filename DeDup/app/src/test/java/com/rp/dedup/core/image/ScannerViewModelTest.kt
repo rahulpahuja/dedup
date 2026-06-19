@@ -33,7 +33,7 @@ class ScannerViewModelTest {
     fun setUp() {
         mockkObject(BestShotAnalyzer)
         coEvery { BestShotAnalyzer.analyzeGroups(any(), any()) } answers { it.invocation.args[1] as List<List<ScannedImage>> }
-        viewModel = ScannerViewModel(context, repository, defaultDispatcher = coroutineRule.testDispatcher)
+        viewModel = ScannerViewModel(context, repository, defaultDispatcher = coroutineRule.testDispatcher, ioDispatcher = coroutineRule.testDispatcher)
     }
 
     @org.junit.After

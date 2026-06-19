@@ -25,9 +25,9 @@ class ContactScannerRepository(private val context: Context) {
             ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
             projection, null, null, null
         )?.use { cursor ->
-            val idCol   = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
-            val nameCol = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-            val numCol  = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+            val idCol   = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
+            val nameCol = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+            val numCol  = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER)
             while (cursor.moveToNext()) {
                 val id     = cursor.getString(idCol)
                 val name   = cursor.getString(nameCol) ?: "Unknown"

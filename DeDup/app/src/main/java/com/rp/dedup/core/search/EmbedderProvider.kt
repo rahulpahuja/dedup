@@ -57,5 +57,7 @@ class EmbedderProvider(context: Context) {
         }
     }
 
-    fun close() = embedder?.close()
+    fun close() {
+        embedder?.close()
+    }
 }

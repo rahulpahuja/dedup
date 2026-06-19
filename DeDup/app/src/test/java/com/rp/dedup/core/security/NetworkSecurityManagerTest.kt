@@ -7,22 +7,20 @@ class NetworkSecurityManagerTest {
 
     // ── verifyTokenOnServer ────────────────────────────────────────────────────
 
-    @Test
-    fun `verifyTokenOnServer returns true for any token`() {
-        // Documents current behaviour: server-side verification is a TODO stub.
-        // This test should be updated when real backend verification is implemented.
-        assertTrue(NetworkSecurityManager.verifyTokenOnServer("any-token"))
+    @Test(expected = UnsupportedOperationException::class)
+    fun `verifyTokenOnServer throws for any token`() {
+        NetworkSecurityManager.verifyTokenOnServer("any-token")
     }
 
-    @Test
-    fun `verifyTokenOnServer returns true for empty token`() {
-        assertTrue(NetworkSecurityManager.verifyTokenOnServer(""))
+    @Test(expected = UnsupportedOperationException::class)
+    fun `verifyTokenOnServer throws for empty token`() {
+        NetworkSecurityManager.verifyTokenOnServer("")
     }
 
-    @Test
-    fun `verifyTokenOnServer returns true for very long token`() {
+    @Test(expected = UnsupportedOperationException::class)
+    fun `verifyTokenOnServer throws for very long token`() {
         val longToken = "a".repeat(4096)
-        assertTrue(NetworkSecurityManager.verifyTokenOnServer(longToken))
+        NetworkSecurityManager.verifyTokenOnServer(longToken)
     }
 
     // ── getIntegrityToken — cloud project number check ─────────────────────────

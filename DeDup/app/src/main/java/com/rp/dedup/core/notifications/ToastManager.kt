@@ -1,8 +1,8 @@
 package com.rp.dedup.core.notifications
 
 import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.view.Gravity
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -59,7 +59,6 @@ class ToastManager(private val context: Context) {
      * @param yOffset Vertical offset from the gravity position
      * @param toastDuration Toast.LENGTH_SHORT or Toast.LENGTH_LONG
      */
-    @Suppress("DEPRECATION")
     fun showCustom(
         message: String,
         @DrawableRes iconRes: Int? = null,
@@ -70,6 +69,14 @@ class ToastManager(private val context: Context) {
         yOffset: Int = 100,
         toastDuration: Int = Toast.LENGTH_SHORT
     ) {
+        // Toast.view was deprecated in API 30 and is silently ignored on API 30+.
+        // Fall back to a plain text toast so the message is always shown.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Toast.makeText(context, message, toastDuration).show()
+            return
+        }
+
+        @Suppress("DEPRECATION")
         val toast = Toast(context)
         
         // Create the root container programmatically
@@ -106,8 +113,11 @@ class ToastManager(private val context: Context) {
         }
         layout.addView(textView)
 
+        @Suppress("DEPRECATION")
         toast.duration = toastDuration
+        @Suppress("DEPRECATION")
         toast.view = layout
+        @Suppress("DEPRECATION")
         toast.setGravity(gravity, 0, yOffset)
         toast.show()
     }

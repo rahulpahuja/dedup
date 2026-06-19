@@ -161,11 +161,13 @@ class ContactScannerViewModel(
     companion object {
         fun factory(context: Context): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ContactScannerViewModel(
-                    ContactScannerRepository(context),
-                    ToastManager(context)
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val appContext = context.applicationContext
+                return ContactScannerViewModel(
+                    ContactScannerRepository(appContext),
+                    ToastManager(appContext)
                 ) as T
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -43,7 +44,10 @@ class ScanHistoryViewModelTest {
 
     @Test
     fun `initial history is empty when repository returns empty list`() = runTest {
+        val collectJob = launch { viewModel.history.collect {} }
+        kotlinx.coroutines.yield()
         assertTrue(viewModel.history.value.isEmpty())
+        collectJob.cancel()
     }
 
     @Test
@@ -51,7 +55,10 @@ class ScanHistoryViewModelTest {
         val records = listOf(scan(1), scan(2), scan(3))
         every { repository.getAll() } returns flowOf(records)
         val vm = ScanHistoryViewModel(repository)
+        val collectJob = launch { vm.history.collect {} }
+        kotlinx.coroutines.yield()
         assertEquals(3, vm.history.value.size)
+        collectJob.cancel()
     }
 
     // ── delete ─────────────────────────────────────────────────────────────────

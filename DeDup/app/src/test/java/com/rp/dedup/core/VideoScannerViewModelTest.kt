@@ -37,7 +37,7 @@ class VideoScannerViewModelTest {
 
     @Before
     fun setUp() {
-        viewModel = VideoScannerViewModel(repository, defaultDispatcher = coroutineRule.testDispatcher)
+        viewModel = VideoScannerViewModel(repository, defaultDispatcher = coroutineRule.testDispatcher, ioDispatcher = coroutineRule.testDispatcher)
     }
 
     // --- Initial state ---

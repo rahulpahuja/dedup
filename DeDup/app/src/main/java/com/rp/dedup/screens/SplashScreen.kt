@@ -29,25 +29,29 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
 import com.rp.dedup.Screen
-import com.rp.dedup.pendingDeepLinkRoute
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.PrimaryBlue
 import kotlinx.coroutines.delay
 
+/**
+ * @param hasPendingDeepLink When true the splash timer completes without navigating —
+ *   MainActivity's LaunchedEffect will handle navigation to the deep-link route.
+ */
 @Composable
-fun SplashScreen(navController: NavHostController) {
+fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean = false) {
     val context = LocalContext.current
-    val authManager = remember { FirebaseAuthManager(ToastManager(context)) }
+    val authManager = remember(context) { FirebaseAuthManager(ToastManager(context.applicationContext)) }
+    DisposableEffect(authManager) { onDispose { authManager.close() } }
     var triggered by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         triggered = true
         delay(3200)
-        
+
         // If a deep link is pending, DON'T navigate. MainActivity will handle it.
-        if (pendingDeepLinkRoute != null) return@LaunchedEffect
+        if (hasPendingDeepLink) return@LaunchedEffect
 
         // Persist login: if user is already authenticated, skip LoginScreen
         val nextRoute = if (authManager.isUserLoggedIn) {

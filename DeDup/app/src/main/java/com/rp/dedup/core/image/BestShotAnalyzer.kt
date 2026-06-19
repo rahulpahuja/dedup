@@ -34,6 +34,15 @@ object BestShotAnalyzer {
     private val bitmapSlots = Semaphore(4)
 
     /**
+     * Releases the ML Kit FaceDetector's native resources.
+     * Call from ScannerViewModel.onCleared() so the native thread pool and model
+     * memory are freed when the ViewModel is destroyed.
+     */
+    fun close() {
+        try { faceDetector.close() } catch (_: Exception) { }
+    }
+
+    /**
      * Scores every image in every group concurrently, then marks the best shot.
      * Bitmap loads are bounded to [bitmapSlots] concurrent operations to cap peak memory.
      */

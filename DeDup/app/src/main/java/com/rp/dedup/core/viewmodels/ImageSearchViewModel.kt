@@ -90,6 +90,11 @@ class ImageSearchViewModel(
         _error.value = null
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        repository.close()
+    }
+
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val appContext  = context.applicationContext

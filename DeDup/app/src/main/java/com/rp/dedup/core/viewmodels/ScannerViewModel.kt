@@ -2,9 +2,6 @@ package com.rp.dedup.core.viewmodels
 
 import android.content.Context
 import android.provider.MediaStore
-import android.companion.CompanionDeviceManager
-import android.content.Intent
-import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
@@ -29,14 +26,17 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 
 class ScannerViewModel(
-    private val context: Context,
+    context: Context,
     private val repository: ImageScannerRepository,
     private val historyRepository: ScanHistoryRepository? = null,
     private val scannedImageRepository: ScannedImageRepository? = null,
     private val dataStoreManager: com.rp.dedup.core.caching.DataStoreManager? = null,
     private val analyticsManager: AnalyticsManager? = null,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
+
+    private val context: Context = context.applicationContext
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedImage>>>(emptyList())
     val duplicateGroups: StateFlow<List<List<ScannedImage>>> = _duplicateGroups.asStateFlow()
@@ -61,35 +61,32 @@ class ScannerViewModel(
     private var excludedFolders = emptyList<String>()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             loadCachedResults()
         }
     }
 
     private suspend fun loadCachedResults() {
-        val cached = scannedImageRepository?.getCachedDuplicateGroups() ?: run {
+        val cached = scannedImageRepository?.getCachedDuplicateGroups()
+        val isStale = if (!cached.isNullOrEmpty()) computeStaleness() else false
+        withContext(Dispatchers.Main.immediate) {
+            if (!cached.isNullOrEmpty()) {
+                _duplicateGroups.value = cached
+                _isStale.value = isStale
+            }
             _cacheLoaded.value = true
-            return
         }
-        if (cached.isNotEmpty()) {
-            _duplicateGroups.value = cached
-            checkStaleness()
-        }
-        _cacheLoaded.value = true
     }
 
-    private suspend fun checkStaleness() {
+    private suspend fun computeStaleness(): Boolean {
         val lastScanMs = dataStoreManager
             ?.readData(com.rp.dedup.core.caching.DataStoreManager.LAST_IMAGE_SCAN_TIME, "0")
             ?.map { it.toLongOrNull() ?: 0L }
-            ?.first() ?: return
-        if (lastScanMs == 0L) {
-            _isStale.value = true
-            return
-        }
+            ?.first() ?: return false
+        if (lastScanMs == 0L) return true
         // MediaStore DATE_MODIFIED is in seconds; lastScanMs is milliseconds.
         val maxModifiedSec = queryMaxMediaStoreModified()
-        _isStale.value = maxModifiedSec * 1000L > lastScanMs
+        return maxModifiedSec * 1000L > lastScanMs
     }
 
     private fun queryMaxMediaStoreModified(): Long {
@@ -169,25 +166,9 @@ class ScannerViewModel(
                     reclaimableBytes = reclaimableBytes
                 )
 
-                // Android 17 Handoff: Broadcast state to other devices
-                if (android.os.Build.VERSION.SDK_INT >= 37) {
-                    val companionManager = context.getSystemService(Context.COMPANION_DEVICE_SERVICE) as? CompanionDeviceManager
-                    companionManager?.let {
-                        val handoffBundle = Bundle().apply {
-                            putString("handoff_route", "image_scanner")
-                            putString("scan_type", "IMAGE")
-                            putInt("duplicates_found", duplicatesFound)
-                        }
-                        // This is a simplified representation of the Android 17 Handoff API
-                        // In a real implementation, you'd use startHandoff() with a ClipData or specific intent
-                        val handoffIntent = Intent("android.intent.action.HANDOFF_RECEIVED").apply {
-                            putExtras(handoffBundle)
-                        }
-                        context.sendBroadcast(handoffIntent)
-                    }
+                withContext(NonCancellable + ioDispatcher) {
+                    persistResults(finalizedGroups)
                 }
-
-                persistResults(finalizedGroups)
 
             } catch (e: Exception) {
                 if (e is CancellationException) {
@@ -203,15 +184,15 @@ class ScannerViewModel(
                 }
             } finally {
                 _isScanning.value = false
-                withContext(NonCancellable + Dispatchers.IO) {
+                withContext(NonCancellable + ioDispatcher) {
                     saveHistory(startTime, if (wasCancelled) "CANCELLED" else "COMPLETED")
                 }
             }
         }
     }
 
-    private fun persistResults(finalizedGroups: List<List<ScannedImage>>) {
-        viewModelScope.launch(Dispatchers.IO) {
+    private suspend fun persistResults(finalizedGroups: List<List<ScannedImage>>) {
+        try {
             scannedImageRepository?.clearAll()
             val imagesToPersist = finalizedGroups.flatMap { group ->
                 val representative = group.first()
@@ -226,7 +207,9 @@ class ScannerViewModel(
                 com.rp.dedup.core.caching.DataStoreManager.LAST_IMAGE_SCAN_TIME,
                 System.currentTimeMillis().toString()
             )
-            _isStale.value = false
+            withContext(Dispatchers.Main.immediate) { _isStale.value = false }
+        } catch (e: Exception) {
+            android.util.Log.e("ScannerViewModel", "Failed to persist scan results", e)
         }
     }
 
@@ -305,6 +288,11 @@ class ScannerViewModel(
             }
         }
         return urisToDelete
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        BestShotAnalyzer.close()
     }
 
     fun removeDeletedImagesFromUI(deletedUris: List<String>) {

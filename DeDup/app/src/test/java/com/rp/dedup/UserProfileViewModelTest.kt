@@ -1,6 +1,7 @@
 package com.rp.dedup
 
 import android.app.Application
+import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import org.junit.Assert.*
@@ -11,15 +12,39 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+@Config(sdk = [33], application = com.rp.dedup.util.TestApp::class)
 class UserProfileViewModelTest {
 
     private lateinit var viewModel: UserProfileViewModel
+    private lateinit var mockPrefs: android.content.SharedPreferences
 
     @Before
     fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Application>()
+        mockPrefs = app.getSharedPreferences("test_profile", Context.MODE_PRIVATE)
+        mockPrefs.edit().clear().commit()
+
+        io.mockk.mockkConstructor(androidx.security.crypto.MasterKey.Builder::class)
+        io.mockk.every { anyConstructed<androidx.security.crypto.MasterKey.Builder>().build() } returns io.mockk.mockk<androidx.security.crypto.MasterKey>(relaxed = true)
+
+        io.mockk.mockkStatic(androidx.security.crypto.EncryptedSharedPreferences::class)
+        io.mockk.every {
+            androidx.security.crypto.EncryptedSharedPreferences.create(
+                any<android.content.Context>(),
+                any<String>(),
+                any<androidx.security.crypto.MasterKey>(),
+                any<androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme>(),
+                any<androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme>()
+            )
+        } returns mockPrefs
+
         viewModel = UserProfileViewModel(app)
+    }
+
+    @org.junit.After
+    fun tearDown() {
+        io.mockk.unmockkStatic(androidx.security.crypto.EncryptedSharedPreferences::class)
+        io.mockk.unmockkConstructor(androidx.security.crypto.MasterKey.Builder::class)
     }
 
     // --- Default state ---

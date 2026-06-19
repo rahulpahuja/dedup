@@ -1,5 +1,6 @@
 package com.rp.dedup.core.deepoptimization
 
+import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
@@ -90,7 +91,7 @@ class WhatsAppCleanerRepositoryImpl(private val context: Context) : WhatsAppClea
             while (cursor.moveToNext()) {
                 val path = cursor.getString(dataIdx) ?: continue
                 result += WhatsAppFile(
-                    uri    = Uri.withAppendedPath(uri, cursor.getLong(idIdx).toString()),
+                    uri    = ContentUris.withAppendedId(uri, cursor.getLong(idIdx)),
                     name   = cursor.getString(nameIdx) ?: path.substringAfterLast('/'),
                     size   = cursor.getLong(sizeIdx),
                     path   = path,

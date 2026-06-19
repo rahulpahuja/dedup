@@ -46,8 +46,9 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val toastManager = remember { ToastManager(context) }
+    val toastManager = remember { ToastManager(context.applicationContext) }
     val authManager = remember { FirebaseAuthManager(toastManager) }
+    DisposableEffect(authManager) { onDispose { authManager.close() } }
     
     var isLoading by remember { mutableStateOf(false) }
 

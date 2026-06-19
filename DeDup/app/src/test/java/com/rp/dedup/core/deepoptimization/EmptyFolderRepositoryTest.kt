@@ -2,12 +2,18 @@ package com.rp.dedup.core.deepoptimization
 
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import com.rp.dedup.core.model.EmptyFolder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
+import java.io.File
 
 /**
  * Tests for EmptyFolderRepository pure-logic paths.
@@ -18,6 +24,17 @@ class EmptyFolderRepositoryTest {
 
     private val context = mockk<Context>(relaxed = true)
     private val repository = EmptyFolderRepositoryImpl(context)
+
+    @Before
+    fun setUp() {
+        mockkStatic(Environment::class)
+        every { Environment.getExternalStorageDirectory() } returns File("/storage")
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Environment::class)
+    }
 
     // ── EmptyFolder model ──────────────────────────────────────────────────────
 

@@ -7,24 +7,30 @@ import android.util.Log
 import com.rp.dedup.MainActivity
 
 /**
- * Handles incoming activity handoff requests from other devices (Android 17 API).
+ * Internal-only receiver for in-process deep-link navigation.
+ * Declared exported=false in the manifest — only this app can send it.
  */
 class HandoffReceiver : BroadcastReceiver() {
 
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == "android.intent.action.HANDOFF_RECEIVED") {
-            val route = intent.getStringExtra("handoff_route") ?: "dashboard"
-            val scanType = intent.getStringExtra("scan_type")
-            
-            Log.d("HandoffReceiver", "Received handoff for $scanType, routing to $route")
+    companion object {
+        const val ACTION_NAVIGATE = "com.rp.dedup.action.NAVIGATE"
+        const val EXTRA_ROUTE = "target_route"
 
-            // Restart MainActivity with the handoff state
-            val startIntent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra("target_route", route)
-                putExtra("handoff_scan_type", scanType)
+        fun buildIntent(context: Context, route: String): Intent =
+            Intent(ACTION_NAVIGATE).apply {
+                setPackage(context.packageName)
+                putExtra(EXTRA_ROUTE, route)
             }
-            context.startActivity(startIntent)
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != ACTION_NAVIGATE) return
+        val route = intent.getStringExtra(EXTRA_ROUTE) ?: return
+        Log.d("HandoffReceiver", "Internal navigate to $route")
+        val startIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_ROUTE, route)
         }
+        context.startActivity(startIntent)
     }
 }

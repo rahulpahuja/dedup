@@ -1,11 +1,17 @@
 package com.rp.dedup.core.viewmodels
 
+import android.os.Environment
 import com.rp.dedup.core.model.FileItem
 import com.rp.dedup.core.model.SortMode
 import com.rp.dedup.util.MainDispatcherRule
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -15,6 +21,17 @@ class FileBrowserViewModelTest {
 
     @get:Rule
     val coroutineRule = MainDispatcherRule()
+
+    @Before
+    fun setUp() {
+        mockkStatic(Environment::class)
+        every { Environment.getExternalStorageDirectory() } returns File("/storage")
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Environment::class)
+    }
 
     private fun item(
         name: String,

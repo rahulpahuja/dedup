@@ -105,7 +105,7 @@ class FileScannerRepository(private val context: Context) {
         if (permissionManager.hasAllFilesAccess) {
             Log.d(TAG, "All Files Access granted, starting direct filesystem scan fallback")
             val externalStorage = Environment.getExternalStorageDirectory()
-            scanDirectoryRecursively(externalStorage, extensions, foundPaths, excludedFolders).forEach { file ->
+            emitDirectoryRecursively(externalStorage, extensions, foundPaths, excludedFolders) { file ->
                 count++
                 emit(file)
             }
@@ -130,8 +130,9 @@ class FileScannerRepository(private val context: Context) {
             MediaStore.Files.FileColumns.DATE_MODIFIED
         )
 
-        val selection = "${MediaStore.Files.FileColumns.DATA} LIKE ? AND ${MediaStore.Files.FileColumns.DATE_MODIFIED} < ?"
-        val selectionArgs = arrayOf("$folder%", (olderThanMs / 1000).toString())
+        val selection = "${MediaStore.Files.FileColumns.DATA} LIKE ? ESCAPE '\\' AND ${MediaStore.Files.FileColumns.DATE_MODIFIED} < ?"
+        val escapedFolder = folder.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        val selectionArgs = arrayOf("$escapedFolder%", (olderThanMs / 1000).toString())
 
         context.contentResolver.query(
             collection, projection, selection, selectionArgs,
@@ -155,41 +156,34 @@ class FileScannerRepository(private val context: Context) {
         }
     }.flowOn(Dispatchers.IO)
 
-    private fun scanDirectoryRecursively(
-        directory: File,
+    // Iterative DFS — emits each matching file immediately instead of accumulating
+    // a potentially huge list. Avoids OOM on large external storage trees.
+    private suspend fun emitDirectoryRecursively(
+        root: File,
         extensions: List<String>,
         alreadyFoundPaths: Set<String>,
-        excludedFolders: List<String>
-    ): List<ScannedFile> {
-        val result = mutableListOf<ScannedFile>()
-        
-        // Skip hidden directories and excluded folders
-        if (directory.name.startsWith(".") || excludedFolders.any { directory.absolutePath.startsWith(it) }) {
-            return result
-        }
-
-        val files = directory.listFiles() ?: return result
-        for (file in files) {
-            if (file.isDirectory) {
-                result.addAll(scanDirectoryRecursively(file, extensions, alreadyFoundPaths, excludedFolders))
-            } else {
-                val path = file.absolutePath
-                if (!alreadyFoundPaths.contains(path)) {
-                    val ext = path.substringAfterLast('.', "").lowercase()
-                    if (extensions.contains(ext)) {
-                        result.add(
-                            ScannedFile(
-                                uri = Uri.fromFile(file),
-                                name = file.name,
-                                size = file.length(),
-                                path = path,
-                                extension = ext
-                            )
-                        )
+        excludedFolders: List<String>,
+        emit: suspend (ScannedFile) -> Unit
+    ) {
+        val stack = ArrayDeque<File>()
+        stack.addLast(root)
+        while (stack.isNotEmpty()) {
+            val dir = stack.removeLast()
+            if (dir.name.startsWith(".") || excludedFolders.any { dir.absolutePath.startsWith(it) }) continue
+            val children = dir.listFiles() ?: continue
+            for (file in children) {
+                if (file.isDirectory) {
+                    stack.addLast(file)
+                } else {
+                    val path = file.absolutePath
+                    if (path !in alreadyFoundPaths) {
+                        val ext = path.substringAfterLast('.', "").lowercase()
+                        if (ext in extensions) {
+                            emit(ScannedFile(Uri.fromFile(file), file.name, file.length(), path, ext))
+                        }
                     }
                 }
             }
         }
-        return result
     }
 }

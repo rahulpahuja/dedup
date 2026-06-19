@@ -7,6 +7,7 @@ import com.rp.dedup.util.MainDispatcherRule
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -68,20 +69,29 @@ class DashboardViewModelTest {
             listOf(scan(1024L), scan(2048L), scan(512L))
         )
         val vm = DashboardViewModel(historyRepository, context)
+        val collectJob = launch { vm.totalReclaimableBytes.collect {} }
+        kotlinx.coroutines.yield()
         assertEquals(3584L, vm.totalReclaimableBytes.value)
+        collectJob.cancel()
     }
 
     @Test
     fun `totalReclaimableBytes is zero with no scan history`() = runTest {
         every { historyRepository.getAll() } returns flowOf(emptyList())
         val vm = DashboardViewModel(historyRepository, context)
+        val collectJob = launch { vm.totalReclaimableBytes.collect {} }
+        kotlinx.coroutines.yield()
         assertEquals(0L, vm.totalReclaimableBytes.value)
+        collectJob.cancel()
     }
 
     @Test
     fun `totalReclaimableBytes is zero with single zero-reclaimable scan`() = runTest {
         every { historyRepository.getAll() } returns flowOf(listOf(scan(0L)))
         val vm = DashboardViewModel(historyRepository, context)
+        val collectJob = launch { vm.totalReclaimableBytes.collect {} }
+        kotlinx.coroutines.yield()
         assertEquals(0L, vm.totalReclaimableBytes.value)
+        collectJob.cancel()
     }
 }

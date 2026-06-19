@@ -21,7 +21,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-class SmartJunkRepository(private val context: Context) {
+class SmartJunkRepository(private val context: Context) : java.io.Closeable {
 
     private val labeler = ImageLabeling.getClient(
         ImageLabelerOptions.Builder()
@@ -158,5 +158,9 @@ class SmartJunkRepository(private val context: Context) {
             }
         }
         return uris
+    }
+
+    override fun close() {
+        try { labeler.close() } catch (_: Exception) { }
     }
 }

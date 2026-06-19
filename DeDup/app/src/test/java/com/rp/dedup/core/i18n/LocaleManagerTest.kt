@@ -14,7 +14,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+@Config(sdk = [33], application = com.rp.dedup.util.TestApp::class)
 class LocaleManagerTest {
 
     @Before
@@ -69,14 +69,17 @@ class LocaleManagerTest {
     }
 
     @Test
-    fun testApplyLocaleSpecificLanguage() {
+    fun testApplyLocaleSpecificLanguageEn() {
         LocaleManager.applyLocale("en")
         verify { AppCompatDelegate.setApplicationLocales(
             withArg {
                 assertEquals("en", it.toLanguageTags())
             }
         ) }
+    }
 
+    @Test
+    fun testApplyLocaleSpecificLanguageHi() {
         LocaleManager.applyLocale("hi")
         verify { AppCompatDelegate.setApplicationLocales(
             withArg {

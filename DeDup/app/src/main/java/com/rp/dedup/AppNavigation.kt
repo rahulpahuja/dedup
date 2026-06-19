@@ -88,7 +88,7 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
+fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = false) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -162,7 +162,7 @@ fun AppNavHost(navController: NavHostController) {
                 }
             ) {
                 composable(Screen.Splash.route) {
-                    SplashScreen(navController)
+                    SplashScreen(navController, hasPendingDeepLink = hasPendingDeepLink)
                 }
                 composable(Screen.Login.route) {
                     LoginScreen(navController, profileViewModel)

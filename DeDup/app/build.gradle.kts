@@ -33,7 +33,7 @@ android {
         applicationId = "com.rp.dedup"
         minSdk = 24
         targetSdk = 37
-        versionCode = 18
+        versionCode = 19
         versionName = "1.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

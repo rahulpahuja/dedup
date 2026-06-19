@@ -35,6 +35,9 @@ class BitmapPoolTest {
     fun `acquire returns previously released bitmap`() {
         val bitmap = mockk<Bitmap>(relaxed = true)
         every { bitmap.isRecycled } returns false
+        every { bitmap.width } returns 9
+        every { bitmap.height } returns 8
+        every { bitmap.config } returns Bitmap.Config.ARGB_8888
 
         BitmapPool.release(bitmap)
         val acquired = BitmapPool.acquire(9, 8, Bitmap.Config.ARGB_8888)
@@ -84,6 +87,9 @@ class BitmapPoolTest {
     fun `release accepts bitmap when pool has capacity`() {
         val bitmap = mockk<Bitmap>(relaxed = true)
         every { bitmap.isRecycled } returns false
+        every { bitmap.width } returns 9
+        every { bitmap.height } returns 8
+        every { bitmap.config } returns Bitmap.Config.ARGB_8888
 
         BitmapPool.release(bitmap)
 

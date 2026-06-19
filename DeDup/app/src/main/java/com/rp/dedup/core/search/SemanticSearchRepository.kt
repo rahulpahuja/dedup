@@ -20,7 +20,11 @@ class SemanticSearchRepository(
     private val dao: ImageEmbeddingDao,
     private val embedder: EmbedderProvider,
     private val fallback: ImageSearchRepository
-) {
+) : java.io.Closeable {
+
+    override fun close() {
+        embedder.close()
+    }
 
     companion object {
         private const val TAG              = "SemanticSearchRepo"

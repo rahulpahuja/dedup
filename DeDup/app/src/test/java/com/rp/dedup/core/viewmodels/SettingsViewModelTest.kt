@@ -6,6 +6,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -84,8 +85,11 @@ class SettingsViewModelTest {
     fun `addExcludedFolder writes folder list to DataStore`() = runTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns flowOf("")
         viewModel = SettingsViewModel(dataStoreManager)
+        val collectJob = launch { viewModel.excludedFolders.collect {} }
+        kotlinx.coroutines.yield()
         viewModel.addExcludedFolder("/storage/DCIM")
         coVerify { dataStoreManager.writeData(DataStoreManager.EXCLUDED_FOLDERS, "/storage/DCIM") }
+        collectJob.cancel()
     }
 
     @Test
@@ -93,8 +97,11 @@ class SettingsViewModelTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns
             flowOf("/storage/DCIM")
         viewModel = SettingsViewModel(dataStoreManager)
+        val collectJob = launch { viewModel.excludedFolders.collect {} }
+        kotlinx.coroutines.yield()
         viewModel.addExcludedFolder("/storage/DCIM")
         coVerify(exactly = 0) { dataStoreManager.writeData(DataStoreManager.EXCLUDED_FOLDERS, any<String>()) }
+        collectJob.cancel()
     }
 
     // ── removeExcludedFolder ───────────────────────────────────────────────────
@@ -104,16 +111,22 @@ class SettingsViewModelTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns
             flowOf("/storage/DCIM,/storage/Download")
         viewModel = SettingsViewModel(dataStoreManager)
+        val collectJob = launch { viewModel.excludedFolders.collect {} }
+        kotlinx.coroutines.yield()
         viewModel.removeExcludedFolder("/storage/DCIM")
         coVerify { dataStoreManager.writeData(DataStoreManager.EXCLUDED_FOLDERS, "/storage/Download") }
+        collectJob.cancel()
     }
 
     @Test
     fun `removeExcludedFolder does nothing when folder not in list`() = runTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns flowOf("")
         viewModel = SettingsViewModel(dataStoreManager)
+        val collectJob = launch { viewModel.excludedFolders.collect {} }
+        kotlinx.coroutines.yield()
         viewModel.removeExcludedFolder("/nonexistent")
         coVerify(exactly = 0) { dataStoreManager.writeData(DataStoreManager.EXCLUDED_FOLDERS, any<String>()) }
+        collectJob.cancel()
     }
 
     // ── excludedFolders parsing ────────────────────────────────────────────────
@@ -123,6 +136,9 @@ class SettingsViewModelTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns
             flowOf("/path/one,/path/two")
         viewModel = SettingsViewModel(dataStoreManager)
+        val collectJob = launch { viewModel.excludedFolders.collect {} }
+        kotlinx.coroutines.yield()
         assertEquals(listOf("/path/one", "/path/two"), viewModel.excludedFolders.value)
+        collectJob.cancel()
     }
 }

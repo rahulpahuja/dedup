@@ -31,7 +31,8 @@ class VideoScannerViewModel(
     private val videoRepository: ScannedVideoRepository? = null,
     private val historyRepository: ScanHistoryRepository? = null,
     private val analyticsManager: AnalyticsManager? = null,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedVideo>>>(emptyList())
@@ -60,7 +61,7 @@ class VideoScannerViewModel(
     private var scanJob: Job? = null
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             loadCachedResults()
         }
     }
@@ -81,13 +82,14 @@ class VideoScannerViewModel(
      */
     fun startScanning(deepScan: Boolean = true, forceRescan: Boolean = false) {
         if (_isScanning.value) return
+        _isScanning.value = true   // set BEFORE launch so re-entrant calls are blocked immediately
         val startTime = System.currentTimeMillis()
         var wasCancelled = false
 
         scanJob = viewModelScope.launch(defaultDispatcher) {
             // ── 1. Optionally wipe cache for a full rescan ──────────────────
             if (forceRescan) {
-                withContext(Dispatchers.IO) { videoRepository?.clearAll() }
+                withContext(ioDispatcher) { videoRepository?.clearAll() }
                 _videos.value = emptyList()
                 _duplicateGroups.value = emptyList()
                 _scannedCount.value = 0
@@ -95,13 +97,12 @@ class VideoScannerViewModel(
             }
 
             // ── 2. Load already-scanned URIs so we can skip them ───────────
-            val alreadyScannedUris: Set<Uri> = withContext(Dispatchers.IO) {
+            val alreadyScannedUris: Set<Uri> = withContext(ioDispatcher) {
                 videoRepository?.getScannedUris() ?: emptySet()
             }
             _resumedCount.value = alreadyScannedUris.size
 
             analyticsManager?.logScanStarted("VIDEO")
-            _isScanning.value = true
 
             // ── 3. Pre-populate in-memory structures from cached groups ─────
             val allVideos = mutableListOf<ScannedVideo>()
@@ -168,7 +169,7 @@ class VideoScannerViewModel(
             } finally {
                 _isScanning.value = false
 
-                withContext(NonCancellable + Dispatchers.IO) {
+                withContext(NonCancellable + ioDispatcher) {
                     // Final persist — captures complete group assignments
                     persistCheckpoint(allVideos, uriToGroupIdx, runningGroups)
 
@@ -194,14 +195,16 @@ class VideoScannerViewModel(
 
     /** Clears the persisted cache and resets in-memory state. */
     fun clearCache() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             videoRepository?.clearAll()
+            withContext(Dispatchers.Main.immediate) {
+                _videos.value = emptyList()
+                _duplicateGroups.value = emptyList()
+                _scannedCount.value = 0
+                _resumedCount.value = 0
+                _cacheLoaded.value = true
+            }
         }
-        _videos.value = emptyList()
-        _duplicateGroups.value = emptyList()
-        _scannedCount.value = 0
-        _resumedCount.value = 0
-        _cacheLoaded.value = true
     }
 
     // ── Persistence helpers ─────────────────────────────────────────────────
@@ -210,7 +213,7 @@ class VideoScannerViewModel(
         allVideos: List<ScannedVideo>,
         uriToGroupIdx: Map<Uri, Int>,
         groups: List<MutableList<ScannedVideo>>
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(ioDispatcher) {
         val entities = allVideos.map { video ->
             val groupKey = deriveGroupKey(video, uriToGroupIdx, groups)
             video.toEntity(groupKey)
@@ -358,7 +361,7 @@ class VideoScannerViewModel(
             _scannedCount.value = currentVideos.size
 
             // Remove from persisted cache too
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 deletedUris.forEach { videoRepository?.deleteByUri(it.toString()) }
             }
 

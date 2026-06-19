@@ -44,9 +44,14 @@ class FirebaseAuthManager(
     private val toastManager: ToastManager,
     private val dbManager: FirebaseDbManager = FirebaseDbManager(),
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-) {
+) : java.io.Closeable {
 
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.Main + job)
+
+    override fun close() {
+        job.cancel()
+    }
 
     companion object {
         private const val TAG = "FirebaseAuthManager"

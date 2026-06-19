@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,10 +27,9 @@ import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.security.RootDetectionManager
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-// Global state to track deep link route across activity instances/recompositions
-var pendingDeepLinkRoute by mutableStateOf<String?>(null)
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     private val themeViewModel: ThemeViewModel by viewModels {
@@ -42,64 +40,61 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Per-instance deep link state: eliminates the process-global var that was shared
+    // across all MainActivity instances (back-stack, task-switching, split-screen).
+    private var pendingDeepLinkRoute by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         enableEdgeToEdge()
 
         // Handle initial intent
         handleIntent(intent)
 
-        val rootResult = RootDetectionManager.check(applicationContext)
-        
-        val analyticsManager = AnalyticsManager(applicationContext)
-        if (rootResult.isRooted) {
-            val bundle = Bundle().apply {
-                putString("triggered_checks", rootResult.triggeredChecks.joinToString())
-            }
-            com.google.firebase.analytics.FirebaseAnalytics.getInstance(applicationContext)
-                .logEvent("security_rooted_device", bundle)
-        }
-
         setContent {
-            val scope = rememberCoroutineScope()
             val palette by themeViewModel.appPalette.collectAsState()
+
+            // Root detection runs on IO — 26+ File.exists() calls must not block the UI thread.
+            var rootResult by remember { mutableStateOf<RootDetectionManager.RootCheckResult?>(null) }
+            LaunchedEffect(Unit) {
+                val result = withContext(Dispatchers.IO) {
+                    RootDetectionManager.check(applicationContext)
+                }
+                if (result.isRooted) {
+                    val bundle = Bundle().apply {
+                        putString("triggered_checks", result.triggeredChecks.joinToString())
+                    }
+                    com.google.firebase.analytics.FirebaseAnalytics
+                        .getInstance(applicationContext)
+                        .logEvent("security_rooted_device", bundle)
+                }
+                rootResult = result
+            }
+
             DeDupTheme(darkTheme = themeViewModel.isDarkTheme(), palette = palette) {
 
-                if (rootResult.isRooted) {
-                    RootedDeviceScreen(triggeredChecks = rootResult.triggeredChecks)
+                if (rootResult?.isRooted == true) {
+                    RootedDeviceScreen(triggeredChecks = rootResult!!.triggeredChecks)
                 } else {
                     val navController: NavHostController = rememberNavController()
-                    val snackbarHostState = remember { SnackbarHostState() }
-                    
-                    // Handle deep links and handoffs
+                    val analyticsManager = remember { AnalyticsManager(applicationContext) }
+
+                    // Navigate to deep-link route once the nav graph is ready
                     LaunchedEffect(pendingDeepLinkRoute) {
                         pendingDeepLinkRoute?.let { route ->
                             analyticsManager.logDeepLinkOpened(route)
-                            
-                            val handoffScanType = intent?.getStringExtra("handoff_scan_type")
-                            if (handoffScanType != null) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Resuming $handoffScanType scan from other device",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                            }
-
                             navController.navigate(route) {
                                 popUpTo(Screen.Splash.route) { inclusive = true }
                             }
-                            pendingDeepLinkRoute = null 
+                            pendingDeepLinkRoute = null
                         }
                     }
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        AppNavHost(navController = navController)
-                        
-                        SnackbarHost(
-                            hostState = snackbarHostState,
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
+                        AppNavHost(
+                            navController = navController,
+                            hasPendingDeepLink = pendingDeepLinkRoute != null
                         )
                     }
                 }

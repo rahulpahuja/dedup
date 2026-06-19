@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 import java.io.ByteArrayInputStream
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+@Config(sdk = [28], application = com.rp.dedup.util.TestApp::class)
 class ImageScannerRepositoryTest {
 
     private lateinit var context: Context
@@ -29,11 +29,16 @@ class ImageScannerRepositoryTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
+        org.robolectric.Shadows.shadowOf(context as android.app.Application)
+            .grantPermissions(
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
         repository = ImageScannerRepository(context)
 
         // Mock companion object and other statics
         mockkObject(ImageScannerRepository.Companion)
-        mockkStatic(ImageHasher::class)
+        mockkObject(ImageHasher)
 
         // Default companion mocks
         every { ImageScannerRepository.loadBitmapEfficiently(any(), any(), any()) } returns mockk<Bitmap>(relaxed = true)
@@ -44,8 +49,10 @@ class ImageScannerRepositoryTest {
     @After
     fun tearDown() {
         unmockkObject(ImageScannerRepository.Companion)
-        unmockkStatic(ImageHasher::class)
-        context.contentResolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null)
+        unmockkObject(ImageHasher)
+        try {
+            context.contentResolver.delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null)
+        } catch (_: SecurityException) { }
     }
 
     private fun insertImageToMediaStore(
@@ -66,10 +73,28 @@ class ImageScannerRepositoryTest {
 
     @Test
     fun `scanImagesInParallel returns scanned images`() = runTest {
-        insertImageToMediaStore("pic1.jpg", 1024L, "/storage/emulated/0/pic1.jpg")
-        insertImageToMediaStore("pic2.png", 2048L, "/storage/emulated/0/pic2.png")
+        val columns = arrayOf(
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.SIZE,
+            MediaStore.Images.Media.DATA,
+            MediaStore.Images.Media.DATE_MODIFIED
+        )
+        val cursor = android.database.MatrixCursor(columns)
+        cursor.addRow(arrayOf<Any>(1L, 1024L, "/storage/emulated/0/pic1.jpg", 1000L))
+        cursor.addRow(arrayOf<Any>(2L, 2048L, "/storage/emulated/0/pic2.png", 2000L))
 
-        val images = repository.scanImagesInParallel(concurrencyLevel = 2).toList()
+        val mockResolver = mockk<android.content.ContentResolver>()
+        val mockContext = mockk<Context>()
+        every { mockContext.contentResolver } returns mockResolver
+        every {
+            mockResolver.query(
+                eq(MediaStore.Images.Media.EXTERNAL_CONTENT_URI),
+                any(), any(), any(), any()
+            )
+        } returns cursor
+
+        val localRepository = ImageScannerRepository(mockContext)
+        val images = localRepository.scanImagesInParallel(concurrencyLevel = 2).toList()
         assertEquals(2, images.size)
 
         val first = images.first { it.uri.contains("pic1.jpg") || it.uri.contains("1") }
@@ -80,10 +105,28 @@ class ImageScannerRepositoryTest {
 
     @Test
     fun `scanImagesInParallel respects excludedFolders`() = runTest {
-        insertImageToMediaStore("pic1.jpg", 1024L, "/storage/emulated/0/Download/pic1.jpg")
-        insertImageToMediaStore("pic2.png", 2048L, "/storage/emulated/0/Android/data/pic2.png")
+        val columns = arrayOf(
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.SIZE,
+            MediaStore.Images.Media.DATA,
+            MediaStore.Images.Media.DATE_MODIFIED
+        )
+        val cursor = android.database.MatrixCursor(columns)
+        cursor.addRow(arrayOf<Any>(1L, 1024L, "/storage/emulated/0/Download/pic1.jpg", 1000L))
+        cursor.addRow(arrayOf<Any>(2L, 2048L, "/storage/emulated/0/Android/data/pic2.png", 2000L))
 
-        val images = repository.scanImagesInParallel(
+        val mockResolver = mockk<android.content.ContentResolver>()
+        val mockContext = mockk<Context>()
+        every { mockContext.contentResolver } returns mockResolver
+        every {
+            mockResolver.query(
+                eq(MediaStore.Images.Media.EXTERNAL_CONTENT_URI),
+                any(), any(), any(), any()
+            )
+        } returns cursor
+
+        val localRepository = ImageScannerRepository(mockContext)
+        val images = localRepository.scanImagesInParallel(
             concurrencyLevel = 2,
             excludedFolders = listOf("/storage/emulated/0/Android")
         ).toList()

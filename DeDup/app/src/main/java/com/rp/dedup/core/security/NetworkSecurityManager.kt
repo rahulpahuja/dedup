@@ -45,13 +45,10 @@ object NetworkSecurityManager {
         }
     }
     
-    /**
-     * Placeholder for verifying the token on your backend.
-     * In a production app, you MUST send the token to your server and verify it there
-     * using the Play Integrity API server-side library.
-     */
-    fun verifyTokenOnServer(token: String): Boolean {
-        // TODO: Implement server-side verification
-        return true
+    // Server-side Play Integrity verification — not yet implemented.
+    // Send `token` to your backend and validate with the Play Integrity API.
+    // Throws so callers fail explicitly instead of silently trusting unverified tokens.
+    fun verifyTokenOnServer(@Suppress("UNUSED_PARAMETER") token: String): Boolean {
+        throw UnsupportedOperationException("Play Integrity server-side verification is not implemented")
     }
 }

@@ -11,7 +11,7 @@ import java.util.Calendar
 import java.util.TimeZone
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+@Config(sdk = [33], application = com.rp.dedup.util.TestApp::class)
 class SolarThemeCalculatorTest {
 
     @Test

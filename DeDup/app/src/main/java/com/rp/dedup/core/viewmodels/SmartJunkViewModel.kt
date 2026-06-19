@@ -129,4 +129,9 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
     fun clear() {
         _uiState.value = SmartJunkState.Idle
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        repository.close()
+    }
 }
