@@ -2,6 +2,8 @@ package com.rp.dedup.feature.voicestorage.data.repository
 
 import android.content.ContentUris
 import android.content.Context
+import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import com.rp.dedup.feature.voicestorage.data.model.MediaType
 import com.rp.dedup.feature.voicestorage.data.model.StorageItem
@@ -23,6 +25,29 @@ class LocalStorageRepository(private val context: Context) {
             MediaStore.MediaColumns.DATE_ADDED,
             MediaStore.MediaColumns.MIME_TYPE,
         )
+
+        // MediaStore.createDeleteRequest() on API 30+ rejects the legacy "external" authority
+        // (content://media/external/…). Use volume-aware URIs (external_primary) so the URIs
+        // we store in StorageItem are accepted by createDeleteRequest without modification.
+        fun imagesUri(): Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        else
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+
+        fun videoUri(): Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        else
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+
+        fun audioUri(): Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        else
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+
+        fun filesUri(): Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        else
+            MediaStore.Files.getContentUri("external")
     }
 
     private fun sortOrder(filters: FilterConfig): String {
@@ -39,17 +64,17 @@ class LocalStorageRepository(private val context: Context) {
         val order = sortOrder(filters)
         val results = buildList {
             if (MediaType.IMAGE in filters.mediaTypes) {
-                addAll(queryMedia(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, MediaType.IMAGE, query, filters, order))
+                addAll(queryMedia(imagesUri(), MediaType.IMAGE, query, filters, order))
             }
             if (MediaType.VIDEO in filters.mediaTypes) {
-                addAll(queryMedia(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, MediaType.VIDEO, query, filters, order))
+                addAll(queryMedia(videoUri(), MediaType.VIDEO, query, filters, order))
             }
             if (MediaType.AUDIO in filters.mediaTypes) {
-                addAll(queryMedia(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MediaType.AUDIO, query, filters, order))
+                addAll(queryMedia(audioUri(), MediaType.AUDIO, query, filters, order))
             }
             // DOCUMENT always needs a mimeTypeFilter — querying all Files without one would return everything
             if (MediaType.DOCUMENT in filters.mediaTypes && filters.mimeTypeFilter != null) {
-                addAll(queryMedia(MediaStore.Files.getContentUri("external"), MediaType.DOCUMENT, query, filters, order))
+                addAll(queryMedia(filesUri(), MediaType.DOCUMENT, query, filters, order))
             }
         }.let { list ->
             // Re-sort the merged image+video list in memory to honour the user's sort intent
