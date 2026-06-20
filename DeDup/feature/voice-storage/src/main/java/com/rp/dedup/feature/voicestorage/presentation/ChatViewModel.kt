@@ -140,17 +140,19 @@ class ChatViewModel(
         _state.update { it.copy(messages = history.ifEmpty { listOf(WELCOME_MSG) }) }
         if (history.isEmpty()) repository.save(listOf(WELCOME_MSG))
 
-        tts = TextToSpeech(appContext) { status ->
-            ttsReady = status == TextToSpeech.SUCCESS
-            if (ttsReady) {
-                tts?.language = Locale.getDefault()
-                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(id: String?) = _state.update { it.copy(isTtsSpeaking = true) }
-                    override fun onDone(id: String?)  = _state.update { it.copy(isTtsSpeaking = false) }
-                    @Deprecated("Deprecated in Java")
-                    override fun onError(id: String?) = _state.update { it.copy(isTtsSpeaking = false) }
-                })
-            }
+        tts = TextToSpeech(appContext, ::onTtsInit)
+    }
+
+    private fun onTtsInit(status: Int) {
+        ttsReady = status == TextToSpeech.SUCCESS
+        if (ttsReady) {
+            tts?.language = Locale.getDefault()
+            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(id: String?) = _state.update { it.copy(isTtsSpeaking = true) }
+                override fun onDone(id: String?)  = _state.update { it.copy(isTtsSpeaking = false) }
+                @Deprecated("Deprecated in Java")
+                override fun onError(id: String?) = _state.update { it.copy(isTtsSpeaking = false) }
+            })
         }
     }
 
