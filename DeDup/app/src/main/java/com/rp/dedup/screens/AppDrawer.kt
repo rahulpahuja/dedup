@@ -19,14 +19,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
@@ -254,7 +254,7 @@ private fun AppDrawerContentUI(
             onClick = { navigateTo(Screen.Activity.route) }
         )
         DrawerNavItem(
-            icon = Icons.Default.ManageSearch,
+            icon = Icons.AutoMirrored.Filled.ManageSearch,
             label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_SCAN_HISTORY)),
             selected = currentRoute == Screen.ScanHistory.route,
             onClick = { navigateTo(Screen.ScanHistory.route) }
@@ -291,7 +291,7 @@ private fun AppDrawerContentUI(
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
         DrawerNavItem(
-            icon = Icons.Default.Logout,
+            icon = Icons.AutoMirrored.Filled.Logout,
             label = stringResource(R.string.logout),
             selected = false,
             onClick = { showLogoutDialog = true }
@@ -304,7 +304,7 @@ private fun AppDrawerContentUI(
             onDismissRequest = { showLogoutDialog = false },
             icon = {
                 Icon(
-                    Icons.Default.Logout,
+                    Icons.AutoMirrored.Filled.Logout,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.error
                 )

@@ -491,7 +491,7 @@ private fun MediaThumbnail(
                             context.contentResolver, id,
                             MediaStore.Video.Thumbnails.MINI_KIND, null
                         )
-                        else -> null
+                        MediaType.AUDIO, MediaType.DOCUMENT -> null
                     }
                 }
             }.getOrNull()

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -174,7 +175,7 @@ fun FileBrowserContent(
                             )
                         }
                         IconButton(onClick = onSortClick) {
-                            Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.sort))
+                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort))
                         }
                         IconButton(onClick = onRefresh) {
                             Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh))
