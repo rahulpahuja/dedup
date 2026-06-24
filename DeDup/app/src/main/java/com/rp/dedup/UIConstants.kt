@@ -63,7 +63,7 @@ object UIConstants {
 
     // ── App-level strings ─────────────────────────────────────────────────────
     const val APP_NAME    = "DeDup"
-    const val APP_VERSION = "v1.0.0"
+    val APP_VERSION: String get() = "v${BuildConfig.VERSION_NAME}"
 
     // ── Scan type identifiers (must match DB values) ───────────────────────────
     const val SCAN_TYPE_IMAGE    = "IMAGE"

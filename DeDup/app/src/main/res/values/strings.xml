@@ -17,6 +17,7 @@
     <string name="version_info">Version %1$s (%2$d)</string>
     <string name="developed_by">Developed by</string>
     <string name="visit_website">Visit my website:</string>
+    <string name="project_site">Project site:</string>
     <string name="about_description">DeDup helps you find and remove duplicate files, images, and videos to save space on your device.</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="account_section">Account</string>

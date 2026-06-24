@@ -1,5 +1,6 @@
 package com.rp.dedup.core.viewmodels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -135,10 +136,27 @@ class CleanupViewModel(private val repository: FileScannerRepository) : ViewMode
         }
     }
 
+    /** Called after the system delete dialog confirms deletion; removes URIs from all category lists. */
+    fun onFilesDeleted(uris: Set<Uri>) {
+        _uiState.value = _uiState.value.let { s ->
+            s.copy(
+                videoStats       = s.videoStats.removeUris(uris),
+                archiveStats     = s.archiveStats.removeUris(uris),
+                appDownloadStats = s.appDownloadStats.removeUris(uris),
+                oldDownloadStats = s.oldDownloadStats.removeUris(uris)
+            )
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     class Factory(private val repository: FileScannerRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return CleanupViewModel(repository) as T
         }
     }
+}
+
+private fun CleanupCategoryStats.removeUris(uris: Set<Uri>): CleanupCategoryStats {
+    val remaining = files.filterNot { it.uri in uris }
+    return copy(files = remaining, totalSize = remaining.sumOf { it.size }, count = remaining.size)
 }

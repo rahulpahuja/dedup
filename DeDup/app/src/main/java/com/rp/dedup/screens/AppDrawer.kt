@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
@@ -79,6 +81,7 @@ import com.rp.dedup.core.model.ThemeMode
 import com.rp.dedup.core.viewmodels.ThemeViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
 import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -158,6 +161,7 @@ private fun AppDrawerContentUI(
     }
 
     ModalDrawerSheet {
+      Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         // ── DeDup branding header ─────────────────────────────────────────
         Box(
             modifier = Modifier
@@ -287,15 +291,13 @@ private fun AppDrawerContentUI(
             selected = currentRoute == Screen.About.route,
             onClick = { navigateTo(Screen.About.route) }
         )
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
         DrawerNavItem(
             icon = Icons.AutoMirrored.Filled.Logout,
             label = stringResource(R.string.logout),
             selected = false,
             onClick = { showLogoutDialog = true }
         )
+      } // end scrollable Column
     }
 
     if (showLogoutDialog) {
@@ -316,6 +318,7 @@ private fun AppDrawerContentUI(
                     onClick = {
                         showLogoutDialog = false
                         scope.launch {
+                            AnalyticsManager(context).logLogout()
                             val toastManager = ToastManager(context)
                             val authManager = FirebaseAuthManager(toastManager)
                             authManager.signOutWithCredentialClear(context)

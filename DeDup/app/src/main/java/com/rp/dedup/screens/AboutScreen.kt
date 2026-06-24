@@ -119,6 +119,27 @@ fun AboutScreen(navController: NavHostController) {
                     }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = stringResource(R.string.project_site),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Text(
+                text = "dedup.space",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline
+                ),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://dedup.space"))
+                        context.startActivity(intent)
+                    }
+            )
+
             Spacer(modifier = Modifier.height(48.dp))
 
             Text(
