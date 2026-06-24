@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.core.firebase.auth.FirebaseAuthManager
@@ -65,15 +63,23 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
         }
     }
 
+    SplashScreenContent(triggered = triggered)
+}
+
+@Composable
+private fun SplashScreenContent(triggered: Boolean = true) {
     // --- Dynamic Theme Aware Colors ---
-    // We use isSystemInDarkTheme() here to ensure the splash background 
-    // immediately matches the MaterialTheme wrapper provided in MainActivity.
     val isDark = isSystemInDarkTheme()
-    val bgStart = if (isDark) Color(0xFF060D1F) else Color(0xFFF0F4F8)
-    val bgEnd = if (isDark) Color(0xFF0D2347) else Color(0xFFDDE6EF)
-    val logoCardColor = if (isDark) Color(0xFF1E1E1E) else Color.White
-    val watermarkColor = if (isDark) Color.White else Color.Black
-    val nameColor = if (isDark) Color(0xFF5FA3FF) else PrimaryBlue
+    val bgStart       = if (isDark) Color(0xFF060D1F) else Color(0xFFF5F7FA)
+    val bgEnd         = if (isDark) Color(0xFF0D2347) else Color(0xFFE8EDF5)
+    val logoCardColor = if (isDark) Color(0xFF101C33) else Color.White
+    val watermarkColor = if (isDark) Color.White else Color(0xFF0A1628)
+    // titleColor: white on midnight navy, near-black on light — both have strong contrast
+    val titleColor    = if (isDark) Color.White       else Color(0xFF0A1628)
+    // taglineColor: explicit rather than onSurfaceVariant which bleeds on both backgrounds
+    val taglineColor  = if (isDark) Color.White       else Color(0xFF455A6B)
+    // accentColor: stays blue in both modes — drives progress bar and pulse rings only
+    val accentColor   = if (isDark) Color(0xFF5FA3FF) else PrimaryBlue
 
     // --- Entrance animations ---
     val logoScale by animateFloatAsState(
@@ -117,7 +123,6 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
         label = "beam"
     )
 
-    // Two offset pulse rings
     val ring1Scale by infinite.animateFloat(
         initialValue = 1f, targetValue = 1.7f,
         animationSpec = infiniteRepeatable(tween(1600, easing = LinearEasing)),
@@ -149,37 +154,10 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
         label = "ring2Alpha"
     )
 
-    // Staggered dot pulse
-    val dot1 by infinite.animateFloat(
-        initialValue = 0.25f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(480), RepeatMode.Reverse),
-        label = "d1"
-    )
-    val dot2 by infinite.animateFloat(
-        initialValue = 0.25f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            tween(480), RepeatMode.Reverse,
-            initialStartOffset = StartOffset(160)
-        ),
-        label = "d2"
-    )
-    val dot3 by infinite.animateFloat(
-        initialValue = 0.25f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            tween(480), RepeatMode.Reverse,
-            initialStartOffset = StartOffset(320)
-        ),
-        label = "d3"
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(bgStart, bgEnd)
-                )
-            )
+            .background(brush = Brush.verticalGradient(colors = listOf(bgStart, bgEnd)))
     ) {
         // Background watermark
         Text(
@@ -205,36 +183,29 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(200.dp)
             ) {
-                // Pulse ring 1
                 Box(
                     modifier = Modifier
                         .size(140.dp)
                         .graphicsLayer {
-                            scaleX = ring1Scale
-                            scaleY = ring1Scale
+                            scaleX = ring1Scale; scaleY = ring1Scale
                             alpha = ring1Alpha * logoAlpha
                         }
-                        .background(PrimaryBlue.copy(alpha = 0.18f), RoundedCornerShape(32.dp))
+                        .background(accentColor.copy(alpha = 0.18f), RoundedCornerShape(32.dp))
                 )
-                // Pulse ring 2
                 Box(
                     modifier = Modifier
                         .size(140.dp)
                         .graphicsLayer {
-                            scaleX = ring2Scale
-                            scaleY = ring2Scale
+                            scaleX = ring2Scale; scaleY = ring2Scale
                             alpha = ring2Alpha * logoAlpha
                         }
-                        .background(PrimaryBlue.copy(alpha = 0.18f), RoundedCornerShape(32.dp))
+                        .background(accentColor.copy(alpha = 0.18f), RoundedCornerShape(32.dp))
                 )
-
-                // Logo card
                 Surface(
                     modifier = Modifier
                         .size(140.dp)
                         .graphicsLayer {
-                            scaleX = logoScale
-                            scaleY = logoScale
+                            scaleX = logoScale; scaleY = logoScale
                             alpha = logoAlpha
                         },
                     shape = RoundedCornerShape(32.dp),
@@ -242,7 +213,6 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
                     shadowElevation = 16.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        // Rotating sweep beam
                         Box(
                             modifier = Modifier
                                 .size(120.dp)
@@ -258,7 +228,6 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
                                     )
                                 )
                         )
-                        // Custom logo
                         Image(
                             painter = painterResource(R.drawable.ic_dedup_logo),
                             contentDescription = null,
@@ -270,7 +239,6 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // App name — slides up
             Text(
                 text = "DeDup",
                 modifier = Modifier.graphicsLayer {
@@ -279,34 +247,31 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
                 },
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontWeight = FontWeight.Bold,
-                    color = nameColor,
+                    color = titleColor,
                     letterSpacing = (-1).sp
                 )
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Tagline — fades in with the app name
             Text(
                 text = stringResource(R.string.tagline),
-                modifier = Modifier.graphicsLayer { alpha = nameAlpha * 0.75f },
+                modifier = Modifier.graphicsLayer { alpha = nameAlpha * if (isDark) 0.55f else 0.8f },
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (triggered) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else Color.Gray,
+                    color = taglineColor,
                     letterSpacing = 0.3.sp,
                     fontWeight = FontWeight.Normal
                 )
             )
         }
 
-        // Bottom loading indicator — fades in last
         LinearProgressIndicator(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(bottom = 0.dp)
                 .graphicsLayer { alpha = bottomAlpha },
-            color = nameColor,
-            trackColor = nameColor.copy(alpha = 0.12f)
+            color = accentColor,
+            trackColor = accentColor.copy(alpha = 0.12f)
         )
     }
 }
@@ -314,8 +279,8 @@ fun SplashScreen(navController: NavHostController, hasPendingDeepLink: Boolean =
 @Preview(showBackground = true, name = "Light Mode")
 @Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
 @Composable
-fun SplashScreenPreview() {
+private fun SplashScreenPreview() {
     DeDupTheme {
-        SplashScreen(rememberNavController())
+        SplashScreenContent()
     }
 }

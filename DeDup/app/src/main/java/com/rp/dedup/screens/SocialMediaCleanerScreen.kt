@@ -81,7 +81,6 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
                             onClick = {
                                 if (profileViewModel.isGuest) showGuestSignInDialog = true
                                 else {
-                                    analytics.logFilesDeleted("SOCIAL_MEDIA", selectedUris.size, 0L)
                                     viewModel.deleteFiles(selectedUris.toList())
                                     selectedUris.clear()
                                 }

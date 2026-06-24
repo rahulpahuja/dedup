@@ -226,15 +226,18 @@ fun DashboardScreenContent(
     var showSearchSheet by rememberSaveable { mutableStateOf(false) }
 
     // Delete flow for search results
-    var pendingDeleteUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingDeleteUri      by remember { mutableStateOf<Uri?>(null) }
+    var pendingDeleteFileSize by remember { mutableStateOf(0L) }
     var showGuestDeleteDialog by remember { mutableStateOf(false) }
 
     val deleteLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
+            analyticsManager?.logFilesDeleted("DASHBOARD_SEARCH", 1, pendingDeleteFileSize)
             pendingDeleteUri?.let { onDeleteSearchResult(it) }
-            pendingDeleteUri = null
+            pendingDeleteUri      = null
+            pendingDeleteFileSize = 0L
         }
     }
 
@@ -243,14 +246,24 @@ fun DashboardScreenContent(
             showGuestDeleteDialog = true
             return
         }
-        pendingDeleteUri = uri
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            pendingDeleteUri = uri
+            scope.launch {
+                pendingDeleteFileSize = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    context.contentResolver.query(
+                        uri, arrayOf(MediaStore.MediaColumns.SIZE), null, null, null
+                    )?.use { c -> if (c.moveToFirst()) c.getLong(0) else 0L } ?: 0L
+                }
+            }
             val pi = MediaStore.createDeleteRequest(context.contentResolver, listOf(uri))
             deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
         } else {
+            val size = context.contentResolver.query(
+                uri, arrayOf(MediaStore.MediaColumns.SIZE), null, null, null
+            )?.use { c -> if (c.moveToFirst()) c.getLong(0) else 0L } ?: 0L
             context.contentResolver.delete(uri, null, null)
+            analyticsManager?.logFilesDeleted("DASHBOARD_SEARCH", 1, size)
             onDeleteSearchResult(uri)
-            pendingDeleteUri = null
         }
     }
 
@@ -1609,7 +1622,11 @@ fun BottomNavigationBar(navController: NavHostController) {
                     .drawWithContent {
                         val w = size.width
                         val h = size.height
-                        drawRect(primary.copy(alpha = if (isDark) 0.26f else 0.14f))
+                        // Dark: brighter blue pill so the white icon above it has clear backing
+                        // Light: subtle primary tint
+                        val pillFill = if (isDark) Color(0xFF5FA3FF).copy(alpha = 0.28f)
+                                       else primary.copy(alpha = 0.14f)
+                        drawRect(pillFill)
                         drawRect(
                             Brush.verticalGradient(
                                 colors = listOf(
@@ -1666,10 +1683,15 @@ private fun GlassNavItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 
     val iconColor by animateColorAsState(
-        targetValue   = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.40f),
+        targetValue = when {
+            selected && isDark  -> Color.White                        // white on blue pill — maximum contrast
+            selected && !isDark -> MaterialTheme.colorScheme.primary  // primary on light pill — clear
+            !selected && isDark -> Color.White.copy(alpha = 0.45f)    // soft white on dark glass — readable
+            else                -> Color(0xFF2D4A6B)                  // dark blue-grey on light glass — defined
+        },
         animationSpec = tween(200),
         label         = "navColor"
     )

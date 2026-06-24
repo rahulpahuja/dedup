@@ -113,16 +113,21 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
     fun removeDeletedItems(deletedUris: List<Uri>) {
         val currentState = _uiState.value
         if (currentState is SmartJunkState.Results) {
+            val deletedSet = deletedUris.toSet()
+            val freedBytes = currentState.groups.values.flatten()
+                .filter { it.uri in deletedSet }
+                .sumOf { it.size }
+
             val newGroups = currentState.groups.mapValues { (_, items) ->
-                items.filterNot { it.uri in deletedUris }
+                items.filterNot { it.uri in deletedSet }
             }.filterValues { it.isNotEmpty() }
-            
+
             _uiState.value = currentState.copy(
                 groups = newGroups,
-                selectedUris = currentState.selectedUris - deletedUris.toSet()
+                selectedUris = currentState.selectedUris - deletedSet
             )
 
-            analyticsManager.logFilesDeleted("JUNK", deletedUris.size, 0L)
+            analyticsManager.logFilesDeleted("JUNK", deletedUris.size, freedBytes)
         }
     }
 

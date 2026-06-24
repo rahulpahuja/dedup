@@ -90,8 +90,9 @@ fun FileCleanupScreen(navController: NavHostController) {
     var selectedFilter   by remember { mutableStateOf(">100MB") }
     var selectedCategory by remember { mutableStateOf<LargeFileCategory?>(null) }
     var selectedUris     by remember { mutableStateOf(emptySet<Uri>()) }
-    var pendingDeleteUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    var showGuestDialog  by remember { mutableStateOf(false) }
+    var pendingDeleteUris  by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var pendingDeleteBytes by remember { mutableStateOf(0L) }
+    var showGuestDialog    by remember { mutableStateOf(false) }
 
     val sizeFilters = remember {
         listOf(">50MB" to 50L * MB, ">100MB" to 100L * MB, ">200MB" to 200L * MB)
@@ -103,9 +104,15 @@ fun FileCleanupScreen(navController: NavHostController) {
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
+            analytics.logFilesDeleted(
+                selectedCategory?.toScanType() ?: "LARGE_FILE",
+                pendingDeleteUris.size,
+                pendingDeleteBytes
+            )
             cleanupViewModel.onFilesDeleted(pendingDeleteUris.toSet())
-            selectedUris      = emptySet()
-            pendingDeleteUris = emptyList()
+            selectedUris       = emptySet()
+            pendingDeleteUris  = emptyList()
+            pendingDeleteBytes = 0L
         }
     }
 
@@ -120,9 +127,12 @@ fun FileCleanupScreen(navController: NavHostController) {
 
     fun triggerDelete(uris: List<Uri>) {
         if (uris.isEmpty()) return
-        pendingDeleteUris = uris
-        // Video files have media_type = VIDEO in MediaStore → safe for createDeleteRequest.
-        // Archives/APKs/downloads are media_type = NONE → must use direct delete.
+        val freedBytes = uris.sumOf { uri ->
+            selectedCategory?.let { cat -> statsFor(cat).files.find { it.uri == uri }?.size } ?: 0L
+        }
+        pendingDeleteUris  = uris
+        pendingDeleteBytes = freedBytes
+        val scanType = selectedCategory?.toScanType() ?: "LARGE_FILE"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
             selectedCategory == LargeFileCategory.VIDEO) {
             runCatching {
@@ -133,9 +143,11 @@ fun FileCleanupScreen(navController: NavHostController) {
                     withContext(Dispatchers.IO) {
                         uris.forEach { runCatching { context.contentResolver.delete(it, null, null) } }
                     }
+                    analytics.logFilesDeleted(scanType, uris.size, freedBytes)
                     cleanupViewModel.onFilesDeleted(uris.toSet())
-                    selectedUris      = emptySet()
-                    pendingDeleteUris  = emptyList()
+                    selectedUris       = emptySet()
+                    pendingDeleteUris   = emptyList()
+                    pendingDeleteBytes  = 0L
                 }
             }
         } else {
@@ -143,9 +155,11 @@ fun FileCleanupScreen(navController: NavHostController) {
                 withContext(Dispatchers.IO) {
                     uris.forEach { runCatching { context.contentResolver.delete(it, null, null) } }
                 }
+                analytics.logFilesDeleted(scanType, uris.size, freedBytes)
                 cleanupViewModel.onFilesDeleted(uris.toSet())
-                selectedUris      = emptySet()
-                pendingDeleteUris  = emptyList()
+                selectedUris       = emptySet()
+                pendingDeleteUris   = emptyList()
+                pendingDeleteBytes  = 0L
             }
         }
     }
@@ -1049,6 +1063,13 @@ private fun LargeFileGridItem(
     if (showImagePreview) {
         ImagePreviewDialog(uri = file.uri, name = file.name, onDismiss = { showImagePreview = false })
     }
+}
+
+private fun LargeFileCategory.toScanType() = when (this) {
+    LargeFileCategory.VIDEO        -> "LARGE_FILE_VIDEO"
+    LargeFileCategory.ARCHIVE      -> "LARGE_FILE_ARCHIVE"
+    LargeFileCategory.APP_DOWNLOAD -> "LARGE_FILE_APP"
+    LargeFileCategory.OLD_DOWNLOAD -> "LARGE_FILE_DOWNLOAD"
 }
 
 private fun fileTypeIcon(ext: String): ImageVector = when (ext.lowercase()) {

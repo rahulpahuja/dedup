@@ -70,7 +70,6 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
                         onDelete = { uris ->
                             if (profileViewModel.isGuest) showGuestSignInDialog = true
                             else {
-                                analytics.logFilesDeleted("WHATSAPP", uris.size, 0L)
                                 viewModel.deleteFiles(uris)
                             }
                         }

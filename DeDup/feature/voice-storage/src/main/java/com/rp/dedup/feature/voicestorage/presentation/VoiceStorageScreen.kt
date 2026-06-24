@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
+import com.google.firebase.analytics.FirebaseAnalytics
 import android.provider.MediaStore
 import android.speech.SpeechRecognizer
 import android.util.Size
@@ -117,6 +119,7 @@ fun VoiceStorageScreen(
     onNavigateUp: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val fa      = remember { FirebaseAnalytics.getInstance(context) }
     val viewModel: VoiceStorageViewModel = viewModel(factory = VoiceStorageViewModel.Factory(context))
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -160,6 +163,16 @@ fun VoiceStorageScreen(
     val deleteLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val freedBytes = state.filteredFiles
+                .filter { it.uri in state.selectedFileUris }
+                .sumOf { it.sizeInBytes }
+            fa.logEvent("files_deleted", Bundle().apply {
+                putString("scan_type", "VOICE_STORAGE")
+                putInt("deleted_count", state.selectedFileUris.size)
+                putLong("freed_bytes", freedBytes)
+            })
+        }
         viewModel.onIntent(VoiceStorageIntent.OnDeletionResult(result.resultCode == Activity.RESULT_OK))
     }
 
@@ -179,6 +192,14 @@ fun VoiceStorageScreen(
         LegacyDeleteDialog(
             count = state.selectedFileUris.size,
             onConfirm = {
+                val freedBytes = state.filteredFiles
+                    .filter { it.uri in state.selectedFileUris }
+                    .sumOf { it.sizeInBytes }
+                fa.logEvent("files_deleted", Bundle().apply {
+                    putString("scan_type", "VOICE_STORAGE")
+                    putInt("deleted_count", state.selectedFileUris.size)
+                    putLong("freed_bytes", freedBytes)
+                })
                 viewModel.onIntent(VoiceStorageIntent.DismissDeletion)
                 state.selectedFileUris.forEach { context.contentResolver.delete(it, null, null) }
                 viewModel.onIntent(VoiceStorageIntent.OnDeletionResult(true))

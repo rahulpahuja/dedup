@@ -21,13 +21,13 @@ class ThemeViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
 
     val themeMode: StateFlow<ThemeMode> = dataStoreManager.readData(
         DataStoreManager.THEME_MODE,
-        ThemeMode.AUTO.name
+        ThemeMode.DARK.name
     ).map { name ->
-        try { ThemeMode.valueOf(name) } catch (_: Exception) { ThemeMode.AUTO }
+        try { ThemeMode.valueOf(name) } catch (_: Exception) { ThemeMode.DARK }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ThemeMode.AUTO
+        initialValue = ThemeMode.DARK
     )
 
     val appPalette: StateFlow<AppPalette> = dataStoreManager.readData(
