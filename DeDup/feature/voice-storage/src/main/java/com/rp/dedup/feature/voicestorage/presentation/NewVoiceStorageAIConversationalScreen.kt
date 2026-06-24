@@ -114,9 +114,33 @@ fun DeDupChatScreen(onNavigateUp: () -> Unit = {}) {
         viewModel.onDeletionResult(result.resultCode == Activity.RESULT_OK)
     }
     if (chatState.showDeleteConfirmation && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        LaunchedEffect(chatState.selectedUris) {
-            val pending = MediaStore.createDeleteRequest(context.contentResolver, chatState.selectedUris.toList())
-            deleteLauncher.launch(IntentSenderRequest.Builder(pending.intentSender).build())
+        // Snapshot the selection at the moment confirmation was requested so that any
+        // in-flight selection changes don't restart this effect mid-way.
+        val snapshotUris   = chatState.selectedUris
+        val snapshotItems  = chatState.previewItems
+        LaunchedEffect(snapshotUris) {
+            // createDeleteRequest rejects URIs where media_type = 0 (documents from
+            // MediaStore.Files). Split: media items via system dialog, docs deleted directly.
+            val selectedItems = snapshotItems.filter { it.uri in snapshotUris }
+            val mediaUris = selectedItems.filter { it.mediaType != MediaType.DOCUMENT }.map { it.uri }
+            val docUris   = selectedItems.filter { it.mediaType == MediaType.DOCUMENT }.map { it.uri }
+
+            // Direct deletion may throw SecurityException on API 30+ for files not owned
+            // by this app, so wrap each call in runCatching.
+            if (mediaUris.isNotEmpty()) {
+                if (docUris.isNotEmpty()) {
+                    withContext(Dispatchers.IO) {
+                        docUris.forEach { runCatching { context.contentResolver.delete(it, null, null) } }
+                    }
+                }
+                val pending = MediaStore.createDeleteRequest(context.contentResolver, mediaUris)
+                deleteLauncher.launch(IntentSenderRequest.Builder(pending.intentSender).build())
+            } else {
+                withContext(Dispatchers.IO) {
+                    docUris.forEach { runCatching { context.contentResolver.delete(it, null, null) } }
+                }
+                viewModel.onDeletionResult(true)
+            }
             viewModel.dismissDeletion()
         }
     }

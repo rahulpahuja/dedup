@@ -14,6 +14,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /**
  * Renders [content] only after all [permissions] are granted.
@@ -49,15 +52,27 @@ fun PermissionGate(
         mutableStateOf(manager.filterDenied(permissions).isEmpty())
     }
 
+    // Re-check when the user returns from the system Settings page after manually granting.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                allGranted = manager.filterDenied(permissions).isEmpty()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         // Fix for java.util.ConcurrentModificationException:
-        // Defer the state update to avoid registering/unregistering launchers 
+        // Defer the state update to avoid registering/unregistering launchers
         // during the activity result delivery phase.
         val granted = results.values.all { it }
         android.os.Handler(android.os.Looper.getMainLooper()).post {
-            allGranted = granted
+            allGranted = manager.filterDenied(permissions).isEmpty()
         }
     }
 

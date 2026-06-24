@@ -285,10 +285,9 @@ fun VideoScannerGatekeeper(navController: NavHostController) {
 
 @Composable
 fun FileBrowserGatekeeper(navController: NavHostController) {
-    PermissionGate(
-        permissions      = PermissionManager.FILES,
-        rationaleTitle   = "Storage Access Needed",
-        rationaleMessage = "DeDup needs storage access to browse and manage files on your device."
+    AllFilesPermissionGatekeeper(
+        rationaleTitle   = "All Files Access Needed",
+        rationaleMessage = "DeDup needs full storage access to browse and manage files across all folders on your device."
     ) {
         FileBrowserScreen(navController = navController)
     }
@@ -296,7 +295,14 @@ fun FileBrowserGatekeeper(navController: NavHostController) {
 
 @Composable
 fun VoiceStorageGatekeeper(navController: NavHostController) {
-    DeDupChatScreen(onNavigateUp = { navController.navigateUp() })
+    val mediaPermissions = (PermissionManager.IMAGE + PermissionManager.VIDEO + PermissionManager.AUDIO).distinct()
+    PermissionGate(
+        permissions      = mediaPermissions,
+        rationaleTitle   = "Storage Access Needed",
+        rationaleMessage = "DeDup AI needs access to your photos, videos, and audio to answer questions about your storage."
+    ) {
+        DeDupChatScreen(onNavigateUp = { navController.navigateUp() })
+    }
 }
 
 @Composable
