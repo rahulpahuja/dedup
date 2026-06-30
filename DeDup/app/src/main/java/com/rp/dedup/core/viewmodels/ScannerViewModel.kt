@@ -3,8 +3,11 @@ package com.rp.dedup.core.viewmodels
 import android.content.Context
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
+import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.image.ImageHasher
 import com.rp.dedup.core.image.BestShotAnalyzer
@@ -317,6 +320,24 @@ class ScannerViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             deletedUris.forEach { scannedImageRepository?.deleteByUri(it) }
+        }
+    }
+
+    companion object {
+        class Factory(private val context: Context) : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val appContext = context.applicationContext
+                val db = AppDatabase.getDatabase(appContext)
+                return ScannerViewModel(
+                    context = appContext,
+                    repository = ImageScannerRepository(appContext),
+                    historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
+                    scannedImageRepository = ScannedImageRepository(db.scannedImageDao()),
+                    dataStoreManager = DataStoreManager(appContext),
+                    analyticsManager = AnalyticsManager.getInstance(appContext)
+                ) as T
+            }
         }
     }
 }

@@ -35,7 +35,7 @@ fun FeedbackDialog(
                     modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
                     trailingIcon = {
                         IconButton(onClick = {}) {
-                            Icon(Icons.Default.Mic, contentDescription = "Voice Input")
+                            Icon(Icons.Default.Mic, contentDescription = stringResource(R.string.voice_input))
                         }
                     },
                     shape = RoundedCornerShape(12.dp)
@@ -43,7 +43,7 @@ fun FeedbackDialog(
                 Spacer(Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-                    Button(onClick = { onSubmit(text) }, enabled = text.isNotBlank()) { Text("Submit") }
+                    Button(onClick = { onSubmit(text) }, enabled = text.isNotBlank()) { Text(stringResource(R.string.submit)) }
                 }
             }
         }

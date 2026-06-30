@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
-class VideoScannerRepository(private val context: Context) {
+class VideoScannerRepository(private val context: Context) : IVideoScannerRepository {
 
     fun scanVideos(deepScan: Boolean = false): Flow<ScannedVideo> = flow {
         val projection = buildList {

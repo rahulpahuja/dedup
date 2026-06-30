@@ -17,7 +17,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import java.util.zip.CRC32
 
-class ImageScannerRepository(private val context: Context) {
+class ImageScannerRepository(private val context: Context) : IImageScannerRepository {
 
     companion object {
         // Minimum decoded dimension for hashing: 16x the 8-row dHash target.

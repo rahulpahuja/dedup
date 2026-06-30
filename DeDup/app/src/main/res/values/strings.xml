@@ -290,6 +290,29 @@
     <string name="large_files">Large Files</string>
     <string name="duplicate_groups">Duplicate Groups</string>
 
+    <!-- Dialogs / inline UI strings previously hardcoded -->
+    <string name="done">Done</string>
+    <string name="delete">Delete</string>
+    <string name="not_now">Not now</string>
+    <string name="preview">Preview</string>
+    <string name="deselect_all">Deselect All</string>
+    <string name="list_view">List view</string>
+    <string name="grid_view">Grid view</string>
+    <string name="no_files_above_threshold">No files above this size threshold</string>
+    <string name="sign_in_to_delete_title">Sign in to delete</string>
+    <string name="sign_in_to_delete_desc">Deleting files is only available to signed-in users. Sign in with Google to unlock delete and other premium actions.</string>
+    <string name="appearance_dialog_title">Appearance</string>
+    <string name="appearance_dialog_desc">Personalize how DeDup looks and feels</string>
+    <string name="add_folder_btn">Add Folder</string>
+    <string name="excluded_folders_desc">Files in these folders will be skipped during scanning.</string>
+    <string name="no_folders_excluded">No folders excluded</string>
+    <string name="remove_btn">Remove</string>
+    <string name="voice_input">Voice Input</string>
+    <string name="currency_picker_title">Storage Cost Currency</string>
+    <string name="currency_picker_desc">Sets the currency used in the savings calculator on the dashboard.</string>
+    <string name="search_currency_hint">Search currency…</string>
+    <string name="image_similarity_dialog_title">Image Similarity</string>
+
     <!-- Share App -->
     <string name="share_app_title">Share DeDup</string>
     <string name="share_app_desc">Recommend it to a friend — help them reclaim storage too</string>

@@ -70,17 +70,17 @@ fun CurrencyPickerDialog(currentCode: String, onDismiss: () -> Unit, onSelect: (
             tonalElevation = 6.dp
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Storage Cost Currency", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
-                Text("Sets the currency used in the savings calculator on the dashboard.",
+                Text(stringResource(R.string.currency_picker_title), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                Text(stringResource(R.string.currency_picker_desc),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(
                     value = query, onValueChange = { query = it },
-                    placeholder = { Text("Search currency…") },
+                    placeholder = { Text(stringResource(R.string.search_currency_hint)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     trailingIcon = {
                         if (query.isNotEmpty()) IconButton(onClick = { query = "" }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear")
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear))
                         }
                     },
                     singleLine = true,

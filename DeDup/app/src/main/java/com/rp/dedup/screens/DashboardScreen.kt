@@ -319,16 +319,16 @@ fun DashboardScreenContent(
             AlertDialog(
                 onDismissRequest = { showGuestDeleteDialog = false },
                 icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp)) },
-                title = { Text("Sign in to delete", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)) },
-                text = { Text("Deleting files is only available to signed-in users. Sign in with Google to unlock delete and other premium actions.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                title = { Text(stringResource(R.string.sign_in_to_delete_title), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)) },
+                text = { Text(stringResource(R.string.sign_in_to_delete_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 confirmButton = {
                     Button(onClick = { showGuestDeleteDialog = false; navController.navigate(Screen.Login.route) { popUpTo(Screen.Dashboard.route) { inclusive = false } } }) {
                         Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Sign in with Google")
+                        Text(stringResource(R.string.sign_in_google))
                     }
                 },
-                dismissButton = { TextButton(onClick = { showGuestDeleteDialog = false }) { Text("Not now") } }
+                dismissButton = { TextButton(onClick = { showGuestDeleteDialog = false }) { Text(stringResource(R.string.not_now)) } }
             )
         }
     }

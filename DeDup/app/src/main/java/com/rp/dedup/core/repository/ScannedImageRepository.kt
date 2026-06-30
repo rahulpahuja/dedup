@@ -4,7 +4,7 @@ import com.rp.dedup.core.dao.ScannedImageDao
 import com.rp.dedup.core.model.ScannedImage
 import kotlinx.coroutines.flow.Flow
 
-class ScannedImageRepository(private val dao: ScannedImageDao) {
+class ScannedImageRepository(private val dao: ScannedImageDao) : IScannedImageRepository {
     fun getAllImages(): Flow<List<ScannedImage>> = dao.getAllImages()
 
     /** Loads persisted duplicate groups from Room. Groups by groupKey; filters singletons. */

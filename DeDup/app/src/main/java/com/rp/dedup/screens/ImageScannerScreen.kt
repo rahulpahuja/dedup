@@ -73,7 +73,6 @@ import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
 import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
-import com.rp.dedup.ScannerViewModelFactory
 import com.rp.dedup.core.ScannerContent
 import com.rp.dedup.core.viewmodels.ScannerViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
@@ -88,7 +87,7 @@ fun ImageScannerScreen(navController: NavHostController) {
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val viewModel: ScannerViewModel = viewModel(factory = ScannerViewModelFactory(context))
+    val viewModel: ScannerViewModel = viewModel(factory = ScannerViewModel.Factory(context))
 
     val settingsViewModel: com.rp.dedup.core.viewmodels.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = com.rp.dedup.core.viewmodels.SettingsViewModel.Factory(

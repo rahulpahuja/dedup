@@ -4,7 +4,7 @@ import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.dao.ScanHistoryDao
 import kotlinx.coroutines.flow.Flow
 
-class ScanHistoryRepository(private val dao: ScanHistoryDao) {
+class ScanHistoryRepository(private val dao: ScanHistoryDao) : IScanHistoryRepository {
     fun getAll(): Flow<List<ScanHistory>> = dao.getAll()
     suspend fun insert(scan: ScanHistory) = dao.insert(scan)
     suspend fun delete(scan: ScanHistory) = dao.delete(scan)

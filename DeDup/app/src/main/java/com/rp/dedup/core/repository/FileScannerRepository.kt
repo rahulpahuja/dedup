@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import java.io.File
 
-class FileScannerRepository(private val context: Context) {
+class FileScannerRepository(private val context: Context) : IFileScannerRepository {
 
     companion object {
         private const val TAG = "FileScannerRepository"

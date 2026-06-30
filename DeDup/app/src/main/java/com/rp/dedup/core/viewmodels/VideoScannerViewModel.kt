@@ -1,8 +1,11 @@
 package com.rp.dedup.core.viewmodels
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.VideoScannerRepository
 import com.rp.dedup.core.model.ScanHistory
 import com.rp.dedup.core.model.ScannedVideo
@@ -366,6 +369,21 @@ class VideoScannerViewModel(
             }
 
             analyticsManager?.logFilesDeleted("VIDEO", deletedUris.size, freedBytes)
+        }
+    }
+
+    companion object {
+        class Factory(private val context: Context) : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val db = AppDatabase.getDatabase(context)
+                return VideoScannerViewModel(
+                    repository = VideoScannerRepository(context),
+                    videoRepository = ScannedVideoRepository(db.scannedVideoDao()),
+                    historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
+                    analyticsManager = AnalyticsManager.getInstance(context)
+                ) as T
+            }
         }
     }
 }

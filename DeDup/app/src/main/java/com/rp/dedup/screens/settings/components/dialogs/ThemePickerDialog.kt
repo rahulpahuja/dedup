@@ -18,7 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
+import com.rp.dedup.R
 import com.rp.dedup.core.model.AppPalette
 import com.rp.dedup.core.model.ThemeMode
 
@@ -78,10 +80,10 @@ fun ThemePickerDialog(
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Appearance",
+                Text(stringResource(R.string.appearance_dialog_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface)
-                Text("Personalize how DeDup looks and feels",
+                Text(stringResource(R.string.appearance_dialog_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
 
@@ -149,7 +151,7 @@ fun ThemePickerDialog(
                 Spacer(Modifier.height(20.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
-                        Text("Done", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                        Text(stringResource(R.string.done), style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary)
                     }
                 }

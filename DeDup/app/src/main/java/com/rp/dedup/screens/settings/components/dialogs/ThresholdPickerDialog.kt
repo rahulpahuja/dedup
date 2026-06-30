@@ -17,7 +17,7 @@ fun ThresholdPickerDialog(currentValue: Int, onDismiss: () -> Unit, onSelect: (I
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surface, tonalElevation = 6.dp) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Image Similarity", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                Text(stringResource(R.string.image_similarity_dialog_title), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                 Text(
                     "Lower bits mean more strict (only very similar images). Higher bits mean more relaxed.",
                     style = MaterialTheme.typography.bodySmall,
@@ -34,7 +34,7 @@ fun ThresholdPickerDialog(currentValue: Int, onDismiss: () -> Unit, onSelect: (I
                 Spacer(Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-                    Button(onClick = { onSelect(sliderValue.toInt()) }) { Text("Save") }
+                    Button(onClick = { onSelect(sliderValue.toInt()) }) { Text(stringResource(R.string.save)) }
                 }
             }
         }

@@ -44,7 +44,6 @@ import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
 import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
-import com.rp.dedup.VideoScannerViewModelFactory
 import com.rp.dedup.core.model.ScannedVideo
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.viewmodels.VideoScannerViewModel
@@ -62,7 +61,7 @@ fun VideoScannerScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val viewModel: VideoScannerViewModel = viewModel(
-        factory = VideoScannerViewModelFactory(context)
+        factory = VideoScannerViewModel.Factory(context)
     )
 
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()

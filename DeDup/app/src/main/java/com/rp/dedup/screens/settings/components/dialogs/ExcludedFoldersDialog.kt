@@ -39,14 +39,14 @@ fun ExcludedFoldersDialog(
                     verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.excluded_folders),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
-                    IconButton(onClick = onAdd) { Icon(Icons.Default.Add, contentDescription = "Add Folder") }
+                    IconButton(onClick = onAdd) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_folder_btn)) }
                 }
-                Text("Files in these folders will be skipped during scanning.",
+                Text(stringResource(R.string.excluded_folders_desc),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 if (folders.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                        Text("No folders excluded", style = MaterialTheme.typography.bodyMedium,
+                        Text(stringResource(R.string.no_folders_excluded), style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                     }
                 } else {
@@ -60,7 +60,7 @@ fun ExcludedFoldersDialog(
                     }
                 }
                 Spacer(Modifier.height(24.dp))
-                TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) { Text("Close") }
+                TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) { Text(stringResource(R.string.close)) }
             }
         }
     }
@@ -83,7 +83,7 @@ private fun ExcludedFolderItem(path: String, onRemove: () -> Unit) {
             Text(text = path, modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Remove",
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.remove_btn),
                     tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
             }
         }

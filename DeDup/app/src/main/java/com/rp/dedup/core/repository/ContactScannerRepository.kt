@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
-class ContactScannerRepository(private val context: Context) {
+class ContactScannerRepository(private val context: Context) : IContactScannerRepository {
 
     // ── Scanning ──────────────────────────────────────────────────────────────
 

@@ -4,7 +4,7 @@ import android.net.Uri
 import com.rp.dedup.core.dao.ScannedVideoDao
 import com.rp.dedup.core.model.ScannedVideoEntity
 
-class ScannedVideoRepository(private val dao: ScannedVideoDao) {
+class ScannedVideoRepository(private val dao: ScannedVideoDao) : IScannedVideoRepository {
 
     suspend fun insertVideos(videos: List<ScannedVideoEntity>) = dao.insertVideos(videos)
 
