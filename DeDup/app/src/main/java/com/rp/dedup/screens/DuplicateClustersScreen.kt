@@ -67,7 +67,7 @@ import com.rp.dedup.core.ui.DeDupTopBar
 @Composable
 fun DuplicateClustersScreen(navController: NavHostController) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     LaunchedEffect(Unit) { analytics.logScreenView("DuplicateClusters") }
     val drawerState = LocalDrawerState.current
     val scope = rememberCoroutineScope()

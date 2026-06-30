@@ -75,7 +75,7 @@ private val MB = 1024L * 1024L
 @Composable
 fun FileCleanupScreen(navController: NavHostController) {
     val context = LocalContext.current
-    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     LaunchedEffect(Unit) { analytics.logScreenView("FileCleanup") }
 
     val cleanupViewModel: CleanupViewModel = viewModel(

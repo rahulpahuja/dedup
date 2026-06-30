@@ -119,7 +119,7 @@ class SocialMediaCleanerViewModel(
                 @Suppress("UNCHECKED_CAST")
                 return SocialMediaCleanerViewModel(
                     SocialMediaCleanerRepositoryImpl(context),
-                    AnalyticsManager(context)
+                    AnalyticsManager.getInstance(context)
                 ) as T
             }
         }

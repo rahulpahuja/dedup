@@ -34,7 +34,7 @@ class StorageLevelReceiver : BroadcastReceiver() {
             Log.d("StorageLevelReceiver", "Storage check: ${usedPercentage.toInt()}% used")
 
             if (usedPercentage >= 90.0) {
-                AnalyticsManager(context).logFeedbackSubmitted("LOW_STORAGE_ALERT")
+                AnalyticsManager.getInstance(context).logFeedbackSubmitted("LOW_STORAGE_ALERT")
                 val notificationManager = AppNotificationManager(context)
                 notificationManager.showActionNotification(
                     id = 1001,

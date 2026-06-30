@@ -92,7 +92,7 @@ private fun String.initials(): String =
 @Composable
 fun DeduplicationScreen(navController: NavHostController) {
     val context = LocalContext.current
-    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
 
     val viewModel: ContactScannerViewModel = viewModel(
         factory = ContactScannerViewModel.factory(context)

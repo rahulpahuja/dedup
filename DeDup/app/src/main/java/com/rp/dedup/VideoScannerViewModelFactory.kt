@@ -19,7 +19,7 @@ class VideoScannerViewModelFactory(private val context: Context) : ViewModelProv
                 repository = VideoScannerRepository(context),
                 videoRepository = ScannedVideoRepository(db.scannedVideoDao()),
                 historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
-                analyticsManager = AnalyticsManager(context)
+                analyticsManager = AnalyticsManager.getInstance(context)
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

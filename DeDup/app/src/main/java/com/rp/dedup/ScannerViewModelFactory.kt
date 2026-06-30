@@ -21,7 +21,7 @@ class ScannerViewModelFactory(private val context: Context) : ViewModelProvider.
                 historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
                 scannedImageRepository = ScannedImageRepository(db.scannedImageDao()),
                 dataStoreManager = com.rp.dedup.core.caching.DataStoreManager(appContext),
-                analyticsManager = com.rp.dedup.core.analytics.AnalyticsManager(appContext)
+                analyticsManager = com.rp.dedup.core.analytics.AnalyticsManager.getInstance(appContext)
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

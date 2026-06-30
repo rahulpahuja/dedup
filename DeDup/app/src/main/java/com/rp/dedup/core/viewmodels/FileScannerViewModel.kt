@@ -1,8 +1,11 @@
 package com.rp.dedup.core.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.analytics.AnalyticsManager
+import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.repository.ScanHistoryRepository
@@ -129,6 +132,18 @@ class FileScannerViewModel(
             _files.value = currentFiles
             findDuplicates(currentFiles)
             analyticsManager?.logFilesDeleted(scanTypeName, deletedUris.size, freedBytes)
+        }
+    }
+
+    companion object {
+        class Factory(private val context: Context, private val scanTypeName: String) : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = FileScannerViewModel(
+                repository = FileScannerRepository(context),
+                historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
+                scanTypeName = scanTypeName,
+                analyticsManager = AnalyticsManager.getInstance(context)
+            ) as T
         }
     }
 }

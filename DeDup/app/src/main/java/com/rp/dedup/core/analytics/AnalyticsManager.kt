@@ -2,16 +2,31 @@ package com.rp.dedup.core.analytics
 
 import android.content.Context
 import android.os.Bundle
+import androidx.annotation.VisibleForTesting
 import com.google.firebase.analytics.FirebaseAnalytics
 
 /**
  * Central manager for tracking critical events in Firebase Analytics.
+ * Call [getInstance] everywhere — one Firebase wrapper for the whole process.
  */
-class AnalyticsManager(context: Context) {
+class AnalyticsManager private constructor(context: Context) {
 
     private val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
 
     companion object {
+        @Volatile
+        private var instance: AnalyticsManager? = null
+
+        fun getInstance(context: Context): AnalyticsManager =
+            instance ?: synchronized(this) {
+                instance ?: AnalyticsManager(context.applicationContext).also { instance = it }
+            }
+
+        @VisibleForTesting
+        fun resetForTesting() {
+            instance = null
+        }
+
         // --- Event Names ---
         private const val EVENT_SCAN_STARTED            = "scan_started"
         private const val EVENT_SCAN_COMPLETED          = "scan_completed"

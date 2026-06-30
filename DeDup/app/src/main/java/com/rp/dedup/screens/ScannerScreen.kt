@@ -374,7 +374,7 @@ private fun SelectableImageItem(
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     var showPreview by remember { mutableStateOf(false) }
 
     Box(

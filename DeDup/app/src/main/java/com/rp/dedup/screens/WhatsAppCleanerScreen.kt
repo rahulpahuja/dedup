@@ -42,7 +42,7 @@ fun WhatsAppCleanerScreen(navController: NavHostController) {
     val profileViewModel = LocalUserProfileViewModel.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showGuestSignInDialog by remember { mutableStateOf(false) }
-    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     LaunchedEffect(Unit) { analytics.logScreenView("WhatsAppCleaner") }
 
     Scaffold(

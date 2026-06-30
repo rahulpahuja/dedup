@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class SmartJunkViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SmartJunkRepository(application)
-    private val analyticsManager = AnalyticsManager(application)
+    private val analyticsManager = AnalyticsManager.getInstance(application)
     private val aiClassifier = GeminiClassifier(application)
 
     private val _uiState = MutableStateFlow<SmartJunkState>(SmartJunkState.Idle)

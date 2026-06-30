@@ -52,7 +52,7 @@ fun LoginScreen(
     
     var isLoading by remember { mutableStateOf(false) }
 
-    val analyticsManager = remember { AnalyticsManager(context) }
+    val analyticsManager = remember { AnalyticsManager.getInstance(context) }
 
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("Login")

@@ -25,18 +25,42 @@ class AnalyticsManagerTest {
 
     @Before
     fun setUp() {
+        // Reset singleton so each test gets a fresh instance backed by the mock.
+        AnalyticsManager.resetForTesting()
+
         mockFirebase = mockk(relaxed = true)
         mockkStatic(FirebaseAnalytics::class)
         every { FirebaseAnalytics.getInstance(any()) } returns mockFirebase
         every { mockFirebase.logEvent(capture(capturedEvent), captureNullable(capturedBundle)) } just Runs
 
         val app = ApplicationProvider.getApplicationContext<Application>()
-        manager = AnalyticsManager(app)
+        manager = AnalyticsManager.getInstance(app)
     }
 
     @After
     fun tearDown() {
         unmockkStatic(FirebaseAnalytics::class)
+        AnalyticsManager.resetForTesting()
+    }
+
+    // ── Singleton behaviour ───────────────────────────────────────────────────
+
+    @Test
+    fun `getInstance returns the same instance on repeated calls`() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val first = AnalyticsManager.getInstance(app)
+        val second = AnalyticsManager.getInstance(app)
+        assertSame(first, second)
+    }
+
+    @Test
+    fun `resetForTesting allows a new instance to be created`() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val first = AnalyticsManager.getInstance(app)
+        AnalyticsManager.resetForTesting()
+        val second = AnalyticsManager.getInstance(app)
+        // After reset the factory creates a new object — identity differs.
+        assertNotSame(first, second)
     }
 
     // ── logScanStarted ────────────────────────────────────────────────────────

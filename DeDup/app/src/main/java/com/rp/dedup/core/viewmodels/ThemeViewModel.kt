@@ -1,10 +1,12 @@
 package com.rp.dedup.core.viewmodels
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.model.AppPalette
@@ -18,6 +20,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ThemeViewModel(private val dataStoreManager: DataStoreManager) : ViewModel() {
+
+    companion object {
+        class Factory(private val context: Context) : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                ThemeViewModel(DataStoreManager(context.applicationContext)) as T
+        }
+    }
 
     val themeMode: StateFlow<ThemeMode> = dataStoreManager.readData(
         DataStoreManager.THEME_MODE,

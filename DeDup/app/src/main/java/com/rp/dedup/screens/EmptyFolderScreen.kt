@@ -59,7 +59,7 @@ fun EmptyFolderScreen(navController: NavHostController) {
     )
     val profileViewModel = LocalUserProfileViewModel.current
     val state by viewModel.state.collectAsState()
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     val selectedPaths = remember { mutableStateSetOf<String>() }
     var showGuestSignInDialog by remember { mutableStateOf(false) }
 

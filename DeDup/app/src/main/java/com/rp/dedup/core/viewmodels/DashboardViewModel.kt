@@ -5,7 +5,9 @@ import android.os.Environment
 import android.os.StatFs
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.model.MediaCounts
 import com.rp.dedup.core.model.StorageStats
 import com.rp.dedup.core.repository.ScanHistoryRepository
@@ -22,6 +24,19 @@ class DashboardViewModel(
     private val historyRepository: ScanHistoryRepository,
     context: Context
 ) : ViewModel() {
+
+    companion object {
+        class Factory(private val context: Context) : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val appContext = context.applicationContext
+                return DashboardViewModel(
+                    ScanHistoryRepository(AppDatabase.getDatabase(appContext).scanHistoryDao()),
+                    appContext
+                ) as T
+            }
+        }
+    }
 
     private val context: Context = context.applicationContext
 

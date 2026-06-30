@@ -100,7 +100,7 @@ fun ImageScannerScreen(navController: NavHostController) {
     val isScanning by viewModel.isScanning.collectAsState()
     val isStale by viewModel.isStale.collectAsState()
     val cacheLoaded by viewModel.cacheLoaded.collectAsState()
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
 
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("ImageScanner")

@@ -18,8 +18,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.appcompat.app.AppCompatActivity
@@ -33,13 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
-    private val themeViewModel: ThemeViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return ThemeViewModel(DataStoreManager(applicationContext)) as T
-            }
-        }
-    }
+    private val themeViewModel: ThemeViewModel by viewModels { ThemeViewModel.Factory(applicationContext) }
 
     // Per-instance deep link state: eliminates the process-global var that was shared
     // across all MainActivity instances (back-stack, task-switching, split-screen).
@@ -79,7 +71,7 @@ class MainActivity : AppCompatActivity() {
                     RootedDeviceScreen(triggeredChecks = rootResult!!.triggeredChecks)
                 } else {
                     val navController: NavHostController = rememberNavController()
-                    val analyticsManager = remember { AnalyticsManager(applicationContext) }
+                    val analyticsManager = remember { AnalyticsManager.getInstance(applicationContext) }
 
                     // Navigate to deep-link route once the nav graph is ready
                     LaunchedEffect(pendingDeepLinkRoute) {

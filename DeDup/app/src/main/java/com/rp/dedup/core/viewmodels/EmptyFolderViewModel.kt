@@ -69,7 +69,7 @@ class EmptyFolderViewModel(
                 @Suppress("UNCHECKED_CAST")
                 return EmptyFolderViewModel(
                     repository       = EmptyFolderRepositoryImpl(context),
-                    analyticsManager = AnalyticsManager(context)
+                    analyticsManager = AnalyticsManager.getInstance(context)
                 ) as T
             }
         }

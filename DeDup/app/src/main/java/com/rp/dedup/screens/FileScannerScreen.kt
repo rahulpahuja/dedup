@@ -36,8 +36,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -45,12 +43,9 @@ import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
 import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
-import com.rp.dedup.core.repository.FileScannerRepository
 import com.rp.dedup.core.viewmodels.FileScannerViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.model.ScannedFile
-import com.rp.dedup.core.db.AppDatabase
-import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar
 
@@ -63,23 +58,12 @@ fun FileScannerScreen(
 ) {
     val context = LocalContext.current
     val historyType = if (scanType == "pdf") "FILE_PDF" else "FILE_APK"
-    val viewModel: FileScannerViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return FileScannerViewModel(
-                    repository = FileScannerRepository(context),
-                    historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
-                    scanTypeName = historyType,
-                    analyticsManager = com.rp.dedup.core.analytics.AnalyticsManager(context)
-                ) as T
-            }
-        }
-    )
+    val viewModel: FileScannerViewModel = viewModel(factory = FileScannerViewModel.Factory(context, historyType))
 
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val allFiles by viewModel.files.collectAsState()
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
 
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("FileScanner_${scanType.uppercase()}")

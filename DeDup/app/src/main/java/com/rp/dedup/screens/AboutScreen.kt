@@ -40,7 +40,7 @@ import com.rp.dedup.core.ui.DeDupTopBar
 @Composable
 fun AboutScreen(navController: NavHostController) {
     val context = LocalContext.current
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("About")
     }

@@ -46,7 +46,7 @@ import com.rp.dedup.ui.theme.DeDupTheme
 fun SmartJunkScreen(navController: NavHostController) {
     val context = LocalContext.current
     val viewModel: SmartJunkViewModel = viewModel()
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {

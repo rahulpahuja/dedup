@@ -54,7 +54,7 @@ fun BigFileMapScreen(navController: NavHostController) {
         factory = BigFileMapViewModel.factory(context)
     )
     val state by viewModel.state.collectAsState()
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     var navStack by remember { mutableStateOf(listOf<FolderNode>()) }
 
     LaunchedEffect(Unit) {

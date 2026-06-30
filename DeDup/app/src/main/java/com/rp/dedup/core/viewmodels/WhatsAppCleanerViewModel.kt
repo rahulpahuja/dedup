@@ -97,7 +97,7 @@ class WhatsAppCleanerViewModel(
                 @Suppress("UNCHECKED_CAST")
                 return WhatsAppCleanerViewModel(
                     WhatsAppCleanerRepositoryImpl(context),
-                    AnalyticsManager(context)
+                    AnalyticsManager.getInstance(context)
                 ) as T
             }
         }

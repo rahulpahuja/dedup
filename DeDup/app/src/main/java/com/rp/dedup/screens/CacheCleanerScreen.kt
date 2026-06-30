@@ -33,7 +33,7 @@ import com.rp.dedup.core.ui.DeDupTopBar
 @Composable
 fun CacheCleanerScreen(navController: NavHostController) {
     val context = LocalContext.current
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     var progressState by remember { mutableStateOf<CleaningProgress>(CleaningProgress.Scanning(0)) }
     var startCleaning by remember { mutableStateOf(false) }
 

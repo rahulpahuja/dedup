@@ -66,8 +66,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -113,14 +111,7 @@ fun AppDrawerContent(
 
     val context = LocalContext.current
     
-    // ThemeViewModel requires DataStoreManager, so we use a factory
-    val themeViewModel: ThemeViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return ThemeViewModel(DataStoreManager(context.applicationContext)) as T
-            }
-        }
-    )
+    val themeViewModel: ThemeViewModel = viewModel(factory = ThemeViewModel.Factory(context))
 
     val currentThemeMode by themeViewModel.themeMode.collectAsState()
 
@@ -318,7 +309,7 @@ private fun AppDrawerContentUI(
                     onClick = {
                         showLogoutDialog = false
                         scope.launch {
-                            AnalyticsManager(context).logLogout()
+                            AnalyticsManager.getInstance(context).logLogout()
                             val toastManager = ToastManager(context)
                             val authManager = FirebaseAuthManager(toastManager)
                             authManager.signOutWithCredentialClear(context)

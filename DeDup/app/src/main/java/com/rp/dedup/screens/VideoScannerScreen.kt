@@ -70,7 +70,7 @@ fun VideoScannerScreen(navController: NavHostController) {
     val scannedCount by viewModel.scannedCount.collectAsState()
     val cacheLoaded by viewModel.cacheLoaded.collectAsState()
     val resumedCount by viewModel.resumedCount.collectAsState()
-    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager(context) }
+    val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
 
     // True when the DB has results from a previous interrupted scan ready to show
     val hasCachedResults = cacheLoaded && duplicateGroups.isNotEmpty() && !isScanning
