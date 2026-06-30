@@ -21,12 +21,10 @@ import kotlinx.coroutines.launch
 
 class ThemeViewModel(private val dataStoreManager: DataStoreManager) : ViewModel() {
 
-    companion object {
-        class Factory(private val context: Context) : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ThemeViewModel(DataStoreManager(context.applicationContext)) as T
-        }
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            ThemeViewModel(DataStoreManager(context.applicationContext)) as T
     }
 
     val themeMode: StateFlow<ThemeMode> = dataStoreManager.readData(

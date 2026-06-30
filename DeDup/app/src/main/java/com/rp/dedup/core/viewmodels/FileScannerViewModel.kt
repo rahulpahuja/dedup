@@ -135,15 +135,13 @@ class FileScannerViewModel(
         }
     }
 
-    companion object {
-        class Factory(private val context: Context, private val scanTypeName: String) : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = FileScannerViewModel(
-                repository = FileScannerRepository(context),
-                historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
-                scanTypeName = scanTypeName,
-                analyticsManager = AnalyticsManager.getInstance(context)
-            ) as T
-        }
+    class Factory(private val context: Context, private val scanTypeName: String) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = FileScannerViewModel(
+            repository = FileScannerRepository(context),
+            historyRepository = ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao()),
+            scanTypeName = scanTypeName,
+            analyticsManager = AnalyticsManager.getInstance(context)
+        ) as T
     }
 }

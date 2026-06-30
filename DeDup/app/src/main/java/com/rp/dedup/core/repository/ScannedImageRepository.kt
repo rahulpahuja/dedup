@@ -5,17 +5,16 @@ import com.rp.dedup.core.model.ScannedImage
 import kotlinx.coroutines.flow.Flow
 
 class ScannedImageRepository(private val dao: ScannedImageDao) : IScannedImageRepository {
-    fun getAllImages(): Flow<List<ScannedImage>> = dao.getAllImages()
+    override fun getAllImages(): Flow<List<ScannedImage>> = dao.getAllImages()
 
-    /** Loads persisted duplicate groups from Room. Groups by groupKey; filters singletons. */
-    suspend fun getCachedDuplicateGroups(): List<List<ScannedImage>> =
+    override suspend fun getCachedDuplicateGroups(): List<List<ScannedImage>> =
         dao.getCachedDuplicateImages()
             .groupBy { it.groupKey }
             .values
             .filter { it.size > 1 }
             .toList()
 
-    suspend fun insertImages(images: List<ScannedImage>) = dao.insertImages(images)
-    suspend fun deleteByUri(uri: String) = dao.deleteByUri(uri)
-    suspend fun clearAll() = dao.clearAll()
+    override suspend fun insertImages(images: List<ScannedImage>) = dao.insertImages(images)
+    override suspend fun deleteByUri(uri: String) = dao.deleteByUri(uri)
+    override suspend fun clearAll() = dao.clearAll()
 }

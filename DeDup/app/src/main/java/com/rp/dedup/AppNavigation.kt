@@ -42,6 +42,9 @@ import com.rp.dedup.UIConstants.ROUTE_CONTACT_TEST
 import com.rp.dedup.UIConstants.ROUTE_CONTACT_DEDUP
 import com.rp.dedup.UIConstants.ROUTE_VIDEO_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_VOICE_STORAGE
+import com.rp.dedup.UIConstants.ROUTE_TRASH
+import com.rp.dedup.UIConstants.ROUTE_SEMANTIC_SCANNER
+import com.rp.dedup.UIConstants.ROUTE_IMAGE_COMPRESSION
 import com.rp.dedup.feature.voicestorage.presentation.DeDupChatScreen
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
@@ -85,6 +88,9 @@ sealed class Screen(val route: String) {
     object WhatsAppCleaner : Screen(ROUTE_WHATSAPP_CLEANER)
     object ContactTest : Screen(ROUTE_CONTACT_TEST)
     object VoiceStorage : Screen(ROUTE_VOICE_STORAGE)
+    object Trash : Screen(ROUTE_TRASH)
+    object SemanticScanner : Screen(ROUTE_SEMANTIC_SCANNER)
+    object ImageCompression : Screen(ROUTE_IMAGE_COMPRESSION)
 }
 
 @Composable
@@ -234,6 +240,15 @@ fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = f
                 }
                 composable(Screen.VoiceStorage.route) {
                     VoiceStorageGatekeeper(navController)
+                }
+                composable(Screen.Trash.route) {
+                    TrashScreen(navController)
+                }
+                composable(Screen.SemanticScanner.route) {
+                    SemanticScannerScreen(navController)
+                }
+                composable(Screen.ImageCompression.route) {
+                    ImageCompressionScreen(navController)
                 }
                 composable(
                     route = Screen.FileScanner.route,

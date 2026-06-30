@@ -222,6 +222,74 @@ Splash
 
 ---
 
+---
+
+## 8. Product Roadmap
+
+### Now — Active (v1.x)
+All features listed in sections 3.1–3.10 are shipped or in active development.
+
+---
+
+### Q3 2026 — Storage Safety & Engagement
+
+| Feature | Description | Priority |
+|---|---|---|
+| **Recoverable Trash (30-day bin)** | Files "deleted" through DeDup are moved to a private `.dedup_trash` directory. A dedicated Trash screen lets users restore or permanently delete within 30 days. Auto-expiry on app open. | P0 |
+| **Storage Health Score** | A 0–100 gamified score on the dashboard computed from: free-space ratio, scan recency, reclaimable bytes, and app cache size. Score history tracked so users see improvement over time. | P0 |
+| **Google Photos Backup Check** | Before deleting a photo, query `MediaStore` / Photos content provider to detect backup status. Surface "Backed up — safe to delete" vs. "No backup — delete with caution" UI. | P1 |
+| **Cleanup Campaign (Goal Mode)** | "Free 1 GB" / "Free 5 GB" modes build an ordered risk-ranked deletion plan (caches → empty folders → exact duplicates → near-duplicates) and walk users through it step-by-step. | P1 |
+
+---
+
+### Q4 2026 — Intelligence & Monetization
+
+| Feature | Description | Priority |
+|---|---|---|
+| **AI Best-of-Burst Curation** | When scanner identifies a burst group (≥3 near-identical photos within 3 seconds), auto-score each on sharpness, exposure, and face quality. Surface "Keep Best Shot" one-tap card. | P0 |
+| **Predictive Storage Alerts** | On-device linear regression on 30 days of DataStore-persisted storage deltas. Push "You'll hit critical storage in ~14 days" notification with a one-tap deep-link to clean. | P0 |
+| **Duplicate Source Attribution** | Post-scan chart showing which sources generated duplicates: WhatsApp received, Camera burst, Telegram, Downloads. Turns raw numbers into personalized recommendations. | P1 |
+| **Freemium Monetization Gates** | Free tier: up to 500-image scan, manual cache clear, basic stats. Pro tier ($2.99/month or $14.99/year): unlimited scans, scheduled cleanup, video compression, trash bin, health score history, priority background scan. One-time $29.99 lifetime option. | P0 |
+| **Shareable Cleanup Report** | One-tap shareable card — "I freed 3.2 GB with DeDup" — showing before/after storage ring, items cleaned, and Play Store QR code. Organic viral loop. | P2 |
+
+---
+
+### Q1 2027 — Compression & Advanced Optimization
+
+| Feature | Description | Priority |
+|---|---|---|
+| **Video Transcoding** | On-device `MediaCodec` + `MediaMuxer` pipeline. Compress 4K → 1080p or 1080p → 720p with a quality slider. Preview size saving before committing. | P0 |
+| **Image Recompression** | Batch re-compress JPEG/PNG/WebP via `Bitmap.compress(WEBP_LOSSY, 85)`. Typically 40–60% size reduction with imperceptible quality loss. | P1 |
+| **Smart Format Conversion** | HEIC → JPEG (compatibility) and JPEG/PNG → WebP (size). Before/after size preview per file. | P2 |
+| **Semantic Duplicate Detection** | Lightweight on-device vision embedding (MobileNetV3 / EfficientNet-Lite) via ONNX Runtime to catch semantic duplicates — same scene from slightly different angles, memes cropped differently. Repurposes existing `ImageSearchRepository` embedding infrastructure. | P0 |
+| **SD Card / USB OTG Offload** | "Move large files to SD card" flow using `DocumentsContract`. Scan files above user threshold, batch-move to SD with a progress bar. | P1 |
+
+---
+
+### Q2 2027 — Platform & Ecosystem
+
+| Feature | Description | Priority |
+|---|---|---|
+| **Quick Settings Tile** | `TileService` in the notification shade: current storage %, one-tap "Scan now" that triggers `ScanWorker`. Top-of-mind retention hook. | P0 |
+| **Wear OS Companion** | Wear OS tile / complication: storage % ring + one-tap "Quick Clean" that triggers `ScanWorker` remotely. Targets Pixel Watch and Galaxy Watch users. | P1 |
+| **Open Scan Audit Log** | Every file read/moved/deleted creates a signed log entry. Export as JSON. Differentiator: "DeDup shows exactly what it did and why." Targets privacy-conscious users and editorial features. | P1 |
+| **Privacy Dashboard** | Screen showing: files scanned this session, files deleted, data sent to internet (always 0 bytes). Powerful trust signal in a category where users are skeptical. | P1 |
+| **Batch Rename on Merge** | When merging duplicates, rename surviving file to canonical pattern (`YYYY-MM-DD_###` or original camera name). Especially valuable for WhatsApp hash-named files. | P2 |
+
+---
+
+### Future (Unscheduled)
+
+| Feature | Description |
+|---|---|
+| **Cross-Device Dedup (P2P WiFi Direct)** | Detect photos/videos duplicated across family devices over local WiFi. No cloud transfer. Very high technical complexity. |
+| **NAS / Network Drive Scanning** | Scan network-attached storage via SMB/SFTP. Target power users with home NAS setups. |
+| **iOS App** | Native Swift / SwiftUI implementation with feature parity. Separate codebase. |
+| **Android Files App Integration** | Register `DocumentsProvider` so DeDup appears as a source in the system Files app — platform-level trust signal. |
+| **AR Storage Visualization** | ARCore-based visualization of storage as physical objects in space. Experimental / marketing-led. |
+
+---
+
 ## 7. Out of Scope (Current Version)
 
 - iOS support

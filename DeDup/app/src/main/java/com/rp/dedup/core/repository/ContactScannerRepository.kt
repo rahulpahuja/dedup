@@ -14,7 +14,7 @@ class ContactScannerRepository(private val context: Context) : IContactScannerRe
 
     // ── Scanning ──────────────────────────────────────────────────────────────
 
-    fun scanContacts(): Flow<ScannedContact> = flow {
+    override fun scanContacts(): Flow<ScannedContact> = flow {
         val contactsMap = mutableMapOf<String, ScannedContact>()
         val projection = arrayOf(
             ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
@@ -47,7 +47,7 @@ class ContactScannerRepository(private val context: Context) : IContactScannerRe
     // ── Merge-preview data ────────────────────────────────────────────────────
 
     /** Returns all phone Data rows for [contactId] as [ContactDataEntry] objects. */
-    suspend fun queryPhoneEntries(
+    override suspend fun queryPhoneEntries(
         contactId: String,
         contactName: String,
         isPrimary: Boolean
@@ -80,7 +80,7 @@ class ContactScannerRepository(private val context: Context) : IContactScannerRe
     }
 
     /** Returns all email Data rows for [contactId] as [ContactDataEntry] objects. */
-    suspend fun queryEmailEntries(
+    override suspend fun queryEmailEntries(
         contactId: String,
         contactName: String,
         isPrimary: Boolean
@@ -123,7 +123,7 @@ class ContactScannerRepository(private val context: Context) : IContactScannerRe
      *
      * [keepId] is never deleted even if it appears in [duplicateIds] by mistake.
      */
-    suspend fun mergeContactsWithSelection(
+    override suspend fun mergeContactsWithSelection(
         keepId: String,
         duplicateIds: List<String>,
         primaryDataIdsToRemove: Set<String>,
@@ -232,7 +232,7 @@ class ContactScannerRepository(private val context: Context) : IContactScannerRe
             null
         )?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
 
-    fun normalizePhone(phone: String): String =
+    override fun normalizePhone(phone: String): String =
         phone.replace("[^0-9+]".toRegex(), "").let {
             if (it.startsWith("+")) it else it.trimStart('0')
         }

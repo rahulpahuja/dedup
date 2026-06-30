@@ -25,16 +25,14 @@ class DashboardViewModel(
     context: Context
 ) : ViewModel() {
 
-    companion object {
-        class Factory(private val context: Context) : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val appContext = context.applicationContext
-                return DashboardViewModel(
-                    ScanHistoryRepository(AppDatabase.getDatabase(appContext).scanHistoryDao()),
-                    appContext
-                ) as T
-            }
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            val appContext = context.applicationContext
+            return DashboardViewModel(
+                ScanHistoryRepository(AppDatabase.getDatabase(appContext).scanHistoryDao()),
+                appContext
+            ) as T
         }
     }
 

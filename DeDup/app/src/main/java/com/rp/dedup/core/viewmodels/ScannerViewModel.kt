@@ -323,21 +323,19 @@ class ScannerViewModel(
         }
     }
 
-    companion object {
-        class Factory(private val context: Context) : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val appContext = context.applicationContext
-                val db = AppDatabase.getDatabase(appContext)
-                return ScannerViewModel(
-                    context = appContext,
-                    repository = ImageScannerRepository(appContext),
-                    historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
-                    scannedImageRepository = ScannedImageRepository(db.scannedImageDao()),
-                    dataStoreManager = DataStoreManager(appContext),
-                    analyticsManager = AnalyticsManager.getInstance(appContext)
-                ) as T
-            }
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            val appContext = context.applicationContext
+            val db = AppDatabase.getDatabase(appContext)
+            return ScannerViewModel(
+                context = appContext,
+                repository = ImageScannerRepository(appContext),
+                historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
+                scannedImageRepository = ScannedImageRepository(db.scannedImageDao()),
+                dataStoreManager = DataStoreManager(appContext),
+                analyticsManager = AnalyticsManager.getInstance(appContext)
+            ) as T
         }
     }
 }

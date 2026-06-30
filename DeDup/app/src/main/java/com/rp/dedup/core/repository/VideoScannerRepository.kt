@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.flowOn
 
 class VideoScannerRepository(private val context: Context) : IVideoScannerRepository {
 
-    fun scanVideos(deepScan: Boolean = false): Flow<ScannedVideo> = flow {
+    override fun scanVideos(deepScan: Boolean): Flow<ScannedVideo> = flow {
         val projection = buildList {
             add(MediaStore.Video.Media._ID)
             add(MediaStore.Video.Media.DISPLAY_NAME)

@@ -372,18 +372,16 @@ class VideoScannerViewModel(
         }
     }
 
-    companion object {
-        class Factory(private val context: Context) : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val db = AppDatabase.getDatabase(context)
-                return VideoScannerViewModel(
-                    repository = VideoScannerRepository(context),
-                    videoRepository = ScannedVideoRepository(db.scannedVideoDao()),
-                    historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
-                    analyticsManager = AnalyticsManager.getInstance(context)
-                ) as T
-            }
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            val db = AppDatabase.getDatabase(context)
+            return VideoScannerViewModel(
+                repository = VideoScannerRepository(context),
+                videoRepository = ScannedVideoRepository(db.scannedVideoDao()),
+                historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
+                analyticsManager = AnalyticsManager.getInstance(context)
+            ) as T
         }
     }
 }

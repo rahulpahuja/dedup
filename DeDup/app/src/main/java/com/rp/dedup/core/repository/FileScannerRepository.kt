@@ -20,7 +20,7 @@ class FileScannerRepository(private val context: Context) : IFileScannerReposito
         private const val TAG = "FileScannerRepository"
     }
 
-    fun scanFilesByExtension(extensions: List<String>, deepScan: Boolean = false, excludedFolders: List<String> = emptyList()): Flow<ScannedFile> = flow<ScannedFile> {
+    override fun scanFilesByExtension(extensions: List<String>, deepScan: Boolean, excludedFolders: List<String>): Flow<ScannedFile> = flow<ScannedFile> {
         Log.d(TAG, "Starting scan for extensions: $extensions")
         
         val collection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
@@ -114,7 +114,7 @@ class FileScannerRepository(private val context: Context) : IFileScannerReposito
         Log.d(TAG, "Scan finished. Total files found: $count")
     }.flowOn(Dispatchers.IO)
 
-    fun scanOldFiles(folder: String, olderThanMs: Long): Flow<ScannedFile> = flow {
+    override fun scanOldFiles(folder: String, olderThanMs: Long): Flow<ScannedFile> = flow {
         val collection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
         } else {

@@ -313,6 +313,29 @@
     <string name="search_currency_hint">Search currency…</string>
     <string name="image_similarity_dialog_title">Image Similarity</string>
 
+    <!-- Trash -->
+    <string name="trash_title">Trash</string>
+    <string name="trash_empty">Empty Trash</string>
+    <string name="trash_empty_state">Your trash is empty</string>
+    <string name="trash_empty_confirm_title">Empty Trash?</string>
+    <string name="trash_empty_confirm_body">All items will be permanently deleted. This cannot be undone.</string>
+    <string name="trash_delete_forever_title">Delete Forever?</string>
+    <string name="trash_delete_forever_body">"%s" will be permanently deleted and cannot be recovered.</string>
+    <string name="restore">Restore</string>
+    <string name="delete_forever">Delete Forever</string>
+
+    <!-- Semantic Scanner -->
+    <string name="semantic_scan_title">Semantic Duplicates</string>
+    <string name="semantic_scan_subtitle">AI-powered visual similarity</string>
+    <string name="semantic_scan_btn">Find Visual Duplicates</string>
+    <string name="semantic_empty_no_index">Scan your photos first to build the AI index</string>
+    <string name="semantic_empty_no_dupes">No visually similar duplicates found</string>
+
+    <!-- Image Compression -->
+    <string name="compression_title">Compress Images</string>
+    <string name="compression_empty">All images are already optimized</string>
+    <string name="compress_btn">Compress %d Images</string>
+
     <!-- Share App -->
     <string name="share_app_title">Share DeDup</string>
     <string name="share_app_desc">Recommend it to a friend — help them reclaim storage too</string>

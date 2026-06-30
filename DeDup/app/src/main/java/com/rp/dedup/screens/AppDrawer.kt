@@ -24,6 +24,8 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
@@ -259,6 +261,24 @@ private fun AppDrawerContentUI(
             label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_FILE_BROWSER)),
             selected = currentRoute == Screen.FileBrowser.route,
             onClick = { navigateTo(Screen.FileBrowser.route) }
+        )
+        DrawerNavItem(
+            icon = Icons.Default.Delete,
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_TRASH)),
+            selected = currentRoute == Screen.Trash.route,
+            onClick = { navigateTo(Screen.Trash.route) }
+        )
+        DrawerNavItem(
+            icon = Icons.Default.AutoAwesome,
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_SEMANTIC_SCANNER)),
+            selected = currentRoute == Screen.SemanticScanner.route,
+            onClick = { navigateTo(Screen.SemanticScanner.route) }
+        )
+        DrawerNavItem(
+            icon = Icons.Default.Compress,
+            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_IMAGE_COMPRESSION)),
+            selected = currentRoute == Screen.ImageCompression.route,
+            onClick = { navigateTo(Screen.ImageCompression.route) }
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))

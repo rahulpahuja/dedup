@@ -30,6 +30,9 @@ object UIConstants {
     const val ROUTE_CONTACT_DEDUP          = "deduplication"
     const val ROUTE_CONTACT_TEST           = "contact_test"
     const val ROUTE_VOICE_STORAGE          = "voice_storage"
+    const val ROUTE_TRASH                  = "trash"
+    const val ROUTE_SEMANTIC_SCANNER       = "semantic_scanner"
+    const val ROUTE_IMAGE_COMPRESSION      = "image_compression"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -57,6 +60,9 @@ object UIConstants {
             route == ROUTE_BIG_FILE_MAP -> R.string.screen_big_file_map
             route == ROUTE_WHATSAPP_CLEANER -> R.string.screen_whatsapp_cleaner
             route == ROUTE_CONTACT_DEDUP -> R.string.contact_deduplication
+            route == ROUTE_TRASH -> R.string.trash_title
+            route == ROUTE_SEMANTIC_SCANNER -> R.string.semantic_scan_title
+            route == ROUTE_IMAGE_COMPRESSION -> R.string.compression_title
             else -> R.string.app_name
         }
     }

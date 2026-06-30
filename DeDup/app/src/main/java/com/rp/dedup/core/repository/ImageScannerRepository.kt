@@ -116,9 +116,9 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
     }
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-    fun scanImagesInParallel(
-        concurrencyLevel: Int = 8,
-        excludedFolders: List<String> = emptyList()
+    override fun scanImagesInParallel(
+        concurrencyLevel: Int,
+        excludedFolders: List<String>
     ): Flow<ScannedImage> {
         val imageQueue = mutableListOf<Triple<Uri, Long, Long>>()
 

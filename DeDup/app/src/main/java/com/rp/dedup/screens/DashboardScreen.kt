@@ -31,7 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import com.canopas.lib.showcase.IntroShowcase
 import com.canopas.lib.showcase.component.ShowcaseStyle
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.DrawerValue
+import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.CompositionLocalProvider
 import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
@@ -39,11 +39,13 @@ import com.rp.dedup.Screen
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.model.MediaCounts
+import com.rp.dedup.core.model.StorageHealthScore
 import com.rp.dedup.core.model.StorageStats
 import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
 import com.rp.dedup.core.viewmodels.ImageSearchViewModel
 import com.rp.dedup.core.viewmodels.SettingsViewModel
+import com.rp.dedup.core.viewmodels.StorageHealthViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.screens.dashboard.components.*
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -57,6 +59,7 @@ fun DashboardScreen(
 ) {
     val context = LocalContext.current
     val dashboardViewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory(context))
+    val healthViewModel: StorageHealthViewModel = viewModel(factory = StorageHealthViewModel.Factory(context))
     val searchViewModel: ImageSearchViewModel  = viewModel(factory = ImageSearchViewModel.Factory(context))
     val analyticsManager = remember { AnalyticsManager.getInstance(context) }
 
@@ -67,6 +70,7 @@ fun DashboardScreen(
     val storageStats     by dashboardViewModel.storageStats.collectAsState()
     val totalReclaimable by dashboardViewModel.totalReclaimableBytes.collectAsState()
     val mediaCounts      by dashboardViewModel.mediaCounts.collectAsState()
+    val healthScore      by healthViewModel.score.collectAsState()
     val searchResults    by searchViewModel.results.collectAsState()
     val isSearching      by searchViewModel.isSearching.collectAsState()
     val searchProgress   by searchViewModel.progress.collectAsState()
@@ -98,6 +102,7 @@ fun DashboardScreen(
         storageStats         = storageStats,
         totalReclaimable     = totalReclaimable,
         mediaCounts          = mediaCounts,
+        healthScore          = healthScore,
         searchResults        = searchResults,
         isSearching          = isSearching,
         searchProgress       = searchProgress,
@@ -125,6 +130,7 @@ fun DashboardScreenContent(
     storageStats: StorageStats,
     totalReclaimable: Long,
     mediaCounts: MediaCounts = MediaCounts(),
+    healthScore: StorageHealthScore = StorageHealthScore.empty(),
     searchResults: List<ImageSearchRepository.SearchResult>,
     isSearching: Boolean,
     searchProgress: Pair<Int, Int>,
@@ -229,6 +235,10 @@ fun DashboardScreenContent(
                     Spacer(Modifier.height(24.dp))
                 }
                 item {
+                    if (healthScore.overallScore > 0) {
+                        StorageHealthScoreCard(score = healthScore)
+                        Spacer(Modifier.height(16.dp))
+                    }
                     SavingsCalculatorCard(reclaimableBytes = totalReclaimable, overrideCurrencyCode = selectedCurrencyCode)
                     Spacer(Modifier.height(32.dp))
                 }

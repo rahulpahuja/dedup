@@ -13,9 +13,11 @@ import com.rp.dedup.core.dao.ImageEmbeddingDao
 import com.rp.dedup.core.dao.ScannedImageDao
 import com.rp.dedup.core.dao.ScannedVideoDao
 import com.rp.dedup.core.dao.ScanHistoryDao
+import com.rp.dedup.core.dao.TrashDao
 import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.model.ScannedVideoEntity
 import com.rp.dedup.core.model.ScanHistory
+import com.rp.dedup.core.model.TrashItem
 import com.rp.dedup.core.search.FloatArrayConverter
 import com.rp.dedup.core.search.ImageEmbeddingEntity
 import com.rp.dedup.core.search.LongListConverter
@@ -24,8 +26,8 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 
 @Database(
-    entities = [ScannedImage::class, ScanHistory::class, ImageEmbeddingEntity::class, ScannedVideoEntity::class],
-    version = 6,
+    entities = [ScannedImage::class, ScanHistory::class, ImageEmbeddingEntity::class, ScannedVideoEntity::class, TrashItem::class],
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(FloatArrayConverter::class, LongListConverter::class)
@@ -34,6 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun scannedVideoDao(): ScannedVideoDao
     abstract fun scanHistoryDao(): ScanHistoryDao
     abstract fun imageEmbeddingDao(): ImageEmbeddingDao
+    abstract fun trashDao(): TrashDao
 
     companion object {
         @Volatile
@@ -111,6 +114,28 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `trash_items` (
+                        `id`            TEXT    NOT NULL,
+                        `originalUri`   TEXT    NOT NULL,
+                        `originalPath`  TEXT    NOT NULL,
+                        `name`          TEXT    NOT NULL,
+                        `size`          INTEGER NOT NULL,
+                        `mimeType`      TEXT    NOT NULL,
+                        `mediaType`     TEXT    NOT NULL,
+                        `trashedAtMs`   INTEGER NOT NULL,
+                        `expiresAtMs`   INTEGER NOT NULL,
+                        `trashFileName` TEXT    NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
@@ -157,7 +182,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 dbName
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .apply {
                     if (com.rp.dedup.BuildConfig.DEBUG) {
                         fallbackToDestructiveMigration(dropAllTables = true)

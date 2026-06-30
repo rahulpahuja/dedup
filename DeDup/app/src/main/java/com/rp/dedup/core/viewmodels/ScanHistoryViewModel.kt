@@ -14,14 +14,12 @@ import kotlinx.coroutines.launch
 
 class ScanHistoryViewModel(private val repository: ScanHistoryRepository) : ViewModel() {
 
-    companion object {
-        class Factory(private val context: Context) : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ScanHistoryViewModel(
-                    ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao())
-                ) as T
-        }
+    class Factory(private val context: Context) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            ScanHistoryViewModel(
+                ScanHistoryRepository(AppDatabase.getDatabase(context).scanHistoryDao())
+            ) as T
     }
 
     val history: StateFlow<List<ScanHistory>> = repository.getAll()
