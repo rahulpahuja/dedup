@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -45,6 +46,8 @@ import com.rp.dedup.UIConstants.ROUTE_VOICE_STORAGE
 import com.rp.dedup.UIConstants.ROUTE_TRASH
 import com.rp.dedup.UIConstants.ROUTE_SEMANTIC_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_IMAGE_COMPRESSION
+import com.rp.dedup.UIConstants.ROUTE_STORAGE_INSIGHTS
+import com.rp.dedup.UIConstants.ROUTE_OPTIMIZE
 import com.rp.dedup.feature.voicestorage.presentation.DeDupChatScreen
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
@@ -91,6 +94,8 @@ sealed class Screen(val route: String) {
     object Trash : Screen(ROUTE_TRASH)
     object SemanticScanner : Screen(ROUTE_SEMANTIC_SCANNER)
     object ImageCompression : Screen(ROUTE_IMAGE_COMPRESSION)
+    object StorageInsights : Screen(ROUTE_STORAGE_INSIGHTS)
+    object Optimize : Screen(ROUTE_OPTIMIZE)
 }
 
 @Composable
@@ -102,13 +107,13 @@ fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = f
     // Shared ViewModel to ensure profile updates are reflected everywhere
     val profileViewModel: UserProfileViewModel = viewModel()
 
+    // Shared across the Dashboard/Cleanup/FileBrowser/Optimize/StorageInsights tab pages so the
+    // current tab survives navigating away to a detail screen and back
+    val pagerState = rememberPagerState(pageCount = { 5 })
+
     // Routes that show the persistent bottom navigation bar
     val showBottomNav = currentRoute == Screen.Dashboard.route
-            || currentRoute == Screen.Cleanup.route
             || currentRoute == Screen.VideoScanner.route
-            || currentRoute == Screen.Settings.route
-            || currentRoute == Screen.ScanHistory.route
-            || currentRoute == Screen.FileBrowser.route
             || currentRoute == Screen.ContactDedup.route
             || currentRoute?.startsWith("file_scanner") == true
 
@@ -130,7 +135,7 @@ fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = f
         ) {
             Scaffold(
                 bottomBar = {
-                    if (showBottomNav) BottomNavigationBar(navController)
+                    if (showBottomNav) BottomNavigationBar(navController, pagerState)
                 }
             ) { innerPadding ->
             PermissionGate(
@@ -174,7 +179,34 @@ fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = f
                     LoginScreen(navController, profileViewModel)
                 }
                 composable(Screen.Dashboard.route) {
-                    DashboardScreen(navController, profileViewModel)
+                    MainTabsScreen(navController, profileViewModel, pagerState)
+                }
+                // Cleanup/FileBrowser/Optimize/StorageInsights are now pages inside the Dashboard's
+                // tab pager rather than standalone destinations — these redirect entries keep
+                // external deep links (e.g. widget/notification target_route) working.
+                composable(Screen.Cleanup.route) {
+                    LaunchedEffect(Unit) {
+                        pagerState.scrollToPage(1)
+                        navController.navigate(Screen.Dashboard.route) { popUpTo(Screen.Cleanup.route) { inclusive = true } }
+                    }
+                }
+                composable(Screen.FileBrowser.route) {
+                    LaunchedEffect(Unit) {
+                        pagerState.scrollToPage(2)
+                        navController.navigate(Screen.Dashboard.route) { popUpTo(Screen.FileBrowser.route) { inclusive = true } }
+                    }
+                }
+                composable(Screen.Optimize.route) {
+                    LaunchedEffect(Unit) {
+                        pagerState.scrollToPage(3)
+                        navController.navigate(Screen.Dashboard.route) { popUpTo(Screen.Optimize.route) { inclusive = true } }
+                    }
+                }
+                composable(Screen.StorageInsights.route) {
+                    LaunchedEffect(Unit) {
+                        pagerState.scrollToPage(4)
+                        navController.navigate(Screen.Dashboard.route) { popUpTo(Screen.StorageInsights.route) { inclusive = true } }
+                    }
                 }
                 composable(Screen.SmartJunk.route) {
                     SmartJunkScreen(navController)
@@ -187,9 +219,6 @@ fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = f
                 }
                 composable(Screen.PrivacyPolicy.route) {
                     PrivacyPolicyScreen(navController)
-                }
-                composable(Screen.Cleanup.route) {
-                    FileCleanupScreen(navController)
                 }
                 // Image scanner — gated behind permission
                 composable(Screen.ImageScanner.route) {
@@ -212,9 +241,6 @@ fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = f
                 }
                 composable(Screen.ScanHistory.route) {
                     ScanHistoryScreen(navController)
-                }
-                composable(Screen.FileBrowser.route) {
-                    FileBrowserGatekeeper(navController)
                 }
                 composable(Screen.CacheCleaner.route) {
                     CacheCleanerScreen(navController)

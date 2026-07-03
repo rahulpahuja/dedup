@@ -39,13 +39,9 @@ import com.rp.dedup.Screen
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.model.MediaCounts
-import com.rp.dedup.core.model.StorageHealthScore
-import com.rp.dedup.core.model.StorageStats
 import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
 import com.rp.dedup.core.viewmodels.ImageSearchViewModel
-import com.rp.dedup.core.viewmodels.SettingsViewModel
-import com.rp.dedup.core.viewmodels.StorageHealthViewModel
 import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.screens.dashboard.components.*
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -59,18 +55,12 @@ fun DashboardScreen(
 ) {
     val context = LocalContext.current
     val dashboardViewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory(context))
-    val healthViewModel: StorageHealthViewModel = viewModel(factory = StorageHealthViewModel.Factory(context))
     val searchViewModel: ImageSearchViewModel  = viewModel(factory = ImageSearchViewModel.Factory(context))
     val analyticsManager = remember { AnalyticsManager.getInstance(context) }
 
     val dataStoreManager = remember { DataStoreManager(context) }
-    val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory(dataStoreManager))
-    val selectedCurrency by settingsViewModel.selectedCurrency.collectAsState()
 
-    val storageStats     by dashboardViewModel.storageStats.collectAsState()
-    val totalReclaimable by dashboardViewModel.totalReclaimableBytes.collectAsState()
     val mediaCounts      by dashboardViewModel.mediaCounts.collectAsState()
-    val healthScore      by healthViewModel.score.collectAsState()
     val searchResults    by searchViewModel.results.collectAsState()
     val isSearching      by searchViewModel.isSearching.collectAsState()
     val searchProgress   by searchViewModel.progress.collectAsState()
@@ -79,6 +69,7 @@ fun DashboardScreen(
     val tutorialShown by dataStoreManager.readData(DataStoreManager.TUTORIAL_SHOWN, false)
         .collectAsState(initial = true)
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("Dashboard")
     LaunchedEffect(Unit) { analyticsManager.logScreenView("Dashboard") }
     LaunchedEffect(tutorialShown) {
         if (!tutorialShown) analyticsManager.logTutorialInteraction("DASHBOARD", "VIEWED")
@@ -99,10 +90,7 @@ fun DashboardScreen(
         userName             = profileViewModel.name,
         userImageUrl         = profileViewModel.profileImageUrl,
         isGuest              = profileViewModel.isGuest,
-        storageStats         = storageStats,
-        totalReclaimable     = totalReclaimable,
         mediaCounts          = mediaCounts,
-        healthScore          = healthScore,
         searchResults        = searchResults,
         isSearching          = isSearching,
         searchProgress       = searchProgress,
@@ -112,7 +100,6 @@ fun DashboardScreen(
         onDeleteSearchResult = { searchViewModel.removeDeletedResult(it) },
         analyticsManager     = analyticsManager,
         showTutorial         = !tutorialShown,
-        selectedCurrencyCode = selectedCurrency,
         onTutorialComplete   = {
             analyticsManager.logTutorialInteraction("DASHBOARD", "COMPLETED")
             coroutineScope.launch { dataStoreManager.writeData(DataStoreManager.TUTORIAL_SHOWN, true) }
@@ -127,10 +114,7 @@ fun DashboardScreenContent(
     userName: String,
     userImageUrl: String,
     isGuest: Boolean = false,
-    storageStats: StorageStats,
-    totalReclaimable: Long,
     mediaCounts: MediaCounts = MediaCounts(),
-    healthScore: StorageHealthScore = StorageHealthScore.empty(),
     searchResults: List<ImageSearchRepository.SearchResult>,
     isSearching: Boolean,
     searchProgress: Pair<Int, Int>,
@@ -138,7 +122,6 @@ fun DashboardScreenContent(
     onSearch: (String) -> Unit,
     onClearSearch: () -> Unit,
     onDeleteSearchResult: (Uri) -> Unit = {},
-    selectedCurrencyCode: String = "",
     analyticsManager: AnalyticsManager? = null,
     showTutorial: Boolean = false,
     onTutorialComplete: () -> Unit = {}
@@ -225,24 +208,6 @@ fun DashboardScreenContent(
                     Spacer(Modifier.height(24.dp))
                 }
                 item {
-                    StorageSummaryCard(
-                        stats = storageStats,
-                        reclaimableBytes = totalReclaimable,
-                        onClick = { analyticsManager?.logTreemapViewed(); navController.navigate(Screen.BigFileMap.route) },
-                        modifier = Modifier.introShowCaseTarget(index = 1, style = tutorialStyle,
-                            content = { TutorialTooltip(stringResource(R.string.tut_storage_title), stringResource(R.string.tut_storage_body)) })
-                    )
-                    Spacer(Modifier.height(24.dp))
-                }
-                item {
-                    if (healthScore.overallScore > 0) {
-                        StorageHealthScoreCard(score = healthScore)
-                        Spacer(Modifier.height(16.dp))
-                    }
-                    SavingsCalculatorCard(reclaimableBytes = totalReclaimable, overrideCurrencyCode = selectedCurrencyCode)
-                    Spacer(Modifier.height(32.dp))
-                }
-                item {
                     Text(stringResource(R.string.quick_scan_title),
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground))
@@ -250,26 +215,12 @@ fun DashboardScreenContent(
                     QuickScanGrid(
                         navController = navController,
                         mediaCounts = mediaCounts,
-                        modifier = Modifier.introShowCaseTarget(index = 2, style = tutorialStyle,
+                        modifier = Modifier.introShowCaseTarget(index = 1, style = tutorialStyle,
                             content = { TutorialTooltip(stringResource(R.string.tut_quick_scan_title), stringResource(R.string.tut_quick_scan_body)) })
                     )
                     Spacer(Modifier.height(32.dp))
                 }
                 item {
-                    OptimizationSection(
-                        navController = navController,
-                        modifier = Modifier.introShowCaseTarget(index = 3, style = tutorialStyle,
-                            content = { TutorialTooltip(stringResource(R.string.tut_opt_tips_title), stringResource(R.string.tut_opt_tips_body)) })
-                    )
-                    Spacer(Modifier.height(24.dp))
-                }
-                item {
-                    SmartAiCleanupCard(onClick = { analyticsManager?.logSmartCleanupViewed(); navController.navigate(Screen.SmartJunk.route) })
-                    Spacer(Modifier.height(12.dp))
-                    DeepOptimizationCard(onClick = { navController.navigate(Screen.DeepOptimization.route) })
-                    Spacer(Modifier.height(12.dp))
-                    ContactDedupCard(onClick = { navController.navigate(Screen.ContactDedup.route) })
-                    Spacer(Modifier.height(12.dp))
                     ShareAppCard()
                     Spacer(Modifier.height(32.dp))
                 }
@@ -353,12 +304,6 @@ fun DashboardScreenPreview() {
                 navController = rememberNavController(),
                 userName = "John Doe",
                 userImageUrl = "",
-                storageStats = StorageStats(
-                    totalBytes = 128L * 1024 * 1024 * 1024,
-                    usedBytes  = 82L  * 1024 * 1024 * 1024,
-                    freeBytes  = 46L  * 1024 * 1024 * 1024
-                ),
-                totalReclaimable = 12L * 1024 * 1024 * 1024,
                 searchResults = emptyList(),
                 isSearching = false,
                 searchProgress = 0 to 0,

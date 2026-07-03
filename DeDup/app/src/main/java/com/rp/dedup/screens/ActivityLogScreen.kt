@@ -79,6 +79,7 @@ fun ActivityLogScreen(navController: NavHostController) {
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("ActivityLog")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("ActivityLog")
     }
@@ -100,8 +101,7 @@ fun ActivityLogScreen(navController: NavHostController) {
                     }
                 }
             )
-        },
-        bottomBar = { BottomNavigationBar(navController) }
+        }
     ) { paddingValues ->
         if (history.isEmpty()) {
             Box(

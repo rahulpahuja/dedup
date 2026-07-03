@@ -33,6 +33,8 @@ object UIConstants {
     const val ROUTE_TRASH                  = "trash"
     const val ROUTE_SEMANTIC_SCANNER       = "semantic_scanner"
     const val ROUTE_IMAGE_COMPRESSION      = "image_compression"
+    const val ROUTE_STORAGE_INSIGHTS       = "storage_insights"
+    const val ROUTE_OPTIMIZE                = "optimize"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -63,6 +65,8 @@ object UIConstants {
             route == ROUTE_TRASH -> R.string.trash_title
             route == ROUTE_SEMANTIC_SCANNER -> R.string.semantic_scan_title
             route == ROUTE_IMAGE_COMPRESSION -> R.string.compression_title
+            route == ROUTE_STORAGE_INSIGHTS -> R.string.screen_storage_insights
+            route == ROUTE_OPTIMIZE -> R.string.screen_optimize
             else -> R.string.app_name
         }
     }
@@ -96,7 +100,7 @@ object UIConstants {
     const val QUICK_SCAN_VIDEOS       = "Videos"
     const val QUICK_SCAN_DOCUMENTS    = "Documents"
     const val QUICK_SCAN_APKS         = "APKs"
-    const val QUICK_SCAN_BROWSE_FILES = "Browse Files"
+    const val QUICK_SCAN_CONTACT_DEDUP = "Contact Dedup"
     const val QUICK_SCAN_HISTORY      = "Scan History"
     const val QUICK_SCAN_SMART_JUNK   = "Smart Cleanup"
 
@@ -115,7 +119,7 @@ object UIConstants {
     val ColorVideos       = Color(0xFFEA4335)
     val ColorDocuments    = Color(0xFFFBBC05)
     val ColorApks         = Color(0xFF34A853)
-    val ColorBrowseFiles  = Color(0xFF00ACC1)
+    val ColorContactDedup = Color(0xFF00ACC1)
     val ColorScanHistory  = Color(0xFF7986CB)
 
     // ── Status colors ─────────────────────────────────────────────────────────

@@ -37,7 +37,7 @@ fun AiSearchIcon() {
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(24.dp)) {
         Icon(
             Icons.Default.Search,
-            contentDescription = "AI Search",
+            contentDescription = stringResource(R.string.ai_search_desc),
             modifier = Modifier.size(22.dp),
             tint = MaterialTheme.colorScheme.onSurface
         )
@@ -208,7 +208,7 @@ private fun ImageSearchResultItem(
                 .clickable { onDeleteRequest(result.uri) },
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.DeleteOutline, contentDescription = "Delete",
+            Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.delete),
                 tint = Color.White, modifier = Modifier.size(15.dp))
         }
     }

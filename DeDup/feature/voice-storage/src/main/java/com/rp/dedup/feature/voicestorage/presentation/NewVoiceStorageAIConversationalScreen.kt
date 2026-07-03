@@ -6,9 +6,12 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.speech.SpeechRecognizer
 import android.util.Size
+import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -82,6 +85,20 @@ fun DeDupChatScreen(onNavigateUp: () -> Unit = {}) {
     val chatState    by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     var inputText    by remember { mutableStateOf("") }
+
+    // Mirrors app-module TrackFeatureUsage: this feature module can't depend on
+    // core.analytics.AnalyticsManager, so it logs the same event/param names directly.
+    DisposableEffect(Unit) {
+        val fa = FirebaseAnalytics.getInstance(context)
+        val openedAtMs = SystemClock.elapsedRealtime()
+        fa.logEvent("feature_opened", Bundle().apply { putString("feature_name", "VoiceStorage") })
+        onDispose {
+            fa.logEvent("feature_closed", Bundle().apply {
+                putString("feature_name", "VoiceStorage")
+                putLong("duration_ms", SystemClock.elapsedRealtime() - openedAtMs)
+            })
+        }
+    }
 
     LaunchedEffect(chatState.partialTranscript) {
         if (chatState.partialTranscript.isNotEmpty()) inputText = chatState.partialTranscript

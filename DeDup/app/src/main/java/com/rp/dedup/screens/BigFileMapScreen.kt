@@ -57,6 +57,7 @@ fun BigFileMapScreen(navController: NavHostController) {
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     var navStack by remember { mutableStateOf(listOf<FolderNode>()) }
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("BigFileMap")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("BigFileMap")
     }
@@ -100,7 +101,7 @@ fun BigFileMapScreen(navController: NavHostController) {
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(56.dp))
                     Spacer(Modifier.height(24.dp))
-                    Text("Building storage map...", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.building_storage_map), style = MaterialTheme.typography.titleMedium)
                     Text(
                         "Walking directory tree",
                         style = MaterialTheme.typography.bodySmall,
@@ -127,7 +128,7 @@ fun BigFileMapScreen(navController: NavHostController) {
                     Spacer(Modifier.height(16.dp))
                     Text(s.message, style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.height(16.dp))
-                    Button(onClick = { viewModel.startScan() }) { Text("Retry") }
+                    Button(onClick = { viewModel.startScan() }) { Text(stringResource(R.string.retry)) }
                 }
             }
         }
@@ -177,7 +178,7 @@ private fun BigFileMapContent(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("No subfolders found at this level.", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.no_subfolders_found), style = MaterialTheme.typography.bodyMedium)
         }
         return
     }
@@ -198,7 +199,7 @@ private fun BigFileMapContent(
             TextButton(onClick = onRescan) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Rescan", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.rescan), style = MaterialTheme.typography.labelSmall)
             }
         }
 

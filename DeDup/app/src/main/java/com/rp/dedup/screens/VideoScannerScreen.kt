@@ -75,6 +75,7 @@ fun VideoScannerScreen(navController: NavHostController) {
     val hasCachedResults = cacheLoaded && duplicateGroups.isNotEmpty() && !isScanning
     val wasInterrupted = cacheLoaded && scannedCount > 0 && !isScanning && resumedCount == 0
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("VideoScanner")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("VideoScanner")
     }
@@ -131,8 +132,8 @@ fun VideoScannerScreen(navController: NavHostController) {
     if (showBubblePermRationale) {
         AlertDialog(
             onDismissRequest = { showBubblePermRationale = false },
-            title = { Text("Notifications Required") },
-            text = { Text("Allow notifications to show the floating scanner bubble. Enable them in Settings.") },
+            title = { Text(stringResource(R.string.notifications_required_title)) },
+            text = { Text(stringResource(R.string.notifications_required_desc)) },
             confirmButton = {
                 TextButton(onClick = {
                     showBubblePermRationale = false
@@ -141,10 +142,10 @@ fun VideoScannerScreen(navController: NavHostController) {
                             data = android.net.Uri.fromParts("package", context.packageName, null)
                         }
                     )
-                }) { Text("Open Settings") }
+                }) { Text(stringResource(R.string.open_settings_btn)) }
             },
             dismissButton = {
-                TextButton(onClick = { showBubblePermRationale = false }) { Text("Not now") }
+                TextButton(onClick = { showBubblePermRationale = false }) { Text(stringResource(R.string.not_now)) }
             }
         )
     }
@@ -331,7 +332,7 @@ fun VideoScannerScreen(navController: NavHostController) {
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Rescan")
+                        Text(stringResource(R.string.rescan))
                     }
                 }
 

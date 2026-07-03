@@ -66,16 +66,16 @@ fun QuickScanGrid(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ScanCategoryCard(
-                title = stringResource(R.string.quick_scan_browse_files),
-                count = "All",
-                icon = Icons.Default.FolderOpen,
-                color = UIConstants.ColorBrowseFiles,
+                title = stringResource(R.string.quick_scan_contact_dedup),
+                count = stringResource(R.string.quick_scan_merge_label),
+                icon = Icons.Default.Contacts,
+                color = UIConstants.ColorContactDedup,
                 modifier = Modifier.weight(1f),
-                onClick = { navController.navigate(Screen.FileBrowser.route) }
+                onClick = { navController.navigate(Screen.ContactDedup.route) }
             )
             ScanCategoryCard(
                 title = stringResource(R.string.quick_scan_history),
-                count = "Log",
+                count = stringResource(R.string.quick_scan_log_label),
                 icon = Icons.Default.History,
                 color = UIConstants.ColorScanHistory,
                 modifier = Modifier.weight(1f),

@@ -65,6 +65,7 @@ fun FileScannerScreen(
     val allFiles by viewModel.files.collectAsState()
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("FileScanner_${scanType.uppercase()}")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("FileScanner_${scanType.uppercase()}")
     }

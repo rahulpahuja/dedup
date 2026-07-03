@@ -48,6 +48,7 @@ fun ScanHistoryScreen(navController: NavHostController) {
     val history by viewModel.history.collectAsState()
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     
+    com.rp.dedup.core.analytics.TrackFeatureUsage("ScanHistory")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("ScanHistory")
     }
@@ -265,7 +266,7 @@ private fun ScanHistoryCard(scan: ScanHistory, onDelete: () -> Unit) {
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.delete),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         modifier = Modifier.size(16.dp)
                     )
@@ -280,22 +281,22 @@ private fun ScanHistoryCard(scan: ScanHistory, onDelete: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                StatChip(icon = Icons.Default.FolderOpen,    value = "${scan.totalScanned}",   label = "scanned")
-                StatChip(icon = Icons.Default.ContentCopy,   value = "${scan.duplicateGroups}", label = "groups")
-                StatChip(icon = Icons.Default.FileCopy,      value = "${scan.totalDuplicates}", label = "dupes")
+                StatChip(icon = Icons.Default.FolderOpen,    value = "${scan.totalScanned}",   label = stringResource(R.string.scanned_label))
+                StatChip(icon = Icons.Default.ContentCopy,   value = "${scan.duplicateGroups}", label = stringResource(R.string.groups_label))
+                StatChip(icon = Icons.Default.FileCopy,      value = "${scan.totalDuplicates}", label = stringResource(R.string.dupes_label))
                 StatChip(
                     icon = Icons.Default.Savings,
                     value = if (scan.reclaimableBytes > 0)
                         Formatter.formatShortFileSize(context, scan.reclaimableBytes)
                     else "—",
-                    label = "saveable"
+                    label = stringResource(R.string.saveable_label)
                 )
             }
 
             Spacer(Modifier.height(10.dp))
 
             Text(
-                text = "Duration: $formattedDuration",
+                text = stringResource(R.string.duration_label, formattedDuration),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -350,13 +351,13 @@ private fun EmptyHistoryState(modifier: Modifier = Modifier) {
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                "No scan history yet",
+                stringResource(R.string.no_scan_history),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "Run a scan to start tracking results",
+                stringResource(R.string.run_scan_start_tracking),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

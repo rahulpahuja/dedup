@@ -41,6 +41,7 @@ import com.rp.dedup.core.ui.DeDupTopBar
 fun AboutScreen(navController: NavHostController) {
     val context = LocalContext.current
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
+    com.rp.dedup.core.analytics.TrackFeatureUsage("About")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("About")
     }

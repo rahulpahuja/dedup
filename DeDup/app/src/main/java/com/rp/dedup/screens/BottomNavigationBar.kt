@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -39,27 +40,26 @@ import androidx.navigation.compose.rememberNavController
 import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.ui.theme.DeDupTheme
+import kotlinx.coroutines.launch
 
 @Composable
-fun BottomNavigationBar(navController: NavHostController) {
+fun BottomNavigationBar(navController: NavHostController, pagerState: PagerState) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val scope = rememberCoroutineScope()
 
     val selectedIndex = when {
-        currentRoute == Screen.Dashboard.route -> 0
-        currentRoute == Screen.Cleanup.route -> 1
-        currentRoute?.startsWith("file_scanner") == true || currentRoute == Screen.FileBrowser.route -> 2
-        currentRoute == Screen.VideoScanner.route -> 3
-        currentRoute == Screen.Settings.route || currentRoute == Screen.ScanHistory.route -> 4
+        currentRoute == Screen.Dashboard.route -> pagerState.currentPage
+        currentRoute?.startsWith("file_scanner") == true -> 2
         else -> 0
     }
 
-    data class NavEntry(val icon: ImageVector, val labelRes: Int, val route: String)
+    data class NavEntry(val icon: ImageVector, val labelRes: Int)
     val items = listOf(
-        NavEntry(Icons.Default.GridView,    R.string.nav_dash,     Screen.Dashboard.route),
-        NavEntry(Icons.Default.Search,      R.string.nav_scan,     Screen.Cleanup.route),
-        NavEntry(Icons.Default.Description, R.string.nav_files,    Screen.FileBrowser.route),
-        NavEntry(Icons.Default.Videocam,    R.string.nav_video,    Screen.VideoScanner.route),
-        NavEntry(Icons.Default.Settings,    R.string.nav_settings, Screen.Settings.route),
+        NavEntry(Icons.Default.GridView,    R.string.nav_dash),
+        NavEntry(Icons.Default.Search,      R.string.nav_scan),
+        NavEntry(Icons.Default.Description, R.string.nav_files),
+        NavEntry(Icons.Default.Tune,        R.string.nav_optimize),
+        NavEntry(Icons.Default.Insights,    R.string.nav_insights),
     )
 
     val isDark    = MaterialTheme.colorScheme.surface.luminance() < 0.5f
@@ -180,7 +180,15 @@ fun BottomNavigationBar(navController: NavHostController) {
                         icon = entry.icon,
                         label = stringResource(entry.labelRes),
                         selected = selectedIndex == index,
-                        onClick = { navController.navigate(entry.route) },
+                        onClick = {
+                            if (currentRoute != Screen.Dashboard.route) {
+                                navController.navigate(Screen.Dashboard.route) {
+                                    popUpTo(Screen.Dashboard.route) { inclusive = false }
+                                    launchSingleTop = true
+                                }
+                            }
+                            scope.launch { pagerState.animateScrollToPage(index) }
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -261,5 +269,10 @@ private fun GlassNavItem(
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Bottom Navigation - Dark")
 @Composable
 fun BottomNavigationBarPreview() {
-    DeDupTheme { BottomNavigationBar(navController = rememberNavController()) }
+    DeDupTheme {
+        BottomNavigationBar(
+            navController = rememberNavController(),
+            pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 5 })
+        )
+    }
 }

@@ -20,20 +20,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Compress
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -189,7 +182,7 @@ private fun AppDrawerContentUI(
                 Spacer(Modifier.width(14.dp))
                 Column {
                     Text(
-                        text = "DeDup",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 22.sp,
@@ -198,7 +191,7 @@ private fun AppDrawerContentUI(
                         )
                     )
                     Text(
-                        text = "Clean · Deduplicate · Reclaim",
+                        text = stringResource(R.string.drawer_tagline),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f),
                             letterSpacing = 0.sp
@@ -226,59 +219,10 @@ private fun AppDrawerContentUI(
             onClick = { navigateTo(Screen.Dashboard.route) }
         )
         DrawerNavItem(
-            icon = Icons.Default.Search,
-            label = stringResource(R.string.drawer_scan_files),
-            selected = currentRoute == Screen.Cleanup.route,
-            onClick = { navigateTo(Screen.Cleanup.route) }
-        )
-        DrawerNavItem(
-            icon = Icons.AutoMirrored.Filled.List,
-            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_IMAGE_SCANNER)),
-            selected = currentRoute == Screen.ImageScanner.route
-                    || currentRoute == Screen.ResultsMedia.route,
-            onClick = { navigateTo(Screen.ImageScanner.route) }
-        )
-        DrawerNavItem(
-            icon = Icons.Default.Videocam,
-            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_VIDEO_SCANNER)),
-            selected = currentRoute == Screen.VideoScanner.route,
-            onClick = { navigateTo(Screen.VideoScanner.route) }
-        )
-        DrawerNavItem(
-            icon = Icons.Default.History,
-            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_ACTIVITY)),
-            selected = currentRoute == Screen.Activity.route,
-            onClick = { navigateTo(Screen.Activity.route) }
-        )
-        DrawerNavItem(
-            icon = Icons.AutoMirrored.Filled.ManageSearch,
-            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_SCAN_HISTORY)),
-            selected = currentRoute == Screen.ScanHistory.route,
-            onClick = { navigateTo(Screen.ScanHistory.route) }
-        )
-        DrawerNavItem(
-            icon = Icons.Default.FolderOpen,
-            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_FILE_BROWSER)),
-            selected = currentRoute == Screen.FileBrowser.route,
-            onClick = { navigateTo(Screen.FileBrowser.route) }
-        )
-        DrawerNavItem(
             icon = Icons.Default.Delete,
             label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_TRASH)),
             selected = currentRoute == Screen.Trash.route,
             onClick = { navigateTo(Screen.Trash.route) }
-        )
-        DrawerNavItem(
-            icon = Icons.Default.AutoAwesome,
-            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_SEMANTIC_SCANNER)),
-            selected = currentRoute == Screen.SemanticScanner.route,
-            onClick = { navigateTo(Screen.SemanticScanner.route) }
-        )
-        DrawerNavItem(
-            icon = Icons.Default.Compress,
-            label = stringResource(UIConstants.getScreenNameRes(UIConstants.ROUTE_IMAGE_COMPRESSION)),
-            selected = currentRoute == Screen.ImageCompression.route,
-            onClick = { navigateTo(Screen.ImageCompression.route) }
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -389,7 +333,7 @@ private fun ProfileHeader(
                 if (imageUrl.isNotEmpty()) {
                     AsyncImage(
                         model = imageUrl,
-                        contentDescription = "Profile Picture",
+                        contentDescription = stringResource(R.string.profile_picture_desc),
                         modifier = Modifier.fillMaxSize().clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
@@ -421,7 +365,7 @@ private fun ProfileHeader(
         IconButton(onClick = onEditClick) {
             Icon(
                 Icons.Default.Edit,
-                contentDescription = "Edit profile",
+                contentDescription = stringResource(R.string.edit_profile_desc),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

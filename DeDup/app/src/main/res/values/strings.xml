@@ -167,12 +167,18 @@
     <string name="clear_cache_desc">Remove temporary app data to free up space</string>
     <string name="large_file_review">Large File Review</string>
     <string name="large_file_review_desc">Analyze %1$d files larger than 500 MB</string>
+    <string name="semantic_scan_desc">Find visually similar images using AI</string>
+    <string name="compression_desc">Shrink photo file sizes without losing quality</string>
+    <string name="activity_log_desc">Review your recent scan and cleanup activity</string>
+    <string name="scan_history_desc">Browse past scan sessions and results</string>
 
     <!-- Navigation Labels -->
     <string name="nav_dash">DASH</string>
     <string name="nav_scan">SCAN</string>
     <string name="nav_files">FILES</string>
     <string name="nav_video">VIDEO</string>
+    <string name="nav_insights">INSIGHTS</string>
+    <string name="nav_optimize">OPTIMIZE</string>
     <string name="nav_settings">SETTINGS</string>
 
     <!-- Drawer Labels -->
@@ -184,7 +190,7 @@
     <string name="quick_scan_videos">Videos</string>
     <string name="quick_scan_documents">Documents</string>
     <string name="quick_scan_apks">APKs</string>
-    <string name="quick_scan_browse_files">Browse Files</string>
+    <string name="quick_scan_contact_dedup">Contact Dedup</string>
     <string name="quick_scan_history">Scan History</string>
     <string name="quick_scan_smart_junk">Smart Cleanup</string>
     <string name="quick_scan_title">Quick Scan</string>
@@ -224,13 +230,15 @@
 
     <!-- Login Screen -->
     <string name="welcome_title">Welcome to DeDup</string>
-    <string name="login_subtitle">Sign in to continue cleaning your duplicate images, videos and more.</string>
+    <string name="login_subtitle">Clean up duplicate photos, videos, and more.</string>
     <string name="tagline">Clean phone. Private. Always.</string>
     <string name="sign_in_google">Sign in with Google</string>
     <string name="sign_in_facebook">Sign in with Facebook</string>
 
     <!-- Common Screen Names -->
     <string name="screen_dashboard">Dashboard</string>
+    <string name="screen_storage_insights">Storage Insights</string>
+    <string name="screen_optimize">Optimize</string>
     <string name="screen_file_cleanup">File Cleanup</string>
     <string name="screen_activity_log">Activity Log</string>
     <string name="screen_scan_history">Scan History</string>
@@ -341,4 +349,93 @@
     <string name="share_app_desc">Recommend it to a friend — help them reclaim storage too</string>
     <string name="share_app_message">Hey! I\'ve been using DeDup to remove duplicate photos, videos, and files. It saved me a ton of storage! Give it a try:\nhttps://play.google.com/store/apps/details?id=com.rp.dedup</string>
     <string name="share_app_chooser_title">Share DeDup via</string>
+
+    <!-- Drawer -->
+    <string name="drawer_tagline">Clean · Deduplicate · Reclaim</string>
+    <string name="profile_picture_desc">Profile Picture</string>
+    <string name="edit_profile_desc">Edit profile</string>
+
+    <!-- Guest Banner -->
+    <string name="guest_mode">Guest mode</string>
+    <string name="guest_banner_desc">Sign in to delete duplicates and merge contacts</string>
+    <string name="sign_in_btn">Sign in</string>
+
+    <!-- Quick Scan Grid -->
+    <string name="quick_scan_merge_label">Merge</string>
+    <string name="quick_scan_log_label">Log</string>
+
+    <!-- Large File List -->
+    <string name="select_all_btn">Select All</string>
+
+    <!-- Notification Permission Rationale -->
+    <string name="notifications_required_title">Notifications Required</string>
+    <string name="notifications_required_desc">Allow notifications to show the floating scanner bubble. Enable them in Settings.</string>
+    <string name="open_settings_btn">Open Settings</string>
+    <string name="rescan">Rescan</string>
+
+    <!-- Guest Sign-in Dialog -->
+    <string name="sign_in_required_title">Sign in required</string>
+    <string name="sign_in_required_desc">You\'re browsing as a guest. Sign in with Google to delete duplicates and free up storage.</string>
+
+    <!-- Smart Junk Screen -->
+    <string name="delete_selected">Delete Selected</string>
+    <string name="ai_analyzing_images">AI is analyzing your images...</string>
+    <string name="ai_analyzing_progress">%1$d%%</string>
+    <string name="items_selected_count">%1$d items · %2$d selected</string>
+    <string name="got_it_btn">Got it</string>
+    <string name="ai_insight_title">AI Insight</string>
+
+    <!-- Contact Deduplication Screen -->
+    <string name="privacy_mode_active">Privacy Mode Active</string>
+    <string name="scanning_contacts">Scanning contacts…</string>
+    <string name="no_duplicate_contacts_found">No duplicate contacts found!</string>
+    <string name="address_book_clean">Your address book looks clean.</string>
+    <string name="merge_btn">Merge</string>
+
+    <!-- Image Compression Screen -->
+    <string name="compressing_progress">Compressing… %1$d / %2$d</string>
+    <string name="delete_originals">Delete originals</string>
+
+    <!-- Empty Folder Screen -->
+    <string name="select_storage_folder">Select Storage Folder</string>
+
+    <!-- Big File Map Screen -->
+    <string name="building_storage_map">Building storage map...</string>
+    <string name="no_subfolders_found">No subfolders found at this level.</string>
+
+    <!-- File Browser Screen -->
+    <string name="bullet_separator">  •  </string>
+    <string name="no_files_found_simple">No files found</string>
+    <string name="sort_by_title">Sort by</string>
+
+    <!-- Scan History Screen -->
+    <string name="scanned_label">scanned</string>
+    <string name="groups_label">groups</string>
+    <string name="dupes_label">dupes</string>
+    <string name="saveable_label">saveable</string>
+    <string name="duration_label">Duration: %1$s</string>
+    <string name="no_scan_history">No scan history yet</string>
+    <string name="run_scan_start_tracking">Run a scan to start tracking results</string>
+
+    <!-- AI Image Search -->
+    <string name="ai_search_desc">AI Search</string>
+
+    <!-- Settings Screen: Feedback / Feature Request Dialogs -->
+    <string name="feedback_placeholder">Tell us what you think…</string>
+    <string name="feedback_submitted_toast">Feedback submitted. Thank you!</string>
+    <string name="feature_request_placeholder">What would you like to see in DeDup?</string>
+    <string name="feature_request_submitted_toast">Feature request submitted. Thank you!</string>
+
+    <!-- Theme Picker Dialog -->
+    <string name="palette_ocean">Ocean</string>
+    <string name="palette_midnight">Midnight</string>
+    <string name="palette_forest">Forest</string>
+    <string name="palette_sunset">Sunset</string>
+    <string name="palette_rose">Rose</string>
+    <string name="palette_mono">Mono</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string name="theme_mode_auto">Auto</string>
+    <string name="mode_section_header">MODE</string>
+    <string name="color_palette_section_header">COLOR PALETTE</string>
 </resources>

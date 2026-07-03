@@ -48,6 +48,7 @@ fun SocialMediaCleanerScreen(navController: NavHostController) {
     val selectedUris = remember { mutableStateSetOf<Uri>() }
     var showGuestSignInDialog by remember { mutableStateOf(false) }
     val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
+    com.rp.dedup.core.analytics.TrackFeatureUsage("SocialMediaCleaner")
     LaunchedEffect(Unit) { analytics.logScreenView("SocialMediaCleaner") }
 
     Scaffold(

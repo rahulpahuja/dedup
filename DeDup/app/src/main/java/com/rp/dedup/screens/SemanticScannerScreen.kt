@@ -37,6 +37,7 @@ fun SemanticScannerScreen(navController: NavHostController) {
 
     val state by viewModel.state.collectAsState()
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("SemanticScanner")
     LaunchedEffect(Unit) { analyticsManager.logScreenView("SemanticScanner") }
 
     Scaffold(

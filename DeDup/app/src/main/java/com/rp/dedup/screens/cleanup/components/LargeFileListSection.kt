@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+import com.rp.dedup.R
 import com.rp.dedup.core.model.ScannedFile
 
 enum class FileListViewMode { LIST, GRID }
@@ -51,7 +53,7 @@ fun LargeFileListSection(
         Column(modifier = Modifier.fillMaxWidth()) {
             if (files.isEmpty()) {
                 Text(
-                    "No files above this size threshold",
+                    stringResource(R.string.no_files_above_threshold),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp)
@@ -71,12 +73,12 @@ fun LargeFileListSection(
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
-                            Text(if (allSelected) "Deselect All" else "Select All")
+                            Text(if (allSelected) stringResource(R.string.deselect_all) else stringResource(R.string.select_all_btn))
                         }
                         IconButton(onClick = { viewMode = FileListViewMode.LIST }) {
                             Icon(
                                 Icons.Default.ViewList,
-                                contentDescription = "List view",
+                                contentDescription = stringResource(R.string.list_view),
                                 tint = if (viewMode == FileListViewMode.LIST)
                                     MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -86,7 +88,7 @@ fun LargeFileListSection(
                         IconButton(onClick = { viewMode = FileListViewMode.GRID }) {
                             Icon(
                                 Icons.Default.GridView,
-                                contentDescription = "Grid view",
+                                contentDescription = stringResource(R.string.grid_view),
                                 tint = if (viewMode == FileListViewMode.GRID)
                                     MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -236,7 +238,7 @@ private fun LargeFileRow(
                 ) {
                     Icon(
                         imageVector = if (isImage) Icons.Default.Visibility else Icons.Default.PlayArrow,
-                        contentDescription = if (isImage) "Preview" else "Play",
+                        contentDescription = if (isImage) stringResource(R.string.preview) else stringResource(R.string.play),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -354,7 +356,7 @@ private fun LargeFileGridItem(
             ) {
                 Icon(
                     imageVector = if (isImage) Icons.Default.Visibility else Icons.Default.PlayArrow,
-                    contentDescription = if (isImage) "Preview" else "Play",
+                    contentDescription = if (isImage) stringResource(R.string.preview) else stringResource(R.string.play),
                     tint = Color.White,
                     modifier = Modifier.size(14.dp)
                 )
@@ -425,7 +427,7 @@ private fun LargeFileImagePreviewDialog(uri: Uri, name: String, onDismiss: () ->
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close), tint = Color.White)
                 }
             }
         }

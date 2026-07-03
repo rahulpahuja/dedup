@@ -25,6 +25,7 @@ import com.rp.dedup.core.ui.DeDupTopBar
 fun PrivacyPolicyScreen(navController: NavHostController) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
+    com.rp.dedup.core.analytics.TrackFeatureUsage("PrivacyPolicy")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("PrivacyPolicy")
     }

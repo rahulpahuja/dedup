@@ -39,6 +39,7 @@ fun ImageCompressionScreen(navController: NavHostController) {
 
     val state by viewModel.state.collectAsState()
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("ImageCompression")
     LaunchedEffect(Unit) { analyticsManager.logScreenView("ImageCompression") }
 
     Scaffold(
@@ -110,7 +111,7 @@ fun ImageCompressionScreen(navController: NavHostController) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(progress = { if (total > 0) done.toFloat() / total else 0f })
                     Spacer(Modifier.height(16.dp))
-                    Text("Compressing… $done / $total")
+                    Text(stringResource(R.string.compressing_progress, done, total))
                     if (state.totalSavedBytes > 0) {
                         Spacer(Modifier.height(8.dp))
                         Text(
@@ -229,7 +230,7 @@ private fun QualitySliderCard(
             )
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Delete originals", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.delete_originals), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
                 Switch(checked = deleteOriginals, onCheckedChange = onDeleteChange)
             }
         }

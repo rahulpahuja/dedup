@@ -49,6 +49,7 @@ fun SmartJunkScreen(navController: NavHostController) {
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     val state by viewModel.uiState.collectAsState()
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("SmartJunkCleanup")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("SmartJunkCleanup")
     }
@@ -114,7 +115,7 @@ fun SmartJunkScreen(navController: NavHostController) {
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Delete Selected")
+                            Text(stringResource(R.string.delete_selected))
                         }
                     }
                 }
@@ -185,8 +186,8 @@ private fun ScanningView(progress: Float) {
     ) {
         CircularProgressIndicator(progress = { progress })
         Spacer(Modifier.height(16.dp))
-        Text("AI is analyzing your images...", style = MaterialTheme.typography.bodyMedium)
-        Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.ai_analyzing_images), style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.ai_analyzing_progress, (progress * 100).toInt()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -246,7 +247,7 @@ private fun JunkCategorySection(
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(category.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("${items.size} items · $categorySelectedCount selected", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.items_selected_count, items.size, categorySelectedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (isExpanded) {
                 TextButton(onClick = if (categorySelectedCount == items.size) onDeselectAll else onSelectAll) {
@@ -331,11 +332,11 @@ private fun JunkItemThumbnail(
     if (showAiReason && item.aiReason != null) {
         AlertDialog(
             onDismissRequest = { showAiReason = false },
-            confirmButton = { TextButton(onClick = { showAiReason = false }) { Text("Got it") } },
+            confirmButton = { TextButton(onClick = { showAiReason = false }) { Text(stringResource(R.string.got_it_btn)) } },
             title = { Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.AutoAwesome, null, tint = Color(0xFFFBBC05))
                 Spacer(Modifier.width(8.dp))
-                Text("AI Insight")
+                Text(stringResource(R.string.ai_insight_title))
             }},
             text = { Text(item.aiReason) }
         )

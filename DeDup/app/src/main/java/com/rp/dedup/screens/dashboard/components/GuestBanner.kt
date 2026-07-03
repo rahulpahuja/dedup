@@ -8,8 +8,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.rp.dedup.R
 
 @Composable
 internal fun GuestBanner(onSignIn: () -> Unit) {
@@ -32,19 +34,19 @@ internal fun GuestBanner(onSignIn: () -> Unit) {
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Guest mode",
+                    text = stringResource(R.string.guest_mode),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Text(
-                    text = "Sign in to delete duplicates and merge contacts",
+                    text = stringResource(R.string.guest_banner_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
                 )
             }
             Spacer(Modifier.width(8.dp))
             TextButton(onClick = onSignIn) {
-                Text("Sign in", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                Text(stringResource(R.string.sign_in_btn), style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
             }
         }
     }

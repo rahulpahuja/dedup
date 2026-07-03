@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.res.stringResource
+import com.rp.dedup.LocalDrawerState
 import com.rp.dedup.R
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.model.FileItem
@@ -45,6 +46,7 @@ import com.rp.dedup.ui.theme.DeDupTheme
 import java.io.File
 import java.util.Locale
 import com.rp.dedup.core.ui.DeDupTopBar
+import kotlinx.coroutines.launch
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
@@ -54,6 +56,7 @@ fun FileBrowserScreen(navController: NavHostController) {
     val vm: FileBrowserViewModel = viewModel()
     val context = LocalContext.current
     val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
+    com.rp.dedup.core.analytics.TrackFeatureUsage("FileBrowser")
     LaunchedEffect(Unit) { analytics.logScreenView("FileBrowser") }
 
     val items by vm.items.collectAsState()
@@ -123,6 +126,9 @@ fun FileBrowserContent(
     onSortClick: () -> Unit,
     onOpenFile: (String) -> Unit
 ) {
+    val drawerState = LocalDrawerState.current
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             Column {
@@ -147,7 +153,7 @@ fun FileBrowserContent(
                             )
                         } else {
                             Text(
-                                "DeDup",
+                                stringResource(R.string.app_name),
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                 maxLines = 1,
                             )
@@ -159,8 +165,8 @@ fun FileBrowserContent(
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                             }
                         } else {
-                            IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.close))
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu))
                             }
                         }
                     },
@@ -389,7 +395,7 @@ private fun FileItemRow(item: FileItem, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    "  •  ",
+                    stringResource(R.string.bullet_separator),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
@@ -433,7 +439,7 @@ private fun EmptyFolderState() {
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                "No files found",
+                stringResource(R.string.no_files_found_simple),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
@@ -460,24 +466,24 @@ private fun SortBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                "Sort by",
+                stringResource(R.string.sort_by_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(16.dp)
             )
             SortOption(
-                label = "Name",
+                label = stringResource(R.string.sort_name),
                 icon = Icons.Default.SortByAlpha,
                 selected = currentSort == SortMode.NAME,
                 onClick = { onSelect(SortMode.NAME) }
             )
             SortOption(
-                label = "Date",
+                label = stringResource(R.string.sort_date),
                 icon = Icons.Default.Event,
                 selected = currentSort == SortMode.DATE,
                 onClick = { onSelect(SortMode.DATE) }
             )
             SortOption(
-                label = "Size",
+                label = stringResource(R.string.sort_size),
                 icon = Icons.Default.VerticalAlignBottom,
                 selected = currentSort == SortMode.SIZE,
                 onClick = { onSelect(SortMode.SIZE) }
@@ -596,24 +602,26 @@ private fun FileBrowserPreview() {
         FileItem("report.pdf", "/storage/emulated/0/report.pdf", false, 1024L * 1024 * 2, System.currentTimeMillis() - 500000, "pdf", 0)
     )
     DeDupTheme {
-        FileBrowserContent(
-            navController = rememberNavController(),
-            items = mockItems,
-            currentDir = File("/storage/emulated/0"),
-            isLoading = false,
-            sortMode = SortMode.NAME,
-            searchQuery = "",
-            breadcrumbs = listOf("Internal Storage"),
-            errorMessage = null,
-            canNavigateUp = false,
-            searchActive = false,
-            onSearchActiveChange = {},
-            onSearchQueryChange = {},
-            onNavigateUp = {},
-            onNavigateToDir = {},
-            onRefresh = {},
-            onSortClick = {},
-            onOpenFile = {}
-        )
+        CompositionLocalProvider(LocalDrawerState provides rememberDrawerState(DrawerValue.Closed)) {
+            FileBrowserContent(
+                navController = rememberNavController(),
+                items = mockItems,
+                currentDir = File("/storage/emulated/0"),
+                isLoading = false,
+                sortMode = SortMode.NAME,
+                searchQuery = "",
+                breadcrumbs = listOf("Internal Storage"),
+                errorMessage = null,
+                canNavigateUp = false,
+                searchActive = false,
+                onSearchActiveChange = {},
+                onSearchQueryChange = {},
+                onNavigateUp = {},
+                onNavigateToDir = {},
+                onRefresh = {},
+                onSortClick = {},
+                onOpenFile = {}
+            )
+        }
     }
 }

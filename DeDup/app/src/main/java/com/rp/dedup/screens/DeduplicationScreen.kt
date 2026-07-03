@@ -100,6 +100,7 @@ fun DeduplicationScreen(navController: NavHostController) {
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("ContactDedup")
     LaunchedEffect(Unit) {
         analytics.logScreenView("ContactDedup")
         if (duplicateGroups.isEmpty() && !isScanning) viewModel.startScanning()
@@ -246,7 +247,7 @@ fun DeduplicationScreen(navController: NavHostController) {
                             )
                             Spacer(Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Privacy Mode Active", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.privacy_mode_active), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                 Text(
                                     "Using Android 17 Standardized Picker to protect your contact data.",
                                     style = MaterialTheme.typography.bodySmall,
@@ -289,7 +290,7 @@ fun DeduplicationScreen(navController: NavHostController) {
                         modifier = Modifier.weight(1f)
                     )
                     if (!isScanning && duplicateGroups.isNotEmpty()) {
-                        TextButton(onClick = { viewModel.startScanning() }) { Text("Rescan") }
+                        TextButton(onClick = { viewModel.startScanning() }) { Text(stringResource(R.string.rescan)) }
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -352,7 +353,7 @@ private fun ContactsScanningIndicator() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator()
             Spacer(Modifier.height(12.dp))
-            Text("Scanning contacts…", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.scanning_contacts), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -363,9 +364,9 @@ private fun ContactsEmptyState() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Default.CheckCircle, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(12.dp))
-            Text("No duplicate contacts found!", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.no_duplicate_contacts_found), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
-            Text("Your address book looks clean.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.address_book_clean), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -619,12 +620,12 @@ fun MergeSelectionDialog(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                     Button(
                         onClick = {
                             onConfirm(keptDataIds.filter { it.value }.keys.toSet())
                         }
-                    ) { Text("Merge") }
+                    ) { Text(stringResource(R.string.merge_btn)) }
                 }
             }
         }

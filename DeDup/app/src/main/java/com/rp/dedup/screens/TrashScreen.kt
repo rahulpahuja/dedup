@@ -48,6 +48,7 @@ fun TrashScreen(navController: NavHostController) {
     val event  by viewModel.event.collectAsState()
     val snackbarHost = remember { SnackbarHostState() }
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("Trash")
     LaunchedEffect(Unit) { analyticsManager.logScreenView("Trash") }
 
     LaunchedEffect(event) {

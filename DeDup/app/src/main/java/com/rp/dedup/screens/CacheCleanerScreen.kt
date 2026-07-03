@@ -37,6 +37,7 @@ fun CacheCleanerScreen(navController: NavHostController) {
     var progressState by remember { mutableStateOf<CleaningProgress>(CleaningProgress.Scanning(0)) }
     var startCleaning by remember { mutableStateOf(false) }
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("CacheCleaner")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("CacheCleaner")
     }

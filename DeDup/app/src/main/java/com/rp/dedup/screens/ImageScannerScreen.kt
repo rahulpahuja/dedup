@@ -101,6 +101,7 @@ fun ImageScannerScreen(navController: NavHostController) {
     val cacheLoaded by viewModel.cacheLoaded.collectAsState()
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("ImageScanner")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("ImageScanner")
     }
@@ -312,8 +313,8 @@ fun ImageScannerScreen(navController: NavHostController) {
         if (showBubblePermRationale) {
             AlertDialog(
                 onDismissRequest = { showBubblePermRationale = false },
-                title = { Text("Notifications Required") },
-                text = { Text("Allow notifications to show the floating scanner bubble. Enable them in Settings.") },
+                title = { Text(stringResource(R.string.notifications_required_title)) },
+                text = { Text(stringResource(R.string.notifications_required_desc)) },
                 confirmButton = {
                     androidx.compose.material3.TextButton(onClick = {
                         showBubblePermRationale = false
@@ -322,11 +323,11 @@ fun ImageScannerScreen(navController: NavHostController) {
                                 data = android.net.Uri.fromParts("package", context.packageName, null)
                             }
                         )
-                    }) { Text("Open Settings") }
+                    }) { Text(stringResource(R.string.open_settings_btn)) }
                 },
                 dismissButton = {
                     androidx.compose.material3.TextButton(onClick = { showBubblePermRationale = false }) {
-                        Text("Not now")
+                        Text(stringResource(R.string.not_now))
                     }
                 }
             )
@@ -566,15 +567,15 @@ private fun ScannerHeader(
 fun GuestSignInDialog(onDismiss: () -> Unit, onSignIn: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Sign in required") },
+        title = { Text(stringResource(R.string.sign_in_required_title)) },
         text = {
-            Text("You're browsing as a guest. Sign in with Google to delete duplicates and free up storage.")
+            Text(stringResource(R.string.sign_in_required_desc))
         },
         confirmButton = {
-            Button(onClick = onSignIn) { Text("Sign in with Google") }
+            Button(onClick = onSignIn) { Text(stringResource(R.string.sign_in_google)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Not now") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.not_now)) }
         }
     )
 }

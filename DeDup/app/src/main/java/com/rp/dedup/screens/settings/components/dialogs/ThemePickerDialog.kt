@@ -26,19 +26,19 @@ import com.rp.dedup.core.model.ThemeMode
 
 data class PaletteOption(
     val palette:   AppPalette,
-    val name:      String,
+    val nameRes:   Int,
     val primary:   Color,
     val secondary: Color,
     val accent:    Color
 )
 
 val PALETTE_OPTIONS = listOf(
-    PaletteOption(AppPalette.OCEAN,      "Ocean",    Color(0xFF0056D2), Color(0xFF00838F), Color(0xFF80DEEA)),
-    PaletteOption(AppPalette.MIDNIGHT,   "Midnight", Color(0xFF7C4DFF), Color(0xFF9C8FFF), Color(0xFFCF6679)),
-    PaletteOption(AppPalette.FOREST,     "Forest",   Color(0xFF2E7D32), Color(0xFF388E3C), Color(0xFF81C784)),
-    PaletteOption(AppPalette.SUNSET,     "Sunset",   Color(0xFFE65100), Color(0xFFEF6C00), Color(0xFFFF8F00)),
-    PaletteOption(AppPalette.ROSE,       "Rose",     Color(0xFFAD1457), Color(0xFFC2185B), Color(0xFFFF80AB)),
-    PaletteOption(AppPalette.MONOCHROME, "Mono",     Color(0xFF424242), Color(0xFF616161), Color(0xFF9E9E9E)),
+    PaletteOption(AppPalette.OCEAN,      R.string.palette_ocean,    Color(0xFF0056D2), Color(0xFF00838F), Color(0xFF80DEEA)),
+    PaletteOption(AppPalette.MIDNIGHT,   R.string.palette_midnight, Color(0xFF7C4DFF), Color(0xFF9C8FFF), Color(0xFFCF6679)),
+    PaletteOption(AppPalette.FOREST,     R.string.palette_forest,   Color(0xFF2E7D32), Color(0xFF388E3C), Color(0xFF81C784)),
+    PaletteOption(AppPalette.SUNSET,     R.string.palette_sunset,   Color(0xFFE65100), Color(0xFFEF6C00), Color(0xFFFF8F00)),
+    PaletteOption(AppPalette.ROSE,       R.string.palette_rose,     Color(0xFFAD1457), Color(0xFFC2185B), Color(0xFFFF80AB)),
+    PaletteOption(AppPalette.MONOCHROME, R.string.palette_mono,     Color(0xFF424242), Color(0xFF616161), Color(0xFF9E9E9E)),
 )
 
 @Composable
@@ -49,7 +49,7 @@ fun ThemeBadge(mode: ThemeMode, palette: AppPalette) {
         Spacer(Modifier.width(6.dp))
         Surface(shape = RoundedCornerShape(8.dp), color = opt.primary.copy(alpha = 0.15f)) {
             Text(
-                text = opt.name,
+                text = stringResource(opt.nameRes),
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                 style = MaterialTheme.typography.labelMedium.copy(color = opt.primary, fontWeight = FontWeight.Bold)
             )
@@ -66,9 +66,9 @@ fun ThemePickerDialog(
     onSelectPalette: (AppPalette) -> Unit
 ) {
     val modeOptions = listOf(
-        Triple(ThemeMode.LIGHT, Icons.Default.LightMode,          "Light"),
-        Triple(ThemeMode.DARK,  Icons.Default.DarkMode,           "Dark"),
-        Triple(ThemeMode.AUTO,  Icons.Default.SettingsBrightness, "Auto")
+        Triple(ThemeMode.LIGHT, Icons.Default.LightMode,          stringResource(R.string.theme_mode_light)),
+        Triple(ThemeMode.DARK,  Icons.Default.DarkMode,           stringResource(R.string.theme_mode_dark)),
+        Triple(ThemeMode.AUTO,  Icons.Default.SettingsBrightness, stringResource(R.string.theme_mode_auto))
     )
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -89,7 +89,7 @@ fun ThemePickerDialog(
 
                 Spacer(Modifier.height(24.dp))
 
-                Text("MODE", style = MaterialTheme.typography.labelSmall.copy(
+                Text(stringResource(R.string.mode_section_header), style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold, letterSpacing = 2.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant))
                 Spacer(Modifier.height(10.dp))
@@ -128,7 +128,7 @@ fun ThemePickerDialog(
 
                 Spacer(Modifier.height(24.dp))
 
-                Text("COLOR PALETTE", style = MaterialTheme.typography.labelSmall.copy(
+                Text(stringResource(R.string.color_palette_section_header), style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold, letterSpacing = 2.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant))
                 Spacer(Modifier.height(10.dp))
@@ -177,7 +177,7 @@ private fun PaletteSwatchCard(option: PaletteOption, selected: Boolean, onClick:
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Text(option.name, style = MaterialTheme.typography.labelSmall.copy(
+            Text(stringResource(option.nameRes), style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 color = if (selected) option.primary else MaterialTheme.colorScheme.onSurfaceVariant))
             if (selected) {

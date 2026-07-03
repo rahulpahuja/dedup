@@ -47,6 +47,8 @@ class AnalyticsManager private constructor(context: Context) {
         private const val EVENT_IMAGE_PREVIEWED         = "image_previewed"
         private const val EVENT_SCREEN_VIEW             = "screen_view_custom"
         private const val EVENT_CONTACT_MERGE           = "contact_merge"
+        private const val EVENT_FEATURE_OPENED          = "feature_opened"
+        private const val EVENT_FEATURE_CLOSED          = "feature_closed"
 
         // --- Parameter Names ---
         private const val PARAM_SCAN_TYPE        = "scan_type"       // IMAGE, VIDEO, PDF, APK, JUNK, WHATSAPP, SOCIAL, CONTACT
@@ -65,6 +67,8 @@ class AnalyticsManager private constructor(context: Context) {
         private const val PARAM_ERROR_MESSAGE    = "error_message"
         private const val PARAM_SCREEN_NAME      = "screen_name"
         private const val PARAM_MERGED_COUNT     = "merged_count"
+        private const val PARAM_FEATURE_NAME     = "feature_name"
+        private const val PARAM_DURATION_MS      = "duration_ms"
     }
 
     fun logScanStarted(scanType: String) {
@@ -189,5 +193,20 @@ class AnalyticsManager private constructor(context: Context) {
             putInt(PARAM_MERGED_COUNT, mergedCount)
         }
         firebaseAnalytics.logEvent(EVENT_CONTACT_MERGE, bundle)
+    }
+
+    fun logFeatureOpened(featureName: String) {
+        val bundle = Bundle().apply {
+            putString(PARAM_FEATURE_NAME, featureName)
+        }
+        firebaseAnalytics.logEvent(EVENT_FEATURE_OPENED, bundle)
+    }
+
+    fun logFeatureClosed(featureName: String, durationMs: Long) {
+        val bundle = Bundle().apply {
+            putString(PARAM_FEATURE_NAME, featureName)
+            putLong(PARAM_DURATION_MS, durationMs)
+        }
+        firebaseAnalytics.logEvent(EVENT_FEATURE_CLOSED, bundle)
     }
 }

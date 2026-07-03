@@ -86,6 +86,7 @@ fun EmptyFolderScreen(navController: NavHostController) {
     // On Android 11+ with no SAF grant: show a rationale and ask the user to pick their storage root.
     val needsSAFGrant = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && treeUri == null
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("EmptyFolderRemover")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("EmptyFolderRemover")
     }
@@ -245,7 +246,7 @@ private fun EmptyFolderSAFRationaleView(onGrant: () -> Unit) {
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
-                    Text("Select Storage Folder", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.select_storage_folder), fontWeight = FontWeight.Bold)
                 }
                 Text(
                     text = "Tip: pick \"Internal Storage\" from the folder picker to scan everything.",
@@ -296,7 +297,7 @@ private fun EmptyFolderResultsView(
 ) {
     if (folders.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No empty folders found.")
+            Text(stringResource(R.string.no_empty_folders))
         }
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {

@@ -64,6 +64,7 @@ fun SettingsScreen(navController: NavHostController) {
     val selectedLanguage    by settingsViewModel.selectedLanguage.collectAsState()
     val selectedCurrency    by settingsViewModel.selectedCurrency.collectAsState()
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("Settings")
     LaunchedEffect(Unit) { analyticsManager.logScreenView("Settings") }
 
     var showThemeDialog           by rememberSaveable { mutableStateOf(false) }
@@ -81,7 +82,7 @@ fun SettingsScreen(navController: NavHostController) {
 
     Scaffold(
         topBar = {
-            DeDupTopBar(title = "DeDup", navigationIcon = {
+            DeDupTopBar(title = stringResource(R.string.app_name), navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
                 }
@@ -124,7 +125,7 @@ fun SettingsScreen(navController: NavHostController) {
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsRow(
                     icon = Icons.Default.CurrencyExchange, iconColor = UIConstants.ColorSavingsGreen,
-                    title = "Storage Cost Currency",
+                    title = stringResource(R.string.currency_picker_title),
                     trailing = {
                         val displayCode = selectedCurrency.ifEmpty {
                             try { Currency.getInstance(Locale.getDefault()).currencyCode } catch (_: Exception) { "USD" }
@@ -283,14 +284,15 @@ fun SettingsScreen(navController: NavHostController) {
     }
 
     if (showFeedbackDialog) {
+        val feedbackSubmittedMsg = stringResource(R.string.feedback_submitted_toast)
         FeedbackDialog(
-            title = "Share Feedback", placeholder = "Tell us what you think…",
+            title = stringResource(R.string.share_feedback), placeholder = stringResource(R.string.feedback_placeholder),
             onDismiss = { showFeedbackDialog = false },
             onSubmit = { content ->
                 analyticsManager.logFeedbackSubmitted("FEEDBACK")
                 scope.launch {
                     val result = dbManager.submitFeedback("FEEDBACK", content)
-                    if (result.isSuccess) toastManager.showShort("Feedback submitted. Thank you!")
+                    if (result.isSuccess) toastManager.showShort(feedbackSubmittedMsg)
                     else toastManager.showLong("Failed to submit: ${result.exceptionOrNull()?.message}")
                 }
                 showFeedbackDialog = false
@@ -299,15 +301,16 @@ fun SettingsScreen(navController: NavHostController) {
     }
 
     if (showFeatureRequestDialog) {
+        val featureRequestSubmittedMsg = stringResource(R.string.feature_request_submitted_toast)
         FeedbackDialog(
-            title = "Request a Feature", placeholder = "What would you like to see in DeDup?",
+            title = stringResource(R.string.request_feature), placeholder = stringResource(R.string.feature_request_placeholder),
             onDismiss = { showFeatureRequestDialog = false },
             onSubmit = { content ->
                 analyticsManager.logFeedbackSubmitted("FEATURE_REQUEST")
                 analyticsManager.logFeatureRequested()
                 scope.launch {
                     val result = dbManager.submitFeedback("FEATURE_REQUEST", content)
-                    if (result.isSuccess) toastManager.showShort("Feature request submitted. Thank you!")
+                    if (result.isSuccess) toastManager.showShort(featureRequestSubmittedMsg)
                     else toastManager.showLong("Failed to submit: ${result.exceptionOrNull()?.message}")
                 }
                 showFeatureRequestDialog = false

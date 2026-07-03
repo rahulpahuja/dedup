@@ -183,7 +183,7 @@
     <string name="quick_scan_videos">वीडियो</string>
     <string name="quick_scan_documents">दस्तावेज़</string>
     <string name="quick_scan_apks">APKs</string>
-    <string name="quick_scan_browse_files">फ़ाइलें ब्राउज़ करें</string>
+    <string name="quick_scan_contact_dedup">संपर्क डुप्लिकेट</string>
     <string name="quick_scan_history">स्कैन इतिहास</string>
     <string name="quick_scan_smart_junk">स्मार्ट क्लीनअप</string>
     <string name="quick_scan_title">क्विक स्कैन</string>
@@ -223,7 +223,7 @@
 
     <!-- Login Screen -->
     <string name="welcome_title">DeDup में आपका स्वागत है</string>
-    <string name="login_subtitle">अपनी डुप्लिकेट छवियों, वीडियो और बहुत कुछ की सफाई जारी रखने के लिए साइन इन करें।</string>
+    <string name="login_subtitle">डुप्लिकेट फ़ोटो, वीडियो और बहुत कुछ साफ़ करें।</string>
     <string name="tagline">साफ फोन। निजी। हमेशा।</string>
     <string name="sign_in_google">गूगल के साथ साइन इन करें</string>
     <string name="sign_in_facebook">फेसबुक के साथ साइन इन करें</string>

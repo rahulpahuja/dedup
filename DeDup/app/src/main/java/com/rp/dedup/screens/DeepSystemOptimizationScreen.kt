@@ -32,6 +32,8 @@ import com.rp.dedup.core.ui.DeDupTopBar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeepSystemOptimizationScreen(navController: NavHostController) {
+    com.rp.dedup.core.analytics.TrackFeatureUsage("DeepOptimization")
+
     Scaffold(
         topBar = {
             DeDupTopBar(

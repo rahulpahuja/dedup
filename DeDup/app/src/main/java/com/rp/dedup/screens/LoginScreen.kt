@@ -54,6 +54,7 @@ fun LoginScreen(
 
     val analyticsManager = remember { AnalyticsManager.getInstance(context) }
 
+    com.rp.dedup.core.analytics.TrackFeatureUsage("Login")
     LaunchedEffect(Unit) {
         analyticsManager.logScreenView("Login")
     }
