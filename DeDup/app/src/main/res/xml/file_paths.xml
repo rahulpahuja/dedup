@@ -4,4 +4,6 @@
     <external-path name="external_storage" path="." />
     <!-- Covers app-specific external files directory -->
     <external-files-path name="external_files" path="." />
+    <!-- Covers all files on the device, including removable SD cards -->
+    <root-path name="root" path="." />
 </paths>
