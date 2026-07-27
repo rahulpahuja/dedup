@@ -29,6 +29,7 @@ import androidx.navigation.NavHostController
 import com.rp.dedup.R
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.model.TrashItem
+import com.rp.dedup.core.repository.ImageScannerRepository
 import com.rp.dedup.core.trash.TrashManager
 import com.rp.dedup.core.viewmodels.TrashUiEvent
 import com.rp.dedup.core.viewmodels.TrashViewModel
@@ -187,8 +188,15 @@ private fun TrashItemCard(
     val thumbnail = remember(item.trashFileName) {
         if (item.mediaType == "IMAGE") {
             runCatching {
+                val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 trashManager.openTrashInputStream(item.trashFileName)?.use { stream ->
-                    val opts = BitmapFactory.Options().apply { inSampleSize = 4 }
+                    BitmapFactory.decodeStream(stream, null, boundsOpts)
+                }
+                val sample = ImageScannerRepository.calculateInSampleSize(
+                    boundsOpts.outWidth, boundsOpts.outHeight, reqSize = 150
+                )
+                trashManager.openTrashInputStream(item.trashFileName)?.use { stream ->
+                    val opts = BitmapFactory.Options().apply { inSampleSize = sample }
                     BitmapFactory.decodeStream(stream, null, opts)?.asImageBitmap()
                 }
             }.getOrNull()

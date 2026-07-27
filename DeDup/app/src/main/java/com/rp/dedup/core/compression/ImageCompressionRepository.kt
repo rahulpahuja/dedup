@@ -23,6 +23,18 @@ class ImageCompressionRepository(private val context: Context) {
 
     companion object {
         private const val TAG = "ImageCompressRepo"
+
+        // Caps the decoded bitmap's long side so an extreme-resolution source (e.g. a
+        // 108MP photo) can't blow past a bounded allocation; ~46MB worst case at this cap.
+        private const val MAX_DECODE_DIMENSION = 3500
+
+        private fun calculateInSampleSizeCappedAt(srcW: Int, srcH: Int, maxDim: Int): Int {
+            val longSide = maxOf(srcW, srcH)
+            if (longSide <= maxDim) return 1
+            var sample = 1
+            while (longSide / (sample * 2) >= maxDim) sample *= 2
+            return sample
+        }
     }
 
     /**
@@ -73,19 +85,33 @@ class ImageCompressionRepository(private val context: Context) {
         val cr = context.contentResolver
         val meta = cr.query(
             uri,
-            arrayOf(MediaStore.Images.Media.DISPLAY_NAME, MediaStore.Images.Media.SIZE),
+            arrayOf(
+                MediaStore.Images.Media.DISPLAY_NAME,
+                MediaStore.Images.Media.SIZE,
+                MediaStore.Images.Media.MIME_TYPE
+            ),
             null, null, null
         )?.use { c ->
-            if (c.moveToFirst()) Pair(
+            if (c.moveToFirst()) Triple(
                 c.getString(0) ?: "image.jpg",
-                c.getLong(1)
+                c.getLong(1),
+                c.getString(2)
             ) else null
         } ?: return@withContext null
 
-        val (originalName, originalSize) = meta
+        val (originalName, originalSize, mimeType) = meta
 
-        val opts = BitmapFactory.Options().apply { inSampleSize = 1 }
-        val bitmap = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+        val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, boundsOpts) }
+
+        val decodeOpts = BitmapFactory.Options().apply {
+            inSampleSize = calculateInSampleSizeCappedAt(
+                boundsOpts.outWidth, boundsOpts.outHeight, MAX_DECODE_DIMENSION
+            )
+            // PNGs may carry alpha; only drop to RGB_565 for JPEGs, which never do.
+            if (mimeType == "image/jpeg") inPreferredConfig = Bitmap.Config.RGB_565
+        }
+        val bitmap = cr.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, decodeOpts) }
             ?: return@withContext null
 
         val baseName = originalName.substringBeforeLast(".")

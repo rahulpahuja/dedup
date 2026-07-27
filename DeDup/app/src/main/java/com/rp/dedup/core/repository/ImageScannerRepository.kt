@@ -82,7 +82,7 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
         }
 
         // Largest power-of-2 subsample where decoded min-dimension still >= reqSize.
-        private fun calculateInSampleSize(srcW: Int, srcH: Int, reqSize: Int): Int {
+        internal fun calculateInSampleSize(srcW: Int, srcH: Int, reqSize: Int): Int {
             val minDim = minOf(srcW, srcH)
             if (minDim <= reqSize) return 1
             var sample = 1

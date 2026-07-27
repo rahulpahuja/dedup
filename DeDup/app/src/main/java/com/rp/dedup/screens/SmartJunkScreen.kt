@@ -11,6 +11,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -218,7 +221,6 @@ private fun ResultsView(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun JunkCategorySection(
     category: SmartJunkRepository.JunkCategory,
@@ -257,12 +259,15 @@ private fun JunkCategorySection(
         }
         
         if (isExpanded) {
-            FlowRow(
-                modifier = Modifier.padding(horizontal = 12.dp),
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 100.dp),
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .heightIn(max = 360.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items.forEach { item ->
+                items(items, key = { it.uri.toString() }) { item ->
                     JunkItemThumbnail(
                         item = item,
                         isSelected = selectedUris.contains(item.uri),

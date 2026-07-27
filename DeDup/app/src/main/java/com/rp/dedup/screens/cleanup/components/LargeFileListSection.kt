@@ -7,6 +7,11 @@ import android.text.format.Formatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,7 +38,6 @@ import com.rp.dedup.core.model.ScannedFile
 
 enum class FileListViewMode { LIST, GRID }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LargeFileListSection(
     files: List<ScannedFile>,
@@ -101,32 +105,33 @@ fun LargeFileListSection(
 
                 when (viewMode) {
                     FileListViewMode.LIST -> {
-                        files.forEach { file ->
-                            LargeFileRow(
-                                file = file,
-                                isSelected = file.uri in selectedUris,
-                                onToggle = { onToggle(file.uri) }
-                            )
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+                            items(files, key = { it.uri.toString() }) { file ->
+                                LargeFileRow(
+                                    file = file,
+                                    isSelected = file.uri in selectedUris,
+                                    onToggle = { onToggle(file.uri) }
+                                )
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                            }
                         }
                     }
                     FileListViewMode.GRID -> {
-                        FlowRow(
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(max = 360.dp)
                                 .padding(12.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            maxItemsInEachRow = 3
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            files.forEach { file ->
+                            items(files, key = { it.uri.toString() }) { file ->
                                 LargeFileGridItem(
                                     file = file,
                                     isSelected = file.uri in selectedUris,
                                     onToggle = { onToggle(file.uri) },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
+                                    modifier = Modifier.aspectRatio(1f)
                                 )
                             }
                         }
