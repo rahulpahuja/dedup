@@ -139,16 +139,44 @@ fun ImageScannerScreen(navController: NavHostController) {
         }
     }
 
+    fun dropStaleUris(uris: List<Uri>) {
+        viewModel.removeDeletedImagesFromUI(uris.map { it.toString() })
+        selectedForDeletion.removeAll(uris)
+    }
+
     fun triggerOSDeletionPrompt(uris: List<Uri>) {
         if (uris.isEmpty()) return
-        pendingDeleteUris = uris
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val pi = MediaStore.createDeleteRequest(context.contentResolver, uris)
-            deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+            // MediaStore.createDeleteRequest throws IllegalArgumentException (rather than
+            // failing gracefully) if any uri no longer refers to an existing media item —
+            // e.g. it was already deleted outside the app since the last scan. Filter those
+            // out up front so a stale cached result can't crash the screen.
+            val validUris = uris.filter { uri ->
+                try {
+                    context.contentResolver.query(uri, arrayOf(MediaStore.MediaColumns._ID), null, null, null)
+                        ?.use { it.moveToFirst() } ?: false
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            val staleUris = uris - validUris.toSet()
+            if (staleUris.isNotEmpty()) dropStaleUris(staleUris)
+            if (validUris.isEmpty()) {
+                pendingDeleteUris = emptyList()
+                return
+            }
+            pendingDeleteUris = validUris
+            try {
+                val pi = MediaStore.createDeleteRequest(context.contentResolver, validUris)
+                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+            } catch (e: IllegalArgumentException) {
+                // Became stale between the check above and this call; drop them instead of crashing.
+                dropStaleUris(validUris)
+                pendingDeleteUris = emptyList()
+            }
         } else {
             uris.forEach { context.contentResolver.delete(it, null, null) }
-            viewModel.removeDeletedImagesFromUI(uris.map { it.toString() })
-            selectedForDeletion.removeAll(uris)
+            dropStaleUris(uris)
         }
     }
 
