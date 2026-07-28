@@ -84,6 +84,7 @@ import com.rp.dedup.ui.theme.DarkCyan
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.ui.theme.LightCyan
 import com.rp.dedup.ui.theme.SelectionBarBackground
+import android.content.res.Configuration
 
 private fun String.initials(): String =
     split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")
@@ -737,5 +738,108 @@ private fun phoneTypeLabel(type: Int): String? = when (type) {
 fun DeduplicationScreenPreview() {
     DeDupTheme {
         DeduplicationScreen(rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ContactsScanningIndicatorPreview() {
+    DeDupTheme {
+        ContactsScanningIndicator()
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ContactsEmptyStatePreview() {
+    DeDupTheme {
+        ContactsEmptyState()
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SectionHeaderPreview() {
+    DeDupTheme {
+        SectionHeader(title = "Duplicate Contacts", subtitle = "12 groups found")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ContactCardPreview() {
+    DeDupTheme {
+        ContactCard(id = "contact-1", name = "Rahul Pahuja")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SelectionBarPreview() {
+    DeDupTheme {
+        SelectionBar()
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun MergeSelectionDialogPreview() {
+    DeDupTheme {
+        MergeSelectionDialog(
+                    groups = listOf(
+                        MergePreviewGroup(
+                            primaryId = "contact-1",
+                            primaryName = "Rahul Pahuja",
+                            duplicateIds = listOf("contact-2"),
+                            phoneEntries = emptyList(),
+                            emailEntries = emptyList()
+                        )
+                    ),
+                    onDismiss = {},
+                    onConfirm = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DataSectionHeaderPreview() {
+    DeDupTheme {
+        DataSectionHeader(icon = Icons.Default.Phone, label = "Phone Numbers")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DataEntryRowPreview() {
+    DeDupTheme {
+        DataEntryRow(
+                    entry = ContactDataEntry(
+                        dataId = "data-1",
+                        value = "+1 555 0100",
+                        type = 1,
+                        contactId = "contact-1",
+                        contactName = "Rahul Pahuja",
+                        isFromPrimary = true
+                    ),
+                    isKept = true,
+                    onToggle = {}
+                )
     }
 }

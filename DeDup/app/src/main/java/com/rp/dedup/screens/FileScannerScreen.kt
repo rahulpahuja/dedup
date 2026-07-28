@@ -48,6 +48,7 @@ import com.rp.dedup.core.viewmodels.UserProfileViewModel
 import com.rp.dedup.core.model.ScannedFile
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -403,5 +404,56 @@ fun FileScannerPreview() {
             onToggleSelect = {},
             onDeleteSelected = {}
         )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun FileScannerScreenPreview() {
+    DeDupTheme {
+        FileScannerScreen(navController = rememberNavController(), scanType = "pdf", extensions = listOf("pdf"))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScannerHeaderPreview() {
+    DeDupTheme {
+        ScannerHeader(title = "PDF Scanner", isScanning = false, groupCount = 3, onScanClick = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DuplicateGroupItemPreview() {
+    DeDupTheme {
+        DuplicateGroupItem(
+                    group = listOf(ScannedFile(uri = Uri.EMPTY, name = "invoice.pdf", size = 245_760L, path = "/Download/invoice.pdf", extension = "pdf")),
+                    icon = Icons.Default.Description,
+                    selectedUris = emptyList(),
+                    onToggleSelect = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun FileItemPreview() {
+    DeDupTheme {
+        FileItem(
+                    file = ScannedFile(uri = Uri.EMPTY, name = "invoice.pdf", size = 245_760L, path = "/Download/invoice.pdf", extension = "pdf"),
+                    icon = Icons.Default.Description,
+                    isSelected = false,
+                    isKeep = true,
+                    onToggleSelect = {}
+                )
     }
 }

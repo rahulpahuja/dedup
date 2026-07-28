@@ -80,6 +80,8 @@ import com.rp.dedup.core.notifications.ToastManager
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import android.content.res.Configuration
+import androidx.compose.material.icons.filled.Home
 
 @Composable
 fun AppDrawerContent(
@@ -477,5 +479,50 @@ private fun AppDrawerContentPreview() {
             onProfileUpdate = { _, _ -> },
             onThemeModeChange = {}
         )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ProfileHeaderPreview() {
+    DeDupTheme {
+        ProfileHeader(name = "Rahul Pahuja", email = "rahul@example.com", imageUrl = "", onEditClick = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DrawerNavItemPreview() {
+    DeDupTheme {
+        DrawerNavItem(icon = Icons.Default.Home, label = "Dashboard", selected = true, onClick = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ThemeSectionPreview() {
+    DeDupTheme {
+        ThemeSection(currentMode = ThemeMode.AUTO, onModeChange = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ProfileEditDialogPreview() {
+    DeDupTheme {
+        ProfileEditDialog(
+                    currentName = "Rahul Pahuja",
+                    currentEmail = "rahul@example.com",
+                    onDismiss = {},
+                    onSave = { _, _ -> }
+                )
     }
 }

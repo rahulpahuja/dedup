@@ -20,6 +20,11 @@ import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.model.MediaCounts
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.material.icons.filled.Image
 
 @Composable
 fun QuickScanGrid(
@@ -130,4 +135,30 @@ private fun formatCount(n: Int): String = when {
     n >= 1_000_000 -> "${"%.1f".format(n / 1_000_000.0)}M"
     n >= 1_000     -> "${"%.1f".format(n / 1_000.0)}k"
     else -> n.toString()
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun QuickScanGridPreview() {
+    DeDupTheme {
+        QuickScanGrid(navController = rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScanCategoryCardPreview() {
+    DeDupTheme {
+        ScanCategoryCard(
+                    title = "Images",
+                    count = "1,204",
+                    icon = Icons.Default.Image,
+                    color = Color(0xFF4285F4),
+                    onClick = {}
+                )
+    }
 }

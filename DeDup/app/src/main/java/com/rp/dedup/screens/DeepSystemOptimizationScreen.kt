@@ -28,6 +28,8 @@ import com.rp.dedup.R
 import com.rp.dedup.UIConstants
 import com.rp.dedup.ui.theme.DeDupTheme
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
+import androidx.compose.material.icons.filled.Speed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -167,5 +169,22 @@ private fun DeepSystemOptimizationScreenPreview() {
     DeDupTheme {
         val navController = rememberNavController()
         DeepSystemOptimizationScreen(navController = navController)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun OptimizationFeatureCardPreview() {
+    DeDupTheme {
+        OptimizationFeatureCard(
+                    icon = Icons.Default.Speed,
+                    iconTint = Color(0xFF34A853),
+                    title = "Clear Cache",
+                    description = "Free up temporary app storage",
+                    ctaLabel = "Clear Now",
+                    onClick = {}
+                )
     }
 }

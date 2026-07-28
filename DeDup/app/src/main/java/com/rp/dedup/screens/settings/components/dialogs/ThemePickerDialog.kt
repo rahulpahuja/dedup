@@ -23,6 +23,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.rp.dedup.R
 import com.rp.dedup.core.model.AppPalette
 import com.rp.dedup.core.model.ThemeMode
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 data class PaletteOption(
     val palette:   AppPalette,
@@ -185,5 +188,41 @@ private fun PaletteSwatchCard(option: PaletteOption, selected: Boolean, onClick:
                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = option.primary, modifier = Modifier.size(14.dp))
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ThemeBadgePreview() {
+    DeDupTheme {
+        ThemeBadge(mode = ThemeMode.AUTO, palette = AppPalette.OCEAN)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ThemePickerDialogPreview() {
+    DeDupTheme {
+        ThemePickerDialog(
+                    currentMode = ThemeMode.AUTO,
+                    currentPalette = AppPalette.OCEAN,
+                    onDismiss = {},
+                    onSelectMode = {},
+                    onSelectPalette = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun PaletteSwatchCardPreview() {
+    DeDupTheme {
+        PaletteSwatchCard(option = PALETTE_OPTIONS.first(), selected = true, onClick = {})
     }
 }

@@ -31,6 +31,9 @@ import coil.compose.AsyncImage
 import com.rp.dedup.R
 import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.ui.ImagePreviewDialog
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun AiSearchIcon() {
@@ -219,5 +222,51 @@ private fun ImageSearchResultItem(
             matchedLabels = result.matchedLabels,
             onDismiss = { showPreview = false }
         )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun AiSearchIconPreview() {
+    DeDupTheme {
+        AiSearchIcon()
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SearchSuggestionsRowPreview() {
+    DeDupTheme {
+        SearchSuggestionsRow(onSuggestionClick = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ImageSearchContentPreview() {
+    DeDupTheme {
+        ImageSearchContent(
+                    query = "beach sunset",
+                    results = listOf(ImageSearchRepository.SearchResult(uri = Uri.EMPTY, matchedLabels = listOf("beach", "sunset"))),
+                    isSearching = false,
+                    progress = 0 to 0,
+                    error = null
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ImageSearchResultItemPreview() {
+    DeDupTheme {
+        ImageSearchResultItem(result = ImageSearchRepository.SearchResult(uri = Uri.EMPTY, matchedLabels = listOf("beach", "sunset")))
     }
 }

@@ -41,6 +41,7 @@ import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.Home
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController, pagerState: PagerState) {
@@ -274,5 +275,15 @@ fun BottomNavigationBarPreview() {
             navController = rememberNavController(),
             pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 5 })
         )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun GlassNavItemPreview() {
+    DeDupTheme {
+        GlassNavItem(icon = Icons.Default.Home, label = "Home", selected = true, onClick = {})
     }
 }

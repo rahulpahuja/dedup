@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.sp
 import com.rp.dedup.R
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.model.StorageStats
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun StorageSummaryCard(
@@ -161,5 +164,15 @@ fun StorageSummaryCard(
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f)
             )
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun StorageSummaryCardPreview() {
+    DeDupTheme {
+        StorageSummaryCard()
     }
 }

@@ -23,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun AiAssistantCard(onClick: () -> Unit) {
@@ -129,5 +132,15 @@ fun AiAssistantCard(onClick: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun AiAssistantCardPreview() {
+    DeDupTheme {
+        AiAssistantCard(onClick = {})
     }
 }

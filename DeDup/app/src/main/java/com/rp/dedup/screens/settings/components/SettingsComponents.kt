@@ -15,6 +15,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Text
 
 @Composable
 fun SettingsSectionHeader(title: String) {
@@ -112,5 +118,51 @@ fun SettingsSwitchRow(
             color = MaterialTheme.colorScheme.onSurface
         )
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SettingsSectionHeaderPreview() {
+    DeDupTheme {
+        SettingsSectionHeader(title = "Preferences")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SettingsCardPreview() {
+    DeDupTheme {
+        SettingsCard { Text("Sample content") }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SettingsRowPreview() {
+    DeDupTheme {
+        SettingsRow(icon = Icons.Default.Info, iconColor = Color(0xFF4285F4), title = "About", onClick = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SettingsSwitchRowPreview() {
+    DeDupTheme {
+        SettingsSwitchRow(
+                    icon = Icons.Default.Notifications,
+                    iconColor = Color(0xFF4285F4),
+                    title = "Notifications",
+                    checked = true,
+                    onCheckedChange = {}
+                )
     }
 }

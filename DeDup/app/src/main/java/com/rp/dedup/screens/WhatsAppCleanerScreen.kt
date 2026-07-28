@@ -30,6 +30,8 @@ import com.rp.dedup.core.model.WhatsAppScanResult
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.WhatsAppCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import android.content.res.Configuration
+import com.rp.dedup.core.model.WhatsAppFolder
 
 private val WaGreen = Color(0xFF25D366)
 
@@ -301,5 +303,94 @@ private fun WaFileItem(file: WhatsAppFile, onDelete: () -> Unit) {
 private fun WhatsAppCleanerScreenPreview() {
     DeDupTheme {
         WhatsAppCleanerScreen(navController = NavHostController(LocalContext.current))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun WaIdleViewPreview() {
+    DeDupTheme {
+        WaIdleView(modifier = Modifier, onScan = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun WaScanningViewPreview() {
+    DeDupTheme {
+        WaScanningView(modifier = Modifier, phase = "Scanning media")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun WaErrorViewPreview() {
+    DeDupTheme {
+        WaErrorView(modifier = Modifier, message = "Something went wrong.", onRetry = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun WaResultsViewPreview() {
+    DeDupTheme {
+        WaResultsView(
+                    modifier = Modifier,
+                    data = WhatsAppScanResult(
+                        duplicateMedia = listOf(
+                            listOf(
+                                WhatsAppFile(
+                                    uri = Uri.EMPTY,
+                                    name = "IMG-20260101.jpg",
+                                    size = 2_097_152L,
+                                    path = "/WhatsApp/Media/Images",
+                                    folder = WhatsAppFolder.IMAGES
+                                )
+                            )
+                        ),
+                        duplicateStatuses = emptyList(),
+                        duplicateDocs = emptyList(),
+                        largeFiles = emptyList(),
+                        sentReceivedMatches = emptyList()
+                    ),
+                    onDelete = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun WaSectionHeaderPreview() {
+    DeDupTheme {
+        WaSectionHeader(title = "Duplicate Media", subtitle = "12 groups", onDeleteAll = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun WaFileItemPreview() {
+    DeDupTheme {
+        WaFileItem(
+                    file = WhatsAppFile(
+                        uri = Uri.EMPTY,
+                        name = "IMG-20260101.jpg",
+                        size = 2_097_152L,
+                        path = "/WhatsApp/Media/Images",
+                        folder = WhatsAppFolder.IMAGES
+                    ),
+                    onDelete = {}
+                )
     }
 }

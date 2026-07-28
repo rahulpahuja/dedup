@@ -11,6 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Storage
 
 @Composable
 fun CategoryCard(
@@ -45,5 +50,15 @@ fun CategoryCard(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun CategoryCardPreview() {
+    DeDupTheme {
+        CategoryCard(title = "Large Files", icon = Icons.Default.Storage, color = Color(0xFF4285F4), onClick = {})
     }
 }

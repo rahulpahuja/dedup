@@ -17,6 +17,9 @@ import com.rp.dedup.UIConstants
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun SavingsCalculatorCard(reclaimableBytes: Long, overrideCurrencyCode: String = "") {
@@ -89,5 +92,15 @@ fun SavingsCalculatorCard(reclaimableBytes: Long, overrideCurrencyCode: String =
                 )
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SavingsCalculatorCardPreview() {
+    DeDupTheme {
+        SavingsCalculatorCard(reclaimableBytes = 734_003_200L)
     }
 }

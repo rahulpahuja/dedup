@@ -18,6 +18,11 @@ import androidx.navigation.NavHostController
 import com.rp.dedup.R
 import com.rp.dedup.Screen
 import com.rp.dedup.UIConstants
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.material.icons.filled.CleaningServices
 
 @Composable
 fun OptimizationSection(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -90,5 +95,31 @@ fun OptimizationCard(
                 tint = if (isOptimized) UIConstants.ColorSavingsGreen else UIConstants.ColorError
             )
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun OptimizationSectionPreview() {
+    DeDupTheme {
+        OptimizationSection(navController = rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun OptimizationCardPreview() {
+    DeDupTheme {
+        OptimizationCard(
+                    title = "Cache Cleanup",
+                    description = "128 MB cached data",
+                    icon = Icons.Default.CleaningServices,
+                    isOptimized = false,
+                    onClick = {}
+                )
     }
 }

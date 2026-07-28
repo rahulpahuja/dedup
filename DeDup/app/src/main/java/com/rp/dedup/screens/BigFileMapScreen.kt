@@ -40,6 +40,7 @@ import com.rp.dedup.ui.theme.DeDupTheme
 import androidx.compose.ui.res.stringResource
 import com.rp.dedup.R
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
 
 private val TREEMAP_PALETTE = listOf(
     Color(0xFF4285F4), Color(0xFFEA4335), Color(0xFF34A853), Color(0xFFFBBC05),
@@ -329,5 +330,53 @@ private fun BigFileMapScreenPreview() {
     DeDupTheme {
         val navController = rememberNavController()
         BigFileMapScreen(navController = navController)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun BigFileMapIdleViewPreview() {
+    DeDupTheme {
+        BigFileMapIdleView(onScan = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun BigFileMapContentPreview() {
+    DeDupTheme {
+        BigFileMapContent(
+                    nodes = listOf(FolderNode(path = "/storage/emulated/0/DCIM", name = "DCIM", sizeBytes = 734_003_200L)),
+                    totalBytes = 734_003_200L,
+                    onNodeTap = {},
+                    onRescan = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun TreemapCanvasPreview() {
+    DeDupTheme {
+        TreemapCanvas(
+                    nodes = listOf(FolderNode(path = "/storage/emulated/0/DCIM", name = "DCIM", sizeBytes = 734_003_200L)),
+                    onNodeTap = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun TreemapLegendPreview() {
+    DeDupTheme {
+        TreemapLegend(nodes = listOf(FolderNode(path = "/storage/emulated/0/DCIM", name = "DCIM", sizeBytes = 734_003_200L)))
     }
 }

@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.compose.material.icons.filled.VideoFile
 
 @Composable
 fun LargeFileCard(
@@ -104,5 +108,22 @@ fun LargeFileCard(
                 )
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun LargeFileCardPreview() {
+    DeDupTheme {
+        LargeFileCard(
+                    title = "Videos",
+                    subtitle = "24 files",
+                    size = "1.2 GB",
+                    icon = Icons.Default.VideoFile,
+                    iconBg = Color(0xFFE8F0FE),
+                    iconTint = Color(0xFF4285F4)
+                )
     }
 }

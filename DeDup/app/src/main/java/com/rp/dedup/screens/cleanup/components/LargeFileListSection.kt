@@ -35,6 +35,9 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.rp.dedup.R
 import com.rp.dedup.core.model.ScannedFile
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 enum class FileListViewMode { LIST, GRID }
 
@@ -481,4 +484,58 @@ fun fileTypeColor(ext: String): Color = when (ext.lowercase()) {
     "apk", "obb"                      -> Color(0xFF43A047)
     "zip", "rar", "7z", "tar", "gz"   -> Color(0xFF7B1FA2)
     else                              -> Color(0xFF546E7A)
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun LargeFileListSectionPreview() {
+    DeDupTheme {
+        LargeFileListSection(
+                    files = listOf(ScannedFile(uri = Uri.EMPTY, name = "movie.mp4", size = 734_003_200L, path = "/Movies/movie.mp4", extension = "mp4")),
+                    selectedUris = emptySet(),
+                    onToggle = {},
+                    onSelectAll = {},
+                    onClearAll = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun LargeFileRowPreview() {
+    DeDupTheme {
+        LargeFileRow(
+                    file = ScannedFile(uri = Uri.EMPTY, name = "movie.mp4", size = 734_003_200L, path = "/Movies/movie.mp4", extension = "mp4"),
+                    isSelected = false,
+                    onToggle = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun LargeFileGridItemPreview() {
+    DeDupTheme {
+        LargeFileGridItem(
+                    file = ScannedFile(uri = Uri.EMPTY, name = "movie.mp4", size = 734_003_200L, path = "/Movies/movie.mp4", extension = "mp4"),
+                    isSelected = false,
+                    onToggle = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun LargeFileImagePreviewDialogPreview() {
+    DeDupTheme {
+        LargeFileImagePreviewDialog(uri = Uri.EMPTY, name = "IMG_0231.jpg", onDismiss = {})
+    }
 }

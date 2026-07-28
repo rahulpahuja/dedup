@@ -11,6 +11,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.rp.dedup.R
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun ThresholdPickerDialog(currentValue: Int, onDismiss: () -> Unit, onSelect: (Int) -> Unit) {
@@ -38,5 +41,15 @@ fun ThresholdPickerDialog(currentValue: Int, onDismiss: () -> Unit, onSelect: (I
                 }
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ThresholdPickerDialogPreview() {
+    DeDupTheme {
+        ThresholdPickerDialog(currentValue = 5, onDismiss = {}, onSelect = {})
     }
 }

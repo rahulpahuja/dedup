@@ -62,6 +62,7 @@ import com.rp.dedup.ui.theme.RedText
 import com.rp.dedup.ui.theme.SelectionBarBackground
 import kotlinx.coroutines.launch
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -518,5 +519,55 @@ fun PurgeSelectionBar() {
 fun DuplicateClustersScreenPreview() {
     DeDupTheme {
         DuplicateClustersScreen(rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun PotentialSpaceCardPreview() {
+    DeDupTheme {
+        PotentialSpaceCard()
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ClusterHeaderPreview() {
+    DeDupTheme {
+        ClusterHeader(id = "cluster-1", title = "Beach Photos", subtitle = "4 similar photos", duplicateCount = 4)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun MainMediaItemPreview() {
+    DeDupTheme {
+        MainMediaItem(similarity = "98%", fileName = "IMG_0234.jpg", fileInfo = "4.2 MB \u2022 3024x4032")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DuplicateListItemPreview() {
+    DeDupTheme {
+        DuplicateListItem(label = "Duplicate", fileName = "IMG_0235.jpg", info = "4.1 MB")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun PurgeSelectionBarPreview() {
+    DeDupTheme {
+        PurgeSelectionBar()
     }
 }

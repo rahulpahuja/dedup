@@ -1,5 +1,6 @@
 package com.rp.dedup.screens
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +29,10 @@ import com.rp.dedup.core.viewmodels.CompressionCandidate
 import com.rp.dedup.core.viewmodels.ImageCompressionViewModel
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -301,3 +306,37 @@ private operator fun PaddingValues.plus(other: PaddingValues): PaddingValues =
                  other.calculateRightPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
         bottom = calculateBottomPadding() + other.calculateBottomPadding()
     )
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ImageCompressionScreenPreview() {
+    DeDupTheme {
+        ImageCompressionScreen(navController = rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun QualitySliderCardPreview() {
+    DeDupTheme {
+        QualitySliderCard(quality = 80, onQualityChange = {}, deleteOriginals = false, onDeleteChange = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun CompressionCandidateRowPreview() {
+    DeDupTheme {
+        CompressionCandidateRow(
+                    candidate = CompressionCandidate(uri = Uri.EMPTY, name = "IMG_0231.jpg", sizeBytes = 3_145_728L),
+                    quality = 80,
+                    onToggle = {}
+                )
+    }
+}

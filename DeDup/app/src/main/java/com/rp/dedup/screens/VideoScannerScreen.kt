@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit
 import androidx.core.content.FileProvider
 import java.io.File
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -641,5 +642,36 @@ private fun VideoScannerScreenPreview() {
     DeDupTheme {
         val navController = rememberNavController()
         VideoScannerScreen(navController = navController)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DuplicateVideoGroupPreview() {
+    DeDupTheme {
+        DuplicateVideoGroup(
+                    group = listOf(
+                        ScannedVideo(uri = Uri.EMPTY, name = "VID_0098.mp4", sizeInBytes = 15_728_640L, durationMs = 32_000L, mimeType = "video/mp4")
+                    ),
+                    selectedUris = emptyList(),
+                    onToggleSelect = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun VideoGridItemPreview() {
+    DeDupTheme {
+        VideoGridItem(
+                    video = ScannedVideo(uri = Uri.EMPTY, name = "VID_0098.mp4", sizeInBytes = 15_728_640L, durationMs = 32_000L, mimeType = "video/mp4"),
+                    isSelected = false,
+                    isKeep = true,
+                    onToggleSelect = {}
+                )
     }
 }

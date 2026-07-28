@@ -38,6 +38,7 @@ import com.rp.dedup.core.model.state.EmptyFolderState
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.EmptyFolderViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import android.content.res.Configuration
 
 private const val SAF_PREFS     = "empty_folder_saf_prefs"
 private const val SAF_URI_KEY   = "tree_uri"
@@ -345,5 +346,53 @@ private fun EmptyFolderItem(
 private fun EmptyFolderScreenPreview() {
     DeDupTheme {
         EmptyFolderScreen(navController = NavHostController(LocalContext.current))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun EmptyFolderSAFRationaleViewPreview() {
+    DeDupTheme {
+        EmptyFolderSAFRationaleView(onGrant = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun EmptyFolderIdleViewPreview() {
+    DeDupTheme {
+        EmptyFolderIdleView(onSweep = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun EmptyFolderResultsViewPreview() {
+    DeDupTheme {
+        EmptyFolderResultsView(
+                    folders = listOf(EmptyFolder(path = "/storage/emulated/0/OldBackup", name = "OldBackup", parentPath = "/storage/emulated/0")),
+                    selectedPaths = emptySet(),
+                    onToggle = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun EmptyFolderItemPreview() {
+    DeDupTheme {
+        EmptyFolderItem(
+                    folder = EmptyFolder(path = "/storage/emulated/0/OldBackup", name = "OldBackup", parentPath = "/storage/emulated/0"),
+                    isSelected = false,
+                    onToggle = {}
+                )
     }
 }

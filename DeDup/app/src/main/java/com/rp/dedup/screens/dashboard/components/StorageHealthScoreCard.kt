@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rp.dedup.core.model.StorageHealthScore
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun StorageHealthScoreCard(
@@ -180,5 +183,34 @@ private fun ScoreBreakdownBar(label: String, value: Int, max: Int, color: Color)
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun StorageHealthScoreCardPreview() {
+    DeDupTheme {
+        StorageHealthScoreCard(
+                    score = StorageHealthScore(
+                        overallScore = 78,
+                        freeSpaceScore = 22,
+                        reclaimableScore = 18,
+                        scanRecencyScore = 20,
+                        cacheSizeScore = 18,
+                        label = "Good"
+                    )
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScoreBreakdownBarPreview() {
+    DeDupTheme {
+        ScoreBreakdownBar(label = "Free Space", value = 22, max = 30, color = Color(0xFF34A853))
     }
 }

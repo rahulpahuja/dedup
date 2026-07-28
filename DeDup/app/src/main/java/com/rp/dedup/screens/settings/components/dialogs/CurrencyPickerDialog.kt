@@ -23,6 +23,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.rp.dedup.R
 import java.util.Currency
 import java.util.Locale
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 private data class CurrencyInfo(val code: String, val name: String, val flag: String)
 
@@ -143,5 +146,25 @@ private fun CurrencyRow(flag: String, name: String, subtitle: String, selected: 
                     tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun CurrencyPickerDialogPreview() {
+    DeDupTheme {
+        CurrencyPickerDialog(currentCode = "USD", onDismiss = {}, onSelect = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun CurrencyRowPreview() {
+    DeDupTheme {
+        CurrencyRow(flag = "\uD83C\uDDFA\uD83C\uDDF8", name = "US Dollar", subtitle = "USD", selected = true, onClick = {})
     }
 }

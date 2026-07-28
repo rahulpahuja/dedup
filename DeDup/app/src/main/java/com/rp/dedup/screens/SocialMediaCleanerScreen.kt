@@ -35,6 +35,9 @@ import com.rp.dedup.core.model.state.SocialMediaCleanerState
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SocialMediaCleanerViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import android.content.res.Configuration
+import com.rp.dedup.core.model.SocialApp
+import com.rp.dedup.core.model.SocialMediaType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -371,5 +374,117 @@ private fun Long.toReadableSize(): String {
 private fun SocialMediaCleanerScreenPreview() {
     DeDupTheme {
         SocialMediaCleanerScreen(navController = NavHostController(LocalContext.current))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun IdleViewPreview() {
+    DeDupTheme {
+        IdleView(onScan = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScanProgressViewPreview() {
+    DeDupTheme {
+        ScanProgressView(phase = "Scanning WhatsApp", progress = 0.4f, detail = "1,204 files scanned")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ResultsContentPreview() {
+    DeDupTheme {
+        ResultsContent(
+                    groups = listOf(
+                        listOf(
+                            SocialMediaFile(
+                                uri = Uri.EMPTY,
+                                name = "IMG_2031.jpg",
+                                size = 3_145_728L,
+                                path = "/WhatsApp/Media/IMG_2031.jpg",
+                                app = SocialApp.WHATSAPP,
+                                mediaType = SocialMediaType.IMAGE
+                            )
+                        )
+                    ),
+                    totalReclaimable = 10_485_760L,
+                    selectedUris = emptySet(),
+                    onToggle = {},
+                    onAutoSelect = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SummaryBannerPreview() {
+    DeDupTheme {
+        SummaryBanner(groupCount = 6, reclaimableBytes = 10_485_760L, onAutoSelect = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DuplicateGroupCardPreview() {
+    DeDupTheme {
+        DuplicateGroupCard(
+                    files = listOf(
+                        SocialMediaFile(
+                            uri = Uri.EMPTY,
+                            name = "IMG_2031.jpg",
+                            size = 3_145_728L,
+                            path = "/WhatsApp/Media/IMG_2031.jpg",
+                            app = SocialApp.WHATSAPP,
+                            mediaType = SocialMediaType.IMAGE
+                        )
+                    ),
+                    selectedUris = emptySet(),
+                    onToggle = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DuplicateFileItemPreview() {
+    DeDupTheme {
+        DuplicateFileItem(
+                    file = SocialMediaFile(
+                        uri = Uri.EMPTY,
+                        name = "IMG_2031.jpg",
+                        size = 3_145_728L,
+                        path = "/WhatsApp/Media/IMG_2031.jpg",
+                        app = SocialApp.WHATSAPP,
+                        mediaType = SocialMediaType.IMAGE
+                    ),
+                    isKeep = true,
+                    isSelected = false,
+                    onToggle = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ErrorViewPreview() {
+    DeDupTheme {
+        ErrorView(message = "Something went wrong while scanning.", onRetry = {})
     }
 }

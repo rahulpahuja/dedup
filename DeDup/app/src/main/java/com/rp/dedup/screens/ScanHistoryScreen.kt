@@ -35,6 +35,8 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
+import androidx.compose.material.icons.filled.Info
 
 // Pre-define the date format to avoid repeated instantiation during list scrolling
 private val historyDateFormatter = SimpleDateFormat("MMM d, yyyy · HH:mm", Locale.getDefault())
@@ -399,5 +401,80 @@ private fun ScanHistoryScreenPreview() {
     DeDupTheme {
         val navController = rememberNavController()
         ScanHistoryScreen(navController = navController)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SummaryCardPreview() {
+    DeDupTheme {
+        SummaryCard(
+                    history = listOf(
+                        ScanHistory(
+                            scanType = "Duplicate Scan",
+                            timestamp = System.currentTimeMillis(),
+                            durationMs = 4_200L,
+                            totalScanned = 1280,
+                            duplicateGroups = 12,
+                            totalDuplicates = 34,
+                            reclaimableBytes = 52_428_800L,
+                            status = "COMPLETED"
+                        )
+                    )
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SummaryStatColumnPreview() {
+    DeDupTheme {
+        SummaryStatColumn(value = "34", label = "Duplicates", color = Color(0xFF4285F4))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScanHistoryCardPreview() {
+    DeDupTheme {
+        ScanHistoryCard(
+                    scan = ScanHistory(
+                        scanType = "Duplicate Scan",
+                        timestamp = System.currentTimeMillis(),
+                        durationMs = 4_200L,
+                        totalScanned = 1280,
+                        duplicateGroups = 12,
+                        totalDuplicates = 34,
+                        reclaimableBytes = 52_428_800L,
+                        status = "COMPLETED"
+                    ),
+                    onDelete = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun StatChipPreview() {
+    DeDupTheme {
+        StatChip(icon = Icons.Default.Info, value = "12", label = "Groups")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun EmptyHistoryStatePreview() {
+    DeDupTheme {
+        EmptyHistoryState()
     }
 }

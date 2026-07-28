@@ -43,6 +43,7 @@ import com.rp.dedup.core.search.SmartJunkRepository
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SmartJunkViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
+import android.content.res.Configuration
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -353,5 +354,84 @@ private fun JunkItemThumbnail(
 private fun SmartJunkScreenPreview() {
     DeDupTheme {
         SmartJunkScreen(navController = NavHostController(LocalContext.current))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScanningViewPreview() {
+    DeDupTheme {
+        ScanningView(progress = 0.6f)
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ResultsViewPreview() {
+    DeDupTheme {
+        ResultsView(
+                    results = SmartJunkState.Results(
+                        groups = mapOf(
+                            SmartJunkRepository.JunkCategory.SCREENSHOTS to listOf(
+                                SmartJunkRepository.JunkItem(
+                                    uri = Uri.EMPTY,
+                                    category = SmartJunkRepository.JunkCategory.SCREENSHOTS,
+                                    labels = listOf("screenshot")
+                                )
+                            )
+                        )
+                    ),
+                    onToggleFile = {},
+                    onToggleCategory = {},
+                    onSelectAllInCategory = {},
+                    onDeselectAllInCategory = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun JunkCategorySectionPreview() {
+    DeDupTheme {
+        JunkCategorySection(
+                    category = SmartJunkRepository.JunkCategory.SCREENSHOTS,
+                    items = listOf(
+                        SmartJunkRepository.JunkItem(
+                            uri = Uri.EMPTY,
+                            category = SmartJunkRepository.JunkCategory.SCREENSHOTS,
+                            labels = listOf("screenshot")
+                        )
+                    ),
+                    selectedUris = emptySet(),
+                    isExpanded = true,
+                    onToggleFile = {},
+                    onToggleCategory = {},
+                    onSelectAll = {},
+                    onDeselectAll = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun JunkItemThumbnailPreview() {
+    DeDupTheme {
+        JunkItemThumbnail(
+                    item = SmartJunkRepository.JunkItem(
+                        uri = Uri.EMPTY,
+                        category = SmartJunkRepository.JunkCategory.SCREENSHOTS,
+                        labels = listOf("screenshot")
+                    ),
+                    isSelected = false,
+                    onToggle = {}
+                )
     }
 }

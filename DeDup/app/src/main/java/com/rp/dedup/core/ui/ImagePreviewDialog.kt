@@ -43,6 +43,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import kotlin.math.ceil
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 private const val AUTO_DISMISS_MS = 5_000
 
@@ -167,5 +170,15 @@ fun ImagePreviewDialog(
                 )
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ImagePreviewDialogPreview() {
+    DeDupTheme {
+        ImagePreviewDialog(uri = Uri.EMPTY, onDismiss = {})
     }
 }

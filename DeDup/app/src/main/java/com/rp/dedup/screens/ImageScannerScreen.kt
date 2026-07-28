@@ -80,6 +80,7 @@ import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -613,5 +614,56 @@ fun GuestSignInDialog(onDismiss: () -> Unit, onSignIn: () -> Unit) {
 private fun ScannerScreenPreview() {
     DeDupTheme() {
         ImageScannerScreen(navController = NavHostController(LocalContext.current))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun TutorialTooltipPreview() {
+    DeDupTheme {
+        TutorialTooltip(title = "Tip", body = "Tap a photo to preview it full-screen.")
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun StaleBannerPreview() {
+    DeDupTheme {
+        StaleBanner(onRescan = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScannerHeaderPreview() {
+    DeDupTheme {
+        ScannerHeader(
+                    isScanning = false,
+                    hasResults = true,
+                    groupCount = 5,
+                    autoClearSavings = 20_971_520L,
+                    selectedCount = 2,
+                    manualSavings = 4_194_304L,
+                    context = LocalContext.current,
+                    onScanClick = {},
+                    onAutoClear = {},
+                    onDeleteSelected = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun GuestSignInDialogPreview() {
+    DeDupTheme {
+        GuestSignInDialog(onDismiss = {}, onSignIn = {})
     }
 }

@@ -35,6 +35,10 @@ import com.rp.dedup.core.viewmodels.TrashUiEvent
 import com.rp.dedup.core.viewmodels.TrashViewModel
 import java.text.DecimalFormat
 import java.util.concurrent.TimeUnit
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -279,5 +283,40 @@ private fun formatBytes(bytes: Long): String {
         bytes >= 1_000_000L     -> "${df.format(bytes / 1_000_000.0)} MB"
         bytes >= 1_000L         -> "${df.format(bytes / 1_000.0)} KB"
         else                    -> "$bytes B"
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun TrashScreenPreview() {
+    DeDupTheme {
+        TrashScreen(navController = rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun TrashItemCardPreview() {
+    DeDupTheme {
+        TrashItemCard(
+                    item = TrashItem(
+                        originalUri = "content://media/external/images/media/42",
+                        originalPath = "/DCIM/Camera/IMG_0231.jpg",
+                        name = "IMG_0231.jpg",
+                        size = 3_145_728L,
+                        mimeType = "image/jpeg",
+                        mediaType = "IMAGE",
+                        trashedAtMs = System.currentTimeMillis(),
+                        expiresAtMs = System.currentTimeMillis() + 2_592_000_000L,
+                        trashFileName = "trash_IMG_0231.jpg"
+                    ),
+                    trashManager = TrashManager(LocalContext.current),
+                    onRestore = {},
+                    onDeleteForever = {}
+                )
     }
 }

@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.rp.dedup.R
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun ExcludedFoldersDialog(
@@ -87,5 +90,30 @@ private fun ExcludedFolderItem(path: String, onRemove: () -> Unit) {
                     tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ExcludedFoldersDialogPreview() {
+    DeDupTheme {
+        ExcludedFoldersDialog(
+                    folders = listOf("/WhatsApp/Media", "/Download"),
+                    onDismiss = {},
+                    onAdd = {},
+                    onRemove = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ExcludedFolderItemPreview() {
+    DeDupTheme {
+        ExcludedFolderItem(path = "/WhatsApp/Media", onRemove = {})
     }
 }

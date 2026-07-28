@@ -17,6 +17,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rp.dedup.R
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun SmartAiCleanupCard(onClick: () -> Unit) {
@@ -140,5 +143,35 @@ fun ShareAppCard() {
             Icon(Icons.Default.ChevronRight, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f))
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SmartAiCleanupCardPreview() {
+    DeDupTheme {
+        SmartAiCleanupCard(onClick = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DeepOptimizationCardPreview() {
+    DeDupTheme {
+        DeepOptimizationCard(onClick = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ShareAppCardPreview() {
+    DeDupTheme {
+        ShareAppCard()
     }
 }

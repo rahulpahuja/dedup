@@ -47,6 +47,8 @@ import java.io.File
 import java.util.Locale
 import com.rp.dedup.core.ui.DeDupTopBar
 import kotlinx.coroutines.launch
+import android.content.res.Configuration
+import androidx.compose.material.icons.filled.SortByAlpha
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
@@ -623,5 +625,68 @@ private fun FileBrowserPreview() {
                 onOpenFile = {}
             )
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun FileBrowserScreenPreview() {
+    DeDupTheme {
+        FileBrowserScreen(navController = rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun BreadcrumbBarPreview() {
+    DeDupTheme {
+        BreadcrumbBar(segments = listOf("Internal Storage", "DCIM", "Camera"))
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun FileItemRowPreview() {
+    DeDupTheme {
+        FileItemRow(
+                    item = FileItem(name = "Camera", path = "/DCIM/Camera", isDirectory = true, size = 0L, lastModified = System.currentTimeMillis(), extension = ""),
+                    onClick = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun EmptyFolderStatePreview() {
+    DeDupTheme {
+        EmptyFolderState()
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SortBottomSheetPreview() {
+    DeDupTheme {
+        SortBottomSheet(currentSort = SortMode.NAME, onSelect = {}, onDismiss = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SortOptionPreview() {
+    DeDupTheme {
+        SortOption(label = "Name", icon = Icons.Default.SortByAlpha, selected = true, onClick = {})
     }
 }

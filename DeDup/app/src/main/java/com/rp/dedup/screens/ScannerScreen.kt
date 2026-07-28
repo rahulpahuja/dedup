@@ -65,6 +65,7 @@ import coil.request.ImageRequest
 import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.ui.ImagePreviewDialog
 import com.rp.dedup.ui.theme.DeDupTheme
+import android.content.res.Configuration
 
 private const val IMAGE_PAGE_SIZE = 10
 
@@ -501,5 +502,47 @@ private fun ScannerContentPreview() {
             onImageSelected = { _, _ -> },
             onDeleteImage = { }
         )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun PaginationBarPreview() {
+    DeDupTheme {
+        PaginationBar(currentPage = 1, totalPages = 5, onPageChange = {})
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun DuplicateGroupCardPreview() {
+    DeDupTheme {
+        DuplicateGroupCard(
+                    groupIndex = 0,
+                    group = listOf(ScannedImage(uri = "content://sample/1", dHash = 123_456_789L, sizeInBytes = 2_097_152L)),
+                    selectedUris = emptyList(),
+                    onImageSelected = { _, _ -> },
+                    onDeleteSingleImage = {}
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SelectableImageItemPreview() {
+    DeDupTheme {
+        SelectableImageItem(
+                    item = ScannedImage(uri = "content://sample/1", dHash = 123_456_789L, sizeInBytes = 2_097_152L),
+                    isSelected = false,
+                    isKeep = true,
+                    onSelect = {},
+                    onDelete = {}
+                )
     }
 }

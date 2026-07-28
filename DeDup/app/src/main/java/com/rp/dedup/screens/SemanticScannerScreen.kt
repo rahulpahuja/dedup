@@ -26,6 +26,10 @@ import coil.compose.AsyncImage
 import com.rp.dedup.R
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.viewmodels.SemanticScannerViewModel
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -223,5 +227,25 @@ private fun SemanticGroupCard(uris: List<Uri>, onDismiss: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SemanticScannerScreenPreview() {
+    DeDupTheme {
+        SemanticScannerScreen(navController = rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun SemanticGroupCardPreview() {
+    DeDupTheme {
+        SemanticGroupCard(uris = listOf(Uri.EMPTY), onDismiss = {})
     }
 }

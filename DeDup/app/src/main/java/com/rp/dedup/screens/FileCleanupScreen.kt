@@ -45,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
 
 // ── Domain model for the Large File Finder section ────────────────────────────
 

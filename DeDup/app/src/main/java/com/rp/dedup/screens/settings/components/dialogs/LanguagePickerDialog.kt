@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.rp.dedup.R
 import com.rp.dedup.core.i18n.LocaleManager
+import androidx.compose.ui.tooling.preview.Preview
+import android.content.res.Configuration
+import com.rp.dedup.ui.theme.DeDupTheme
 
 @Composable
 fun LanguagePickerDialog(currentCode: String, onDismiss: () -> Unit, onSelect: (String) -> Unit) {
@@ -57,5 +60,15 @@ fun LanguagePickerDialog(currentCode: String, onDismiss: () -> Unit, onSelect: (
                 }
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun LanguagePickerDialogPreview() {
+    DeDupTheme {
+        LanguagePickerDialog(currentCode = "en", onDismiss = {}, onSelect = {})
     }
 }

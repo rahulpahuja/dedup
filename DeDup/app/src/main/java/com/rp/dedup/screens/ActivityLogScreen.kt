@@ -68,6 +68,8 @@ import java.util.concurrent.TimeUnit
 import androidx.compose.ui.res.stringResource
 import com.rp.dedup.R
 import com.rp.dedup.core.ui.DeDupTopBar
+import android.content.res.Configuration
+import androidx.compose.material.icons.filled.Info
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -429,5 +431,59 @@ fun ActivityLogScreenPreview() {
 fun ActivityLogScreenDarkPreview() {
     DeDupTheme(darkTheme = true) {
         ActivityLogScreen(rememberNavController())
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ScanActivityItemPreview() {
+    DeDupTheme {
+        ScanActivityItem(
+                    scan = ScanHistory(
+                        scanType = "Duplicate Scan",
+                        timestamp = System.currentTimeMillis(),
+                        durationMs = 4_200L,
+                        totalScanned = 1280,
+                        duplicateGroups = 12,
+                        totalDuplicates = 34,
+                        reclaimableBytes = 52_428_800L,
+                        status = "COMPLETED"
+                    ),
+                    isDark = false,
+                    context = LocalContext.current
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun CompactActivityItemPreview() {
+    DeDupTheme {
+        CompactActivityItem(
+                    icon = Icons.Default.Info,
+                    title = "Duplicate Scan",
+                    description = "Found 12 duplicate groups",
+                    time = "2h ago",
+                    iconColor = Color(0xFF4285F4)
+                )
+    }
+}
+
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ActivityListItemPreview() {
+    DeDupTheme {
+        ActivityListItem(
+                    icon = Icons.Default.Info,
+                    title = "Duplicate Scan",
+                    description = "Found 12 duplicate groups",
+                    time = "2h ago"
+                )
     }
 }
