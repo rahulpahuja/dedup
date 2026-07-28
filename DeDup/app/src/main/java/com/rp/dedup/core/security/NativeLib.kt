@@ -1,15 +1,9 @@
 package com.rp.dedup.core.security
 
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-
 class NativeLib {
     companion object {
         init {
-            try {
-                System.loadLibrary("dedup-native")
-            } catch (e: Throwable) {
-                FirebaseCrashlytics.getInstance().recordException(e)
-            }
+            System.loadLibrary("dedup_native")
         }
     }
 

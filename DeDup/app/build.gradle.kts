@@ -104,7 +104,7 @@ android {
     packaging {
         jniLibs {
             // Support 16 KB page sizes by ensuring native libraries are uncompressed and aligned
-            useLegacyPackaging = false
+            useLegacyPackaging = true
         }
         resources {
             excludes += setOf(
