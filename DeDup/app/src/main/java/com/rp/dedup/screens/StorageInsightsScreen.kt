@@ -41,7 +41,7 @@ fun StorageInsightsScreen(navController: NavHostController) {
     val dashboardViewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory(context))
     val healthViewModel: StorageHealthViewModel = viewModel(factory = StorageHealthViewModel.Factory(context))
     val dataStoreManager = remember { DataStoreManager(context) }
-    val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory(dataStoreManager))
+    val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory(dataStoreManager, context))
     val analyticsManager = remember { AnalyticsManager.getInstance(context) }
 
     val storageStats     by dashboardViewModel.storageStats.collectAsState()

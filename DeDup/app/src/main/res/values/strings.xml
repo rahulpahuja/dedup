@@ -9,6 +9,7 @@
     <string name="similarity_sensitivity">Similarity Sensitivity</string>
     <string name="excluded_folders">Excluded Folders</string>
     <string name="auto_scan_on_startup">Auto Scan on Startup</string>
+    <string name="background_auto_scan">Background Auto-Scan</string>
     <string name="support_feedback_section">Support &amp; Feedback</string>
     <string name="share_feedback">Share Feedback</string>
     <string name="request_feature">Request a Feature</string>

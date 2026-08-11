@@ -1,10 +1,12 @@
 package com.rp.dedup.core.viewmodels
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.caching.DataStoreManager
+import com.rp.dedup.core.workers.ScanWorker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +15,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
+class SettingsViewModel(
+    val dataStoreManager: DataStoreManager,
+    private val context: Context
+) : ViewModel() {
 
     val similarityThreshold: StateFlow<Int> = dataStoreManager.readData(DataStoreManager.SIMILARITY_THRESHOLD, "10")
         .map { it.toIntOrNull() ?: 10 }
@@ -28,6 +33,10 @@ class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
 
     val selectedCurrency: StateFlow<String> = dataStoreManager.readData(DataStoreManager.SELECTED_CURRENCY, "")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
+    val backgroundAutoScanEnabled: StateFlow<Boolean> =
+        dataStoreManager.readData(DataStoreManager.BACKGROUND_AUTO_SCAN_ENABLED, true)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     private val _selectedLanguage = MutableStateFlow(getCurrentLanguageCode())
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
@@ -46,6 +55,17 @@ class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
     fun setAutoScanOnStartup(enabled: Boolean) {
         viewModelScope.launch {
             dataStoreManager.writeData(DataStoreManager.AUTO_SCAN_ON_STARTUP, enabled)
+        }
+    }
+
+    fun setBackgroundAutoScanEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.writeData(DataStoreManager.BACKGROUND_AUTO_SCAN_ENABLED, enabled)
+        }
+        if (enabled) {
+            ScanWorker.enqueuePeriodic(context)
+        } else {
+            ScanWorker.cancelPeriodic(context)
         }
     }
 
@@ -79,9 +99,12 @@ class SettingsViewModel(val dataStoreManager: DataStoreManager) : ViewModel() {
         }
     }
 
-    class Factory(private val dataStoreManager: DataStoreManager) : ViewModelProvider.Factory {
+    class Factory(
+        private val dataStoreManager: DataStoreManager,
+        private val context: Context
+    ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return SettingsViewModel(dataStoreManager) as T
+            return SettingsViewModel(dataStoreManager, context.applicationContext) as T
         }
     }
 }

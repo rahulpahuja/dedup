@@ -19,6 +19,7 @@ class SettingsViewModelTest {
     val coroutineRule = MainDispatcherRule()
 
     private val dataStoreManager = mockk<DataStoreManager>(relaxed = true)
+    private val context = mockk<android.content.Context>(relaxed = true)
     private lateinit var viewModel: SettingsViewModel
 
     @Before
@@ -27,7 +28,8 @@ class SettingsViewModelTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns flowOf("")
         every { dataStoreManager.readData(DataStoreManager.AUTO_SCAN_ON_STARTUP, true) } returns flowOf(true)
         every { dataStoreManager.readData(DataStoreManager.SELECTED_CURRENCY, "") } returns flowOf("")
-        viewModel = SettingsViewModel(dataStoreManager)
+        every { dataStoreManager.readData(DataStoreManager.BACKGROUND_AUTO_SCAN_ENABLED, true) } returns flowOf(true)
+        viewModel = SettingsViewModel(dataStoreManager, context)
     }
 
     // ── initial state ──────────────────────────────────────────────────────────
@@ -45,6 +47,11 @@ class SettingsViewModelTest {
     @Test
     fun `initial auto scan on startup is true`() {
         assertTrue(viewModel.autoScanOnStartup.value)
+    }
+
+    @Test
+    fun `initial background auto-scan enabled is true`() {
+        assertTrue(viewModel.backgroundAutoScanEnabled.value)
     }
 
     // ── setSimilarityThreshold ─────────────────────────────────────────────────
@@ -84,7 +91,7 @@ class SettingsViewModelTest {
     @Test
     fun `addExcludedFolder writes folder list to DataStore`() = runTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns flowOf("")
-        viewModel = SettingsViewModel(dataStoreManager)
+        viewModel = SettingsViewModel(dataStoreManager, context)
         val collectJob = launch { viewModel.excludedFolders.collect {} }
         kotlinx.coroutines.yield()
         viewModel.addExcludedFolder("/storage/DCIM")
@@ -96,7 +103,7 @@ class SettingsViewModelTest {
     fun `addExcludedFolder does not add duplicates`() = runTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns
             flowOf("/storage/DCIM")
-        viewModel = SettingsViewModel(dataStoreManager)
+        viewModel = SettingsViewModel(dataStoreManager, context)
         val collectJob = launch { viewModel.excludedFolders.collect {} }
         kotlinx.coroutines.yield()
         viewModel.addExcludedFolder("/storage/DCIM")
@@ -110,7 +117,7 @@ class SettingsViewModelTest {
     fun `removeExcludedFolder removes folder from list`() = runTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns
             flowOf("/storage/DCIM,/storage/Download")
-        viewModel = SettingsViewModel(dataStoreManager)
+        viewModel = SettingsViewModel(dataStoreManager, context)
         val collectJob = launch { viewModel.excludedFolders.collect {} }
         kotlinx.coroutines.yield()
         viewModel.removeExcludedFolder("/storage/DCIM")
@@ -121,7 +128,7 @@ class SettingsViewModelTest {
     @Test
     fun `removeExcludedFolder does nothing when folder not in list`() = runTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns flowOf("")
-        viewModel = SettingsViewModel(dataStoreManager)
+        viewModel = SettingsViewModel(dataStoreManager, context)
         val collectJob = launch { viewModel.excludedFolders.collect {} }
         kotlinx.coroutines.yield()
         viewModel.removeExcludedFolder("/nonexistent")
@@ -135,7 +142,7 @@ class SettingsViewModelTest {
     fun `excludedFolders parses comma-separated string`() = runTest {
         every { dataStoreManager.readData(DataStoreManager.EXCLUDED_FOLDERS, "") } returns
             flowOf("/path/one,/path/two")
-        viewModel = SettingsViewModel(dataStoreManager)
+        viewModel = SettingsViewModel(dataStoreManager, context)
         val collectJob = launch { viewModel.excludedFolders.collect {} }
         kotlinx.coroutines.yield()
         assertEquals(listOf("/path/one", "/path/two"), viewModel.excludedFolders.value)

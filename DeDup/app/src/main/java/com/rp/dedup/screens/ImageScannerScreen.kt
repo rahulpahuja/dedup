@@ -92,7 +92,7 @@ fun ImageScannerScreen(navController: NavHostController) {
 
     val settingsViewModel: com.rp.dedup.core.viewmodels.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = com.rp.dedup.core.viewmodels.SettingsViewModel.Factory(
-            com.rp.dedup.core.caching.DataStoreManager(context.applicationContext)
+            com.rp.dedup.core.caching.DataStoreManager(context.applicationContext), context
         )
     )
 

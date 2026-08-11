@@ -54,15 +54,18 @@ fun SettingsScreen(navController: NavHostController) {
     val analyticsManager = remember { AnalyticsManager.getInstance(context) }
 
     val themeViewModel: ThemeViewModel = viewModel(factory = ThemeViewModel.Factory(context))
-    val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory(DataStoreManager(context.applicationContext)))
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.Factory(DataStoreManager(context.applicationContext), context)
+    )
 
-    val currentThemeMode    by themeViewModel.themeMode.collectAsState()
-    val currentPalette      by themeViewModel.appPalette.collectAsState()
-    val similarityThreshold by settingsViewModel.similarityThreshold.collectAsState()
-    val excludedFolders     by settingsViewModel.excludedFolders.collectAsState()
-    val autoScanOnStartup   by settingsViewModel.autoScanOnStartup.collectAsState()
-    val selectedLanguage    by settingsViewModel.selectedLanguage.collectAsState()
-    val selectedCurrency    by settingsViewModel.selectedCurrency.collectAsState()
+    val currentThemeMode         by themeViewModel.themeMode.collectAsState()
+    val currentPalette           by themeViewModel.appPalette.collectAsState()
+    val similarityThreshold      by settingsViewModel.similarityThreshold.collectAsState()
+    val excludedFolders          by settingsViewModel.excludedFolders.collectAsState()
+    val autoScanOnStartup        by settingsViewModel.autoScanOnStartup.collectAsState()
+    val backgroundAutoScanEnabled by settingsViewModel.backgroundAutoScanEnabled.collectAsState()
+    val selectedLanguage         by settingsViewModel.selectedLanguage.collectAsState()
+    val selectedCurrency         by settingsViewModel.selectedCurrency.collectAsState()
 
     com.rp.dedup.core.analytics.TrackFeatureUsage("Settings")
     LaunchedEffect(Unit) { analyticsManager.logScreenView("Settings") }
@@ -164,6 +167,13 @@ fun SettingsScreen(navController: NavHostController) {
                     title = stringResource(R.string.auto_scan_on_startup),
                     checked = autoScanOnStartup,
                     onCheckedChange = { settingsViewModel.setAutoScanOnStartup(it) }
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsSwitchRow(
+                    icon = Icons.Default.Schedule, iconColor = MaterialTheme.colorScheme.primary,
+                    title = stringResource(R.string.background_auto_scan),
+                    checked = backgroundAutoScanEnabled,
+                    onCheckedChange = { settingsViewModel.setBackgroundAutoScanEnabled(it) }
                 )
             }
 
