@@ -185,7 +185,7 @@ Epics may interleave, but within each epic stories are strictly sequential (each
 
 - [x] A1 — Implement real duplicate scan in `ScanWorker.doWork()`
 - [x] A2 — Fire "duplicates found" notification from scan results
-- [ ] A3 — Schedule `ScanWorker` as periodic work at app start
+- [x] A3 — Schedule `ScanWorker` as periodic work at app start
 - [ ] A4 — Settings toggle to enable/disable background auto-scan
 - [ ] B1 — Wire AppFunctions build dependencies into `:app`
 - [ ] B2 — Implement `findLargeFiles` AppFunction

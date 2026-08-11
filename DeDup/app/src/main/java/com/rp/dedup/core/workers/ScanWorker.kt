@@ -6,19 +6,24 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.rp.dedup.MainActivity
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.notifications.AppNotificationManager
 import com.rp.dedup.core.repository.SemanticDuplicateRepository
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 /**
  * Periodic background worker that scans the semantic image index for duplicates and,
- * when meaningful reclaimable space is found, notifies the user. Scheduling lives in
+ * when meaningful reclaimable space is found, notifies the user. Scheduled via
  * [enqueuePeriodic].
  */
 class ScanWorker(appContext: Context, workerParams: WorkerParameters) :
@@ -71,10 +76,37 @@ class ScanWorker(appContext: Context, workerParams: WorkerParameters) :
 
     companion object {
         private const val TAG = "ScanWorker"
+        private const val WORK_NAME = "periodic_duplicate_scan"
         private const val NOTIFICATION_ID = 2001
         private const val RECLAIMABLE_THRESHOLD_BYTES = 50L * 1024 * 1024 // 50 MB
         const val KEY_GROUP_COUNT = "group_count"
         const val KEY_RECLAIMABLE_BYTES = "reclaimable_bytes"
+
+        /**
+         * Schedules a daily duplicate scan. Battery-friendly: runs only when the battery
+         * isn't low. KEEP policy: re-calling this (e.g. on every app start) is a no-op if
+         * the periodic work is already scheduled.
+         */
+        fun enqueuePeriodic(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .build()
+
+            val request = PeriodicWorkRequestBuilder<ScanWorker>(24, TimeUnit.HOURS)
+                .setConstraints(constraints)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                WORK_NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                request
+            )
+        }
+
+        /** Cancels the periodic scan (e.g. when the user disables background scanning). */
+        fun cancelPeriodic(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+        }
 
         /**
          * Sums the size of every file but the first ("keeper") in each duplicate group.

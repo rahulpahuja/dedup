@@ -8,6 +8,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.rp.dedup.BuildConfig
 import com.rp.dedup.core.security.NativeLib
 import com.rp.dedup.core.work.ImageIndexWorker
+import com.rp.dedup.core.workers.ScanWorker
 
 class DeDupApp : Application() {
     override fun onCreate() {
@@ -47,5 +48,9 @@ class DeDupApp : Application() {
         // Kick off background semantic indexing of on-device images.
         // KEEP policy: no-ops if already running or enqueued.
         ImageIndexWorker.enqueue(this)
+
+        // Schedule the periodic background duplicate scan.
+        // KEEP policy: no-ops if already scheduled.
+        ScanWorker.enqueuePeriodic(this)
     }
 }

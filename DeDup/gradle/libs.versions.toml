@@ -83,6 +83,7 @@ sqlcipher = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "
 play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 introshowcaseview = { group = "com.canopas.intro-showcase-view", name = "introshowcaseview", version.ref = "introshowcaseview" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "work" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 # Firebase
