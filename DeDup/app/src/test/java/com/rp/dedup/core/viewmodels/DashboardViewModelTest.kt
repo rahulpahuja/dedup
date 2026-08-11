@@ -1,7 +1,9 @@
 package com.rp.dedup.core.viewmodels
 
 import android.content.Context
+import com.rp.dedup.core.model.ForecastConfidence
 import com.rp.dedup.core.model.ScanHistory
+import com.rp.dedup.core.model.StorageForecast
 import com.rp.dedup.core.repository.ScanHistoryRepository
 import com.rp.dedup.core.repository.StorageForecastingRepository
 import com.rp.dedup.util.MainDispatcherRule
@@ -14,6 +16,7 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.util.Date
 
 class DashboardViewModelTest {
 
@@ -95,6 +98,47 @@ class DashboardViewModelTest {
         val collectJob = launch { vm.totalReclaimableBytes.collect {} }
         kotlinx.coroutines.yield()
         assertEquals(0L, vm.totalReclaimableBytes.value)
+        collectJob.cancel()
+    }
+
+    // ── storageForecast ──────────────────────────────────────────────────────────
+    // Verifies the same forecast the notification worker (ScanWorker.isLowStorage,
+    // fed by this same StorageForecastingRepository/DAO) would act on is exactly what
+    // the dashboard card renders — no separate/stale copy of the forecast.
+
+    @Test
+    fun `initial storageForecast is null before the flow emits`() = runTest {
+        val vm = DashboardViewModel(historyRepository, forecastingRepository, context)
+        assertNull(vm.storageForecast.value)
+    }
+
+    @Test
+    fun `storageForecast reflects the repository's forecast flow`() = runTest {
+        val forecast = StorageForecast(
+            daysRemaining = 3,
+            estimatedFullDate = Date(),
+            dailyUsageVelocity = 1024L,
+            confidence = ForecastConfidence.HIGH
+        )
+        every { forecastingRepository.forecast } returns flowOf(forecast)
+
+        val vm = DashboardViewModel(historyRepository, forecastingRepository, context)
+        val collectJob = launch { vm.storageForecast.collect {} }
+        kotlinx.coroutines.yield()
+
+        assertEquals(forecast, vm.storageForecast.value)
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `storageForecast is null when the repository has no forecast yet`() = runTest {
+        every { forecastingRepository.forecast } returns flowOf(null)
+
+        val vm = DashboardViewModel(historyRepository, forecastingRepository, context)
+        val collectJob = launch { vm.storageForecast.collect {} }
+        kotlinx.coroutines.yield()
+
+        assertNull(vm.storageForecast.value)
         collectJob.cancel()
     }
 }
