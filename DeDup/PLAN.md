@@ -183,7 +183,7 @@ Epics may interleave, but within each epic stories are strictly sequential (each
 
 ## Progress
 
-- [ ] A1 — Implement real duplicate scan in `ScanWorker.doWork()`
+- [x] A1 — Implement real duplicate scan in `ScanWorker.doWork()`
 - [ ] A2 — Fire "duplicates found" notification from scan results
 - [ ] A3 — Schedule `ScanWorker` as periodic work at app start
 - [ ] A4 — Settings toggle to enable/disable background auto-scan
