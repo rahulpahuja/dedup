@@ -55,10 +55,14 @@ data class MediaTypeSummary(
 abstract class BaseDeDupAppFunctionService : AppFunctionService() {
 
     /**
-     * Finds the largest files on the device, sorted by size descending.
+     * Find the largest photos, videos, and audio files on the device, sorted by size
+     * descending, to identify what is consuming the most storage.
      *
-     * @param minSizeBytes Only include files at least this large. 0 means no minimum.
-     * @param maxResults Maximum number of files to return.
+     * @param minSizeBytes Only include files at least this many bytes. 0 (default) means no minimum.
+     * @param maxResults Maximum number of files to return, largest first. Must be positive.
+     * @return Up to [maxResults] files, largest first.
+     * @throws AppFunctionInvalidArgumentException If minSizeBytes is negative or maxResults is
+     *   not positive; retry with a non-negative minSizeBytes and a positive maxResults.
      */
     @AppFunction(isDescribedByKDoc = true)
     suspend fun findLargeFiles(
@@ -75,10 +79,15 @@ abstract class BaseDeDupAppFunctionService : AppFunctionService() {
     }
 
     /**
-     * Finds photos added more than [olderThanDays] days ago, oldest first.
+     * Find photos added more than a given number of days ago, oldest first, to identify
+     * old photos that may be candidates for cleanup or backup.
      *
-     * @param olderThanDays Only include photos added at least this many days ago.
-     * @param maxResults Maximum number of photos to return.
+     * @param olderThanDays Only include photos added at least this many days ago. Must be
+     *   positive. Defaults to 365 (photos older than a year).
+     * @param maxResults Maximum number of photos to return, oldest first. Must be positive.
+     * @return Up to [maxResults] photos, oldest first.
+     * @throws AppFunctionInvalidArgumentException If olderThanDays or maxResults is not
+     *   positive; retry with positive values for both.
      */
     @AppFunction(isDescribedByKDoc = true)
     suspend fun findOldPhotos(
@@ -94,7 +103,12 @@ abstract class BaseDeDupAppFunctionService : AppFunctionService() {
             .map(::toStorageFileResult)
     }
 
-    /** Summarizes on-device storage usage (file count and total size) per media type. */
+    /**
+     * Summarize on-device storage usage by media type, to answer questions like "how much
+     * space are my photos using" without listing individual files.
+     *
+     * @return One [MediaTypeSummary] per media type present on the device (image, video, audio).
+     */
     @AppFunction(isDescribedByKDoc = true)
     suspend fun getStorageSummary(): List<MediaTypeSummary> = withContext(Dispatchers.IO) {
         val items = LocalStorageRepository(this@BaseDeDupAppFunctionService)

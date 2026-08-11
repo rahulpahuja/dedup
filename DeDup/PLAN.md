@@ -190,7 +190,7 @@ Epics may interleave, but within each epic stories are strictly sequential (each
 - [x] B1 — Wire AppFunctions build dependencies into `:app`
 - [x] B2 — Implement `findLargeFiles` AppFunction
 - [x] B3 — Implement `findOldPhotos` / `getStorageSummary` AppFunctions
-- [ ] B4 — KDoc refinement pass for agent consumption
+- [x] B4 — KDoc refinement pass for agent consumption
 - [ ] C1 — `MemoriesRepository`: group indexed photos by capture date
 - [ ] C2 — `MemoriesViewModel`
 - [ ] C3 — `MemoriesScreen` + nav entry from dashboard

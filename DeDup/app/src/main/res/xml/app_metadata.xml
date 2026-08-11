@@ -1,12 +1,10 @@
 <AppFunctionAppMetadata xmlns:appfn="http://schemas.android.com/apk/androidx.appfunctions"
     appfn:description="DeDup finds and cleans up duplicate photos/videos, large files, and
-    junk on the device. Operational Patterns:
-    - Use 'findLargeFiles' to find the largest photos/videos/audio files on the device,
-    optionally filtered by a minimum size.
-    - Use 'findOldPhotos' to find photos added more than a given number of days ago,
-    oldest first.
-    - Use 'getStorageSummary' to get a per-media-type breakdown of file count and
-    total size on the device.
+    junk on the device.
+    Operational Patterns:
+    - Prefer 'getStorageSummary' first to get an overview of storage usage by media type
+    before calling 'findLargeFiles' or 'findOldPhotos' for a detailed file listing, to
+    avoid returning unnecessarily large result sets.
     Constraints:
     - All exposed functions are read-only; DeDup does not expose file deletion to agents."
     appfn:displayDescription="@string/app_functions_display_description" />
