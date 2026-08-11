@@ -241,6 +241,7 @@
     <string name="screen_dashboard">Dashboard</string>
     <string name="screen_storage_insights">Storage Insights</string>
     <string name="screen_optimize">Optimize</string>
+    <string name="screen_memories">Memories</string>
     <string name="screen_file_cleanup">File Cleanup</string>
     <string name="screen_activity_log">Activity Log</string>
     <string name="screen_scan_history">Scan History</string>
@@ -343,6 +344,10 @@
     <string name="semantic_empty_no_index">Scan your photos first to build the AI index</string>
     <string name="semantic_empty_no_dupes">No visually similar duplicates found</string>
 
+    <!-- Memories -->
+    <string name="memories_title">Memories</string>
+    <string name="memories_empty">No memories yet — check back once you have photos from a year or more ago</string>
+
     <!-- Image Compression -->
     <string name="compression_title">Compress Images</string>
     <string name="compression_empty">All images are already optimized</string>
@@ -367,6 +372,7 @@
     <!-- Quick Scan Grid -->
     <string name="quick_scan_merge_label">Merge</string>
     <string name="quick_scan_log_label">Log</string>
+    <string name="quick_scan_memories_label">View</string>
 
     <!-- Large File List -->
     <string name="select_all_btn">Select All</string>

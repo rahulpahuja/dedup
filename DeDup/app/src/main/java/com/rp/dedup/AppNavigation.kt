@@ -48,6 +48,7 @@ import com.rp.dedup.UIConstants.ROUTE_SEMANTIC_SCANNER
 import com.rp.dedup.UIConstants.ROUTE_IMAGE_COMPRESSION
 import com.rp.dedup.UIConstants.ROUTE_STORAGE_INSIGHTS
 import com.rp.dedup.UIConstants.ROUTE_OPTIMIZE
+import com.rp.dedup.UIConstants.ROUTE_MEMORIES
 import com.rp.dedup.feature.voicestorage.presentation.DeDupChatScreen
 import com.rp.dedup.core.permissions.AllFilesPermissionGate
 import com.rp.dedup.core.permissions.PermissionGate
@@ -96,6 +97,7 @@ sealed class Screen(val route: String) {
     object ImageCompression : Screen(ROUTE_IMAGE_COMPRESSION)
     object StorageInsights : Screen(ROUTE_STORAGE_INSIGHTS)
     object Optimize : Screen(ROUTE_OPTIMIZE)
+    object Memories : Screen(ROUTE_MEMORIES)
 }
 
 @Composable
@@ -272,6 +274,9 @@ fun AppNavHost(navController: NavHostController, hasPendingDeepLink: Boolean = f
                 }
                 composable(Screen.SemanticScanner.route) {
                     SemanticScannerScreen(navController)
+                }
+                composable(Screen.Memories.route) {
+                    MemoriesScreen(navController)
                 }
                 composable(Screen.ImageCompression.route) {
                     ImageCompressionScreen(navController)

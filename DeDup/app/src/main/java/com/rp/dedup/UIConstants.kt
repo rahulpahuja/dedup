@@ -35,6 +35,7 @@ object UIConstants {
     const val ROUTE_IMAGE_COMPRESSION      = "image_compression"
     const val ROUTE_STORAGE_INSIGHTS       = "storage_insights"
     const val ROUTE_OPTIMIZE                = "optimize"
+    const val ROUTE_MEMORIES                = "memories"
 
     fun getFileScannerRoute(type: String) = "file_scanner/$type"
 
@@ -67,6 +68,7 @@ object UIConstants {
             route == ROUTE_IMAGE_COMPRESSION -> R.string.compression_title
             route == ROUTE_STORAGE_INSIGHTS -> R.string.screen_storage_insights
             route == ROUTE_OPTIMIZE -> R.string.screen_optimize
+            route == ROUTE_MEMORIES -> R.string.screen_memories
             else -> R.string.app_name
         }
     }
@@ -121,6 +123,7 @@ object UIConstants {
     val ColorApks         = Color(0xFF34A853)
     val ColorContactDedup = Color(0xFF00ACC1)
     val ColorScanHistory  = Color(0xFF7986CB)
+    val ColorMemories     = Color(0xFFAB47BC)
 
     // ── Status colors ─────────────────────────────────────────────────────────
     val ColorSuccess   = Color(0xFF4CAF50)

@@ -87,6 +87,17 @@ fun QuickScanGrid(
                 onClick = { navController.navigate(Screen.ScanHistory.route) }
             )
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            ScanCategoryCard(
+                title = stringResource(R.string.memories_title),
+                count = stringResource(R.string.quick_scan_memories_label),
+                icon = Icons.Default.PhotoLibrary,
+                color = UIConstants.ColorMemories,
+                modifier = Modifier.weight(1f),
+                onClick = { navController.navigate(Screen.Memories.route) }
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
