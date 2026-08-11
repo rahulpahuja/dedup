@@ -1,10 +1,14 @@
 package com.rp.dedup.core.viewmodels
 
-import android.os.Environment
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.model.FileItem
 import com.rp.dedup.core.model.SortMode
+import com.rp.dedup.core.model.StorageVolume
+import com.rp.dedup.core.utils.StorageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,12 +19,23 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 
-class FileBrowserViewModel : ViewModel() {
+class FileBrowserViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val storageRoot = Environment.getExternalStorageDirectory()
+    class Factory(private val application: Application) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return FileBrowserViewModel(application) as T
+        }
+    }
 
-    private val _currentDir = MutableStateFlow(storageRoot)
-    val currentDir: StateFlow<File> = _currentDir.asStateFlow()
+    private val _availableVolumes = MutableStateFlow<List<StorageVolume>>(emptyList())
+    val availableVolumes: StateFlow<List<StorageVolume>> = _availableVolumes.asStateFlow()
+
+    private val _selectedVolume = MutableStateFlow<StorageVolume?>(null)
+    val selectedVolume: StateFlow<StorageVolume?> = _selectedVolume.asStateFlow()
+
+    private val _currentDir = MutableStateFlow<File?>(null)
+    val currentDir: StateFlow<File?> = _currentDir.asStateFlow()
 
     // Back-navigation history
     private val backStack = ArrayDeque<File>()
@@ -62,25 +77,45 @@ class FileBrowserViewModel : ViewModel() {
     /** True when there is at least one directory in the back-stack. */
     val canNavigateUp: Boolean get() = backStack.isNotEmpty()
 
-    /** Human-readable breadcrumb segments, e.g. ["Internal Storage", "Downloads", "Docs"]. */
+    /** Human-readable breadcrumb segments. */
     val breadcrumbs: StateFlow<List<String>> = combine(
-        _currentDir
-    ) { dirs ->
-        val dir = dirs[0]
-        val relativePath = dir.absolutePath.removePrefix(storageRoot.absolutePath)
-        val segments = mutableListOf("Internal Storage")
+        _currentDir, _selectedVolume
+    ) { dir, volume ->
+        if (dir == null || volume == null) return@combine listOf("Loading...")
+        
+        val relativePath = dir.absolutePath.removePrefix(volume.file.absolutePath)
+        val segments = mutableListOf(volume.name)
         if (relativePath.isNotEmpty()) {
             relativePath.split("/").filter { it.isNotBlank() }.forEach { segments.add(it) }
         }
         segments
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), listOf("Internal Storage"))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
-        loadDirectory(storageRoot)
+        refreshVolumes()
+    }
+
+    fun refreshVolumes() {
+        val volumes = StorageUtils.getAllStorageVolumes(getApplication())
+        _availableVolumes.value = volumes
+        
+        // Default to primary if nothing selected yet
+        if (_selectedVolume.value == null) {
+            val primary = volumes.find { it.isPrimary } ?: volumes.firstOrNull()
+            primary?.let { selectVolume(it) }
+        }
+    }
+
+    fun selectVolume(volume: StorageVolume) {
+        _selectedVolume.value = volume
+        _currentDir.value = volume.file
+        backStack.clear()
+        _searchQuery.value = ""
+        loadDirectory(volume.file)
     }
 
     fun navigateTo(dir: File) {
-        backStack.addLast(_currentDir.value)
+        _currentDir.value?.let { backStack.addLast(it) }
         _currentDir.value = dir
         _searchQuery.value = ""
         loadDirectory(dir)
@@ -104,7 +139,7 @@ class FileBrowserViewModel : ViewModel() {
     }
 
     fun refresh() {
-        loadDirectory(_currentDir.value)
+        _currentDir.value?.let { loadDirectory(it) }
     }
 
     private fun loadDirectory(dir: File) {

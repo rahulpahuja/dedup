@@ -55,14 +55,16 @@ import androidx.compose.material.icons.filled.SortByAlpha
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FileBrowserScreen(navController: NavHostController) {
-    val vm: FileBrowserViewModel = viewModel()
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext as android.app.Application
+    val vm: FileBrowserViewModel = viewModel(factory = FileBrowserViewModel.Factory(context))
     val analytics = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
     com.rp.dedup.core.analytics.TrackFeatureUsage("FileBrowser")
     LaunchedEffect(Unit) { analytics.logScreenView("FileBrowser") }
 
     val items by vm.items.collectAsState()
     val currentDir by vm.currentDir.collectAsState()
+    val availableVolumes by vm.availableVolumes.collectAsState()
+    val selectedVolume by vm.selectedVolume.collectAsState()
     val isLoading by vm.isLoading.collectAsState()
     val sortMode by vm.sortMode.collectAsState()
     val searchQuery by vm.searchQuery.collectAsState()
@@ -71,6 +73,7 @@ fun FileBrowserScreen(navController: NavHostController) {
 
     var searchActive by remember { mutableStateOf(false) }
     var showSortSheet by remember { mutableStateOf(false) }
+    var showVolumeSheet by remember { mutableStateOf(false) }
 
     // Intercept system back button
     BackHandler(enabled = vm.canNavigateUp) {
@@ -81,6 +84,8 @@ fun FileBrowserScreen(navController: NavHostController) {
         navController = navController,
         items = items,
         currentDir = currentDir,
+        availableVolumes = availableVolumes,
+        selectedVolume = selectedVolume,
         isLoading = isLoading,
         sortMode = sortMode,
         searchQuery = searchQuery,
@@ -94,6 +99,7 @@ fun FileBrowserScreen(navController: NavHostController) {
         onNavigateToDir = { vm.navigateTo(File(it)) },
         onRefresh = vm::refresh,
         onSortClick = { showSortSheet = true },
+        onVolumeClick = { showVolumeSheet = true },
         onOpenFile = { openFile(context, File(it)) }
     )
 
@@ -105,6 +111,16 @@ fun FileBrowserScreen(navController: NavHostController) {
             onDismiss = { showSortSheet = false }
         )
     }
+
+    // Volume bottom sheet
+    if (showVolumeSheet) {
+        VolumeBottomSheet(
+            volumes = availableVolumes,
+            selectedVolume = selectedVolume,
+            onSelect = { vm.selectVolume(it); showVolumeSheet = false },
+            onDismiss = { showVolumeSheet = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,7 +128,9 @@ fun FileBrowserScreen(navController: NavHostController) {
 fun FileBrowserContent(
     navController: NavHostController,
     items: List<FileItem>,
-    currentDir: File,
+    currentDir: File?,
+    availableVolumes: List<com.rp.dedup.core.model.StorageVolume>,
+    selectedVolume: com.rp.dedup.core.model.StorageVolume?,
     isLoading: Boolean,
     sortMode: SortMode,
     searchQuery: String,
@@ -126,6 +144,7 @@ fun FileBrowserContent(
     onNavigateToDir: (String) -> Unit,
     onRefresh: () -> Unit,
     onSortClick: () -> Unit,
+    onVolumeClick: () -> Unit,
     onOpenFile: (String) -> Unit
 ) {
     val drawerState = LocalDrawerState.current
@@ -142,7 +161,7 @@ fun FileBrowserContent(
                                 onValueChange = onSearchQueryChange,
                                 placeholder = {
                                     Text(
-                                        stringResource(R.string.search_in, currentDir.name),
+                                        stringResource(R.string.search_in, currentDir?.name ?: ""),
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 },
@@ -154,11 +173,23 @@ fun FileBrowserContent(
                                 )
                             )
                         } else {
-                            Text(
-                                stringResource(R.string.app_name),
-                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                                maxLines = 1,
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clickable { onVolumeClick() }
+                            ) {
+                                Text(
+                                    text = selectedVolume?.name ?: stringResource(R.string.app_name),
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                    maxLines = 1,
+                                )
+                                if (availableVolumes.size > 1) {
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    )
+                                }
+                            }
                         }
                     },
                     navigationIcon = {
@@ -210,11 +241,13 @@ fun FileBrowserContent(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Page title — shows current dir name (root = "Internal Storage", subfolders = dir name)
+            // Page title — shows current dir name
             item {
                 Text(
-                    text = if (currentDir.absolutePath == "/storage/emulated/0")
-                        UIConstants.FILE_BROWSER_ROOT_LABEL else currentDir.name,
+                    text = currentDir?.let { 
+                        if (it.absolutePath == selectedVolume?.file?.absolutePath)
+                            selectedVolume.name else it.name 
+                    } ?: "...",
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     color = MaterialTheme.colorScheme.onBackground,
@@ -449,6 +482,82 @@ private fun EmptyFolderState() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VolumeBottomSheet(
+    volumes: List<com.rp.dedup.core.model.StorageVolume>,
+    selectedVolume: com.rp.dedup.core.model.StorageVolume?,
+    onSelect: (com.rp.dedup.core.model.StorageVolume) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                "Select Storage",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            volumes.forEach { volume ->
+                VolumeOption(
+                    volume = volume,
+                    selected = volume.file.absolutePath == selectedVolume?.file?.absolutePath,
+                    onClick = { onSelect(volume) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun VolumeOption(
+    volume: com.rp.dedup.core.model.StorageVolume,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (volume.isPrimary) Icons.Default.Smartphone else Icons.Default.SdCard,
+            contentDescription = null,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(
+                volume.name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+            )
+            Text(
+                text = "${formatFileSize(volume.freeBytes)} free of ${formatFileSize(volume.totalBytes)}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        if (selected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
 // ─── Bottom Sheet ─────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -605,10 +714,14 @@ private fun FileBrowserPreview() {
     )
     DeDupTheme {
         CompositionLocalProvider(LocalDrawerState provides rememberDrawerState(DrawerValue.Closed)) {
+            val root = File("/storage/emulated/0")
+            val volume = com.rp.dedup.core.model.StorageVolume("Internal Storage", root, true, 1024L*1024*100, 1024L*1024*50)
             FileBrowserContent(
                 navController = rememberNavController(),
                 items = mockItems,
-                currentDir = File("/storage/emulated/0"),
+                currentDir = root,
+                availableVolumes = listOf(volume),
+                selectedVolume = volume,
                 isLoading = false,
                 sortMode = SortMode.NAME,
                 searchQuery = "",
@@ -622,6 +735,7 @@ private fun FileBrowserPreview() {
                 onNavigateToDir = {},
                 onRefresh = {},
                 onSortClick = {},
+                onVolumeClick = {},
                 onOpenFile = {}
             )
         }
