@@ -187,6 +187,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime.ktx)
+
+    // AppFunctions
+    implementation(libs.androidx.appfunctions)
+    ksp(libs.androidx.appfunctions.compiler)
     implementation(libs.sqlcipher)
     implementation(libs.play.integrity)
     implementation(libs.androidx.profileinstaller)
