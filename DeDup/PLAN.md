@@ -51,7 +51,7 @@ Success criteria: When the forecast crosses a low-storage threshold, the app pro
 **A2 — Fire "duplicates found" notification from scan results**
 - Outcome: user gets a notification when the scan finds meaningful reclaimable space; no notification when it doesn't.
 - Files: `ScanWorker.kt` (call `AppNotificationManager`), notification copy.
-- AC: notification fires only when `reclaimableBytes` > threshold; respects `hasNotificationPermission()`; tapping deep-links into the duplicates screen.
+- AC: notification fires only when `reclaimableBytes` > threshold; respects `hasNotificationPermission()`; tapping deep-links to the Dashboard (`ROUTE_DASHBOARD`) — not `results_media`/duplicates screen directly, since that route is deliberately excluded from `MainActivity`'s deep-link allowlist (requires prior scan context; expanding a security allowlist is out of scope for this story).
 - Test: unit test asserting the notification manager is/isn't invoked for above/below-threshold and permission-denied cases.
 
 **A3 — Schedule `ScanWorker` as periodic work at app start**
@@ -184,7 +184,7 @@ Epics may interleave, but within each epic stories are strictly sequential (each
 ## Progress
 
 - [x] A1 — Implement real duplicate scan in `ScanWorker.doWork()`
-- [ ] A2 — Fire "duplicates found" notification from scan results
+- [x] A2 — Fire "duplicates found" notification from scan results
 - [ ] A3 — Schedule `ScanWorker` as periodic work at app start
 - [ ] A4 — Settings toggle to enable/disable background auto-scan
 - [ ] B1 — Wire AppFunctions build dependencies into `:app`

@@ -134,12 +134,14 @@ class AppNotificationManager(private val context: Context) {
      * @param title Notification title
      * @param message Notification body text
      * @param isUrgent Whether to use the High Importance channel
+     * @param contentIntent Optional PendingIntent fired when the notification is tapped
      */
     fun showSimpleNotification(
         id: Int,
         title: String,
         message: String,
-        isUrgent: Boolean = false
+        isUrgent: Boolean = false,
+        contentIntent: PendingIntent? = null
     ) {
         if (!hasNotificationPermission()) return
 
@@ -152,6 +154,7 @@ class AppNotificationManager(private val context: Context) {
             .setContentText(message)
             .setPriority(if (isUrgent) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .apply { contentIntent?.let { setContentIntent(it) } }
 
         with(NotificationManagerCompat.from(context)) {
             try {

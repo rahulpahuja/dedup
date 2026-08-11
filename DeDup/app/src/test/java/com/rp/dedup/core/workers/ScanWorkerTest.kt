@@ -3,6 +3,8 @@ package com.rp.dedup.core.workers
 import android.net.Uri
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ScanWorkerTest {
@@ -37,5 +39,24 @@ class ScanWorkerTest {
         val reclaimable = ScanWorker.computeReclaimableBytes(listOf(singleton)) { 42L }
 
         assertEquals(0L, reclaimable)
+    }
+
+    @Test
+    fun `shouldNotify is false below the 50MB threshold`() {
+        assertFalse(ScanWorker.shouldNotify(50L * 1024 * 1024 - 1))
+    }
+
+    @Test
+    fun `shouldNotify is true at or above the 50MB threshold`() {
+        assertTrue(ScanWorker.shouldNotify(50L * 1024 * 1024))
+        assertTrue(ScanWorker.shouldNotify(100L * 1024 * 1024))
+    }
+
+    @Test
+    fun `formatBytes renders human-readable units`() {
+        assertEquals("512 B", ScanWorker.formatBytes(512))
+        assertEquals("1.0 KB", ScanWorker.formatBytes(1024))
+        assertEquals("2.5 MB", ScanWorker.formatBytes((2.5 * 1024 * 1024).toLong()))
+        assertEquals("1.0 GB", ScanWorker.formatBytes(1024L * 1024 * 1024))
     }
 }
