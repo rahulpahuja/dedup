@@ -188,7 +188,7 @@ Epics may interleave, but within each epic stories are strictly sequential (each
 - [x] A3 — Schedule `ScanWorker` as periodic work at app start
 - [x] A4 — Settings toggle to enable/disable background auto-scan
 - [x] B1 — Wire AppFunctions build dependencies into `:app`
-- [ ] B2 — Implement `findLargeFiles` AppFunction
+- [x] B2 — Implement `findLargeFiles` AppFunction
 - [ ] B3 — Implement `findOldPhotos` / `getStorageSummary` AppFunctions
 - [ ] B4 — KDoc refinement pass for agent consumption
 - [ ] C1 — `MemoriesRepository`: group indexed photos by capture date
