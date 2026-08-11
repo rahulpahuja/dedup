@@ -96,4 +96,35 @@ class ScanWorkerTest {
     fun `isLowStorage is true well below the threshold with high confidence`() {
         assertTrue(ScanWorker.isLowStorage(forecast(1, ForecastConfidence.HIGH), thresholdDays = 5))
     }
+
+    // ── todayKey ─────────────────────────────────────────────────────────────
+
+    @Test
+    fun `todayKey formats as yyyy-MM-dd`() {
+        val jan5_2026 = java.util.GregorianCalendar(2026, 0, 5, 12, 0).timeInMillis
+
+        assertEquals("2026-01-05", ScanWorker.todayKey(jan5_2026))
+    }
+
+    // ── shouldNotifyLowStorage ───────────────────────────────────────────────
+
+    @Test
+    fun `shouldNotifyLowStorage is false when the condition itself is false`() {
+        assertFalse(ScanWorker.shouldNotifyLowStorage(isLowStorage = false, lastNotifiedDay = null, today = "2026-08-12"))
+    }
+
+    @Test
+    fun `shouldNotifyLowStorage is true when condition holds and never notified before`() {
+        assertTrue(ScanWorker.shouldNotifyLowStorage(isLowStorage = true, lastNotifiedDay = null, today = "2026-08-12"))
+    }
+
+    @Test
+    fun `shouldNotifyLowStorage is false when already notified today`() {
+        assertFalse(ScanWorker.shouldNotifyLowStorage(isLowStorage = true, lastNotifiedDay = "2026-08-12", today = "2026-08-12"))
+    }
+
+    @Test
+    fun `shouldNotifyLowStorage is true when last notified on a different day`() {
+        assertTrue(ScanWorker.shouldNotifyLowStorage(isLowStorage = true, lastNotifiedDay = "2026-08-11", today = "2026-08-12"))
+    }
 }
