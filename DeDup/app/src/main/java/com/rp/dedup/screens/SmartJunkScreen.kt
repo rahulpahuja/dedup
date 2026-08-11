@@ -40,6 +40,7 @@ import com.rp.dedup.LocalUserProfileViewModel
 import com.rp.dedup.Screen
 import com.rp.dedup.core.model.state.SmartJunkState
 import com.rp.dedup.core.search.SmartJunkRepository
+import com.rp.dedup.core.ui.AiScanningAnimation
 import com.rp.dedup.core.ui.DeDupTopBar
 import com.rp.dedup.core.viewmodels.SmartJunkViewModel
 import com.rp.dedup.ui.theme.DeDupTheme
@@ -188,10 +189,10 @@ private fun ScanningView(progress: Float) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(progress = { progress })
-        Spacer(Modifier.height(16.dp))
-        Text(stringResource(R.string.ai_analyzing_images), style = MaterialTheme.typography.bodyMedium)
-        Text(stringResource(R.string.ai_analyzing_progress, (progress * 100).toInt()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        AiScanningAnimation(progress = progress)
+        Spacer(Modifier.height(24.dp))
+        Text(stringResource(R.string.ai_analyzing_images), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+        Text(stringResource(R.string.ai_analyzing_progress, (progress * 100).toInt()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
