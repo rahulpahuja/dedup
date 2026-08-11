@@ -4,6 +4,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
+import android.os.StatFs
 import android.provider.MediaStore
 import android.util.Log
 import androidx.work.Constraints
@@ -16,8 +18,12 @@ import androidx.work.WorkerParameters
 import com.rp.dedup.MainActivity
 import com.rp.dedup.UIConstants
 import com.rp.dedup.core.db.AppDatabase
+import com.rp.dedup.core.model.ForecastConfidence
+import com.rp.dedup.core.model.StorageForecast
 import com.rp.dedup.core.notifications.AppNotificationManager
 import com.rp.dedup.core.repository.SemanticDuplicateRepository
+import com.rp.dedup.core.repository.StorageForecastingRepository
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -40,6 +46,14 @@ class ScanWorker(appContext: Context, workerParams: WorkerParameters) :
         if (shouldNotify(reclaimableBytes)) {
             notifyDuplicatesFound(applicationContext, reclaimableBytes)
         }
+
+        val forecastingRepository = StorageForecastingRepository(
+            AppDatabase.getDatabase(applicationContext).storageTrendDao()
+        )
+        forecastingRepository.recordSnapshotIfNecessary(freeBytes())
+        val forecast = forecastingRepository.forecast.first()
+        val lowStorageWarning = isLowStorage(forecast)
+        Log.d(TAG, "Storage forecast: $forecast, low-storage warning: $lowStorageWarning")
 
         Result.success(
             Data.Builder()
@@ -74,11 +88,17 @@ class ScanWorker(appContext: Context, workerParams: WorkerParameters) :
         )
     }
 
+    private fun freeBytes(): Long {
+        val stat = StatFs(Environment.getExternalStorageDirectory().path)
+        return stat.availableBlocksLong * stat.blockSizeLong
+    }
+
     companion object {
         private const val TAG = "ScanWorker"
         private const val WORK_NAME = "periodic_duplicate_scan"
         private const val NOTIFICATION_ID = 2001
         private const val RECLAIMABLE_THRESHOLD_BYTES = 50L * 1024 * 1024 // 50 MB
+        private const val LOW_STORAGE_THRESHOLD_DAYS = 5
         const val KEY_GROUP_COUNT = "group_count"
         const val KEY_RECLAIMABLE_BYTES = "reclaimable_bytes"
 
@@ -118,6 +138,19 @@ class ScanWorker(appContext: Context, workerParams: WorkerParameters) :
         /** Only worth interrupting the user once there's a meaningful amount of space to free. */
         internal fun shouldNotify(reclaimableBytes: Long): Boolean =
             reclaimableBytes >= RECLAIMABLE_THRESHOLD_BYTES
+
+        /**
+         * Pure/testable: true once the forecast is confident enough and storage is
+         * running out soon enough to be worth warning the user about. A LOW-confidence
+         * forecast (fewer than 3 snapshots) is excluded to avoid false alarms.
+         */
+        internal fun isLowStorage(
+            forecast: StorageForecast?,
+            thresholdDays: Int = LOW_STORAGE_THRESHOLD_DAYS,
+        ): Boolean =
+            forecast != null &&
+                forecast.confidence != ForecastConfidence.LOW &&
+                forecast.daysRemaining <= thresholdDays
 
         internal fun formatBytes(bytes: Long): String = when {
             bytes >= 1024L * 1024 * 1024 -> "${(bytes / (1024.0 * 1024 * 1024) * 10).roundToInt() / 10.0} GB"

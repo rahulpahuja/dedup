@@ -1,13 +1,23 @@
 package com.rp.dedup.core.workers
 
 import android.net.Uri
+import com.rp.dedup.core.model.ForecastConfidence
+import com.rp.dedup.core.model.StorageForecast
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Date
 
 class ScanWorkerTest {
+
+    private fun forecast(daysRemaining: Int, confidence: ForecastConfidence) = StorageForecast(
+        daysRemaining = daysRemaining,
+        estimatedFullDate = Date(),
+        dailyUsageVelocity = 0L,
+        confidence = confidence,
+    )
 
     private fun uri(): Uri = mockk(relaxed = true)
 
@@ -58,5 +68,32 @@ class ScanWorkerTest {
         assertEquals("1.0 KB", ScanWorker.formatBytes(1024))
         assertEquals("2.5 MB", ScanWorker.formatBytes((2.5 * 1024 * 1024).toLong()))
         assertEquals("1.0 GB", ScanWorker.formatBytes(1024L * 1024 * 1024))
+    }
+
+    // ── isLowStorage ─────────────────────────────────────────────────────────
+
+    @Test
+    fun `isLowStorage is false when forecast is null`() {
+        assertFalse(ScanWorker.isLowStorage(null, thresholdDays = 5))
+    }
+
+    @Test
+    fun `isLowStorage is false when confidence is LOW regardless of daysRemaining`() {
+        assertFalse(ScanWorker.isLowStorage(forecast(1, ForecastConfidence.LOW), thresholdDays = 5))
+    }
+
+    @Test
+    fun `isLowStorage is true at exactly the threshold`() {
+        assertTrue(ScanWorker.isLowStorage(forecast(5, ForecastConfidence.MEDIUM), thresholdDays = 5))
+    }
+
+    @Test
+    fun `isLowStorage is false just above the threshold`() {
+        assertFalse(ScanWorker.isLowStorage(forecast(6, ForecastConfidence.MEDIUM), thresholdDays = 5))
+    }
+
+    @Test
+    fun `isLowStorage is true well below the threshold with high confidence`() {
+        assertTrue(ScanWorker.isLowStorage(forecast(1, ForecastConfidence.HIGH), thresholdDays = 5))
     }
 }

@@ -194,6 +194,6 @@ Epics may interleave, but within each epic stories are strictly sequential (each
 - [x] C1 — `MemoriesRepository`: group indexed photos by capture date
 - [x] C2 — `MemoriesViewModel`
 - [x] C3 — `MemoriesScreen` + nav entry from dashboard
-- [ ] D1 — Extend `ScanWorker` to record forecast snapshot + evaluate low-storage condition
+- [x] D1 — Extend `ScanWorker` to record forecast snapshot + evaluate low-storage condition
 - [ ] D2 — Fire deduped "storage running low" notification
 - [ ] D3 — Align in-app forecast card with notification data
