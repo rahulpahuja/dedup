@@ -75,6 +75,77 @@ class DeDupAppFunctionServiceTest {
         BaseDeDupAppFunctionService.validateFindLargeFilesParams(0L, 20)
     }
 
+    // ── oldPhotosFilterConfig ─────────────────────────────────────────────────
+
+    @Test
+    fun `oldPhotosFilterConfig computes dateAddedBefore from olderThanDays`() {
+        val now = 1_000_000_000_000L
+        val filters = BaseDeDupAppFunctionService.oldPhotosFilterConfig(olderThanDays = 30, nowMs = now)
+
+        assertEquals(now - 30L * 24 * 60 * 60 * 1000, filters.dateAddedBefore)
+    }
+
+    @Test
+    fun `oldPhotosFilterConfig only queries images, oldest first`() {
+        val filters = BaseDeDupAppFunctionService.oldPhotosFilterConfig(olderThanDays = 30, nowMs = 0L)
+
+        assertEquals(setOf(MediaType.IMAGE), filters.mediaTypes)
+        assertEquals(SortBy.DATE_ADDED, filters.sortBy)
+        assertEquals(SortOrder.ASC, filters.sortOrder)
+    }
+
+    // ── validateFindOldPhotosParams ───────────────────────────────────────────
+
+    @Test
+    fun `validateFindOldPhotosParams rejects non-positive olderThanDays`() {
+        assertThrows(AppFunctionInvalidArgumentException::class.java) {
+            BaseDeDupAppFunctionService.validateFindOldPhotosParams(0, 20)
+        }
+    }
+
+    @Test
+    fun `validateFindOldPhotosParams rejects non-positive maxResults`() {
+        assertThrows(AppFunctionInvalidArgumentException::class.java) {
+            BaseDeDupAppFunctionService.validateFindOldPhotosParams(30, 0)
+        }
+    }
+
+    @Test
+    fun `validateFindOldPhotosParams accepts valid input`() {
+        BaseDeDupAppFunctionService.validateFindOldPhotosParams(30, 20)
+    }
+
+    // ── storageSummaryFilterConfig / summarize ────────────────────────────────
+
+    @Test
+    fun `storageSummaryFilterConfig covers image, video, and audio`() {
+        val filters = BaseDeDupAppFunctionService.storageSummaryFilterConfig()
+
+        assertEquals(setOf(MediaType.IMAGE, MediaType.VIDEO, MediaType.AUDIO), filters.mediaTypes)
+    }
+
+    @Test
+    fun `summarize aggregates count and size per media type`() {
+        val uri = mockk<Uri>(relaxed = true)
+        val items = listOf(
+            StorageItem(uri, "a.jpg", 100L, 0L, "image/jpeg", MediaType.IMAGE),
+            StorageItem(uri, "b.jpg", 200L, 0L, "image/jpeg", MediaType.IMAGE),
+            StorageItem(uri, "c.mp4", 500L, 0L, "video/mp4", MediaType.VIDEO),
+        )
+
+        val summary = BaseDeDupAppFunctionService.summarize(items).associateBy { it.mediaType }
+
+        assertEquals(2, summary.getValue("IMAGE").fileCount)
+        assertEquals(300L, summary.getValue("IMAGE").totalSizeBytes)
+        assertEquals(1, summary.getValue("VIDEO").fileCount)
+        assertEquals(500L, summary.getValue("VIDEO").totalSizeBytes)
+    }
+
+    @Test
+    fun `summarize returns empty list for no items`() {
+        assertEquals(emptyList<MediaTypeSummary>(), BaseDeDupAppFunctionService.summarize(emptyList()))
+    }
+
     // ── toStorageFileResult ───────────────────────────────────────────────────
 
     @Test
