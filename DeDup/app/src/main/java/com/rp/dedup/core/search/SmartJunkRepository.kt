@@ -10,10 +10,11 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.BrightnessLow
 import androidx.compose.material.icons.filled.Mood
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.rp.dedup.R
@@ -43,9 +44,9 @@ class SmartJunkRepository(private val context: Context) : java.io.Closeable {
         val icon: ImageVector,
         val color: Color
     ) {
-        SCREENSHOTS(R.string.junk_category_screenshots, R.string.tut_search_title, Icons.Default.Description, Color(0xFF4285F4)),
+        SCREENSHOTS(R.string.junk_category_screenshots, R.string.tut_search_title, Icons.Default.Smartphone, Color(0xFF4285F4)),
         MEMES(R.string.junk_category_memes, R.string.ai_image_cleanup_desc, Icons.Default.Mood, Color(0xFFEA4335)),
-        DOCUMENTS(R.string.junk_category_documents, R.string.smart_ai_cleanup_desc, Icons.Default.Description, Color(0xFF34A853)),
+        DOCUMENTS(R.string.junk_category_documents, R.string.smart_ai_cleanup_desc, Icons.AutoMirrored.Filled.Article, Color(0xFF34A853)),
         BLURRY(R.string.junk_category_blurry, R.string.junk_category_blurry_desc, Icons.Default.PhotoCamera, Color(0xFFFBBC05)),
         POOR_EXPOSURE(R.string.junk_category_poor_exposure, R.string.junk_category_poor_exposure_desc, Icons.Default.BrightnessLow, Color(0xFF9C6FFF))
     }

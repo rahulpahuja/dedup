@@ -248,7 +248,22 @@ private fun JunkCategorySection(
                 if (isExpanded) Icons.Default.ExpandMore else Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(12.dp))
+            Surface(
+                color = category.color.copy(alpha = 0.12f),
+                shape = CircleShape,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = category.icon,
+                        contentDescription = null,
+                        tint = category.color,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(stringResource(category.nameRes), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(stringResource(R.string.items_selected_count, items.size, categorySelectedCount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
