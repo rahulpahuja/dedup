@@ -1,6 +1,8 @@
 package com.rp.dedup.core.image
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
 import android.util.Log
 import androidx.core.net.toUri
 import com.google.mlkit.vision.common.InputImage
@@ -15,6 +17,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.tasks.await
+import kotlin.math.pow
 
 object BestShotAnalyzer {
     private const val TAG = "BestShotAnalyzer"
@@ -29,14 +32,10 @@ object BestShotAnalyzer {
     }
 
     // Gates concurrent bitmap loads across all groups and images.
-    // Without this, analyzeGroups launches all groups × all images at once:
-    // 500 groups × 2 images × ~1 MB per 500px bitmap ≈ 1 GB peak → OOM crash.
     private val bitmapSlots = Semaphore(4)
 
     /**
      * Releases the ML Kit FaceDetector's native resources.
-     * Call from ScannerViewModel.onCleared() so the native thread pool and model
-     * memory are freed when the ViewModel is destroyed.
      */
     fun close() {
         try { faceDetector.close() } catch (_: Exception) { }
@@ -44,7 +43,6 @@ object BestShotAnalyzer {
 
     /**
      * Scores every image in every group concurrently, then marks the best shot.
-     * Bitmap loads are bounded to [bitmapSlots] concurrent operations to cap peak memory.
      */
     suspend fun analyzeGroups(context: Context, groups: List<List<ScannedImage>>): List<List<ScannedImage>> =
         coroutineScope {
@@ -70,20 +68,29 @@ object BestShotAnalyzer {
     private suspend fun calculateQualityScore(context: Context, scannedImage: ScannedImage): Float {
         val uri = scannedImage.uri.toUri()
         val bitmap = bitmapSlots.withPermit {
-            ImageScannerRepository.loadBitmapEfficiently(context, uri)
+            ImageScannerRepository.loadBitmapEfficiently(context, uri, targetWidth = 400)
         } ?: return 0f
 
         var score = 0f
 
-        score += (scannedImage.sizeInBytes / 1024f) / 100f
+        // 1. Sharpness Score (Laplacian Variance) - Max ~50 pts
+        val blurScore = calculateLaplacianVariance(bitmap)
+        score += (blurScore.toFloat() / 20f).coerceAtMost(50f)
 
+        // 2. Exposure Penalty - Max 10 pts reduction
+        val brightness = calculateAverageBrightness(bitmap)
+        if (brightness < 45 || brightness > 225) score -= 10f
+
+        // 3. Face & Expression Score - Max ~40 pts
         try {
             val image = InputImage.fromBitmap(bitmap, 0)
             val faces = faceDetector.process(image).await()
-            score += faces.size * 5f
+            score += faces.size * 5f // 5 pts per face
             faces.forEach { face ->
                 val smileProb = face.smilingProbability ?: 0f
-                score += smileProb * 10f
+                val eyesOpenProb = (face.leftEyeOpenProbability ?: 0.5f) * (face.rightEyeOpenProbability ?: 0.5f)
+                score += smileProb * 15f
+                score += eyesOpenProb * 10f
             }
         } catch (e: Exception) {
             Log.e(TAG, "Face detection failed for ${scannedImage.uri}", e)
@@ -91,6 +98,57 @@ object BestShotAnalyzer {
             bitmap.recycle()
         }
 
+        // 4. File Size (Tie-breaker/Detail proxy)
+        score += (scannedImage.sizeInBytes / 1024f) / 1000f
+
         return score
+    }
+
+    private fun calculateAverageBrightness(bitmap: Bitmap): Double {
+        var totalLuma = 0.0
+        val w = bitmap.width
+        val h = bitmap.height
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        for (pixel in pixels) {
+            val r = AndroidColor.red(pixel)
+            val g = AndroidColor.green(pixel)
+            val b = AndroidColor.blue(pixel)
+            totalLuma += (0.299 * r + 0.587 * g + 0.114 * b)
+        }
+        return totalLuma / (w * h)
+    }
+
+    private fun calculateLaplacianVariance(bitmap: Bitmap): Double {
+        val w = bitmap.width
+        val h = bitmap.height
+        val gray = IntArray(w * h)
+        val pixels = IntArray(w * h)
+        bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
+        
+        for (i in pixels.indices) {
+            val p = pixels[i]
+            gray[i] = (AndroidColor.red(p) * 0.299 + AndroidColor.green(p) * 0.587 + AndroidColor.blue(p) * 0.114).toInt()
+        }
+        
+        val laplacian = DoubleArray(w * h)
+        var mean = 0.0
+        
+        for (y in 1 until h - 1) {
+            for (x in 1 until w - 1) {
+                val idx = y * w + x
+                val center = gray[idx]
+                val sum = gray[idx - 1] + gray[idx + 1] + gray[idx - w] + gray[idx + w] - 4 * center
+                laplacian[idx] = sum.toDouble()
+                mean += sum
+            }
+        }
+        mean /= (w * h)
+        
+        var variance = 0.0
+        for (v in laplacian) {
+            variance += (v - mean).pow(2)
+        }
+        return variance / (w * h)
     }
 }

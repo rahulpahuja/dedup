@@ -9,8 +9,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.model.MediaCounts
+import com.rp.dedup.core.model.StorageForecast
 import com.rp.dedup.core.model.StorageStats
 import com.rp.dedup.core.repository.ScanHistoryRepository
+import com.rp.dedup.core.repository.StorageForecastingRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +24,7 @@ import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val historyRepository: ScanHistoryRepository,
+    private val forecastingRepository: StorageForecastingRepository,
     context: Context
 ) : ViewModel() {
 
@@ -29,8 +32,10 @@ class DashboardViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val appContext = context.applicationContext
+            val db = AppDatabase.getDatabase(appContext)
             return DashboardViewModel(
-                ScanHistoryRepository(AppDatabase.getDatabase(appContext).scanHistoryDao()),
+                ScanHistoryRepository(db.scanHistoryDao()),
+                StorageForecastingRepository(db.storageTrendDao()),
                 appContext
             ) as T
         }
@@ -48,6 +53,9 @@ class DashboardViewModel(
     val totalReclaimableBytes: StateFlow<Long> = historyRepository.getAll()
         .map { history -> history.sumOf { it.reclaimableBytes } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0L)
+
+    val storageForecast: StateFlow<StorageForecast?> = forecastingRepository.forecast
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
         loadStorageStats()
@@ -71,6 +79,8 @@ class DashboardViewModel(
                     usedBytes = total - free,
                     freeBytes = free
                 )
+                // Record snapshot for forecasting
+                forecastingRepository.recordSnapshotIfNecessary(free)
             } catch (_: Exception) { /* leave defaults */ }
         }
     }

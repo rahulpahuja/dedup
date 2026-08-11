@@ -287,6 +287,8 @@
     <string name="ml_best_choice">ML BEST CHOICE</string>
     <string name="keep">KEEP</string>
     <string name="best_shot">Best Shot</string>
+    <string name="best_shot_label">BEST SHOT</string>
+    <string name="burst_label">BURST</string>
     <string name="page_number">%1$d</string>
     <string name="prev_page">Previous page</string>
     <string name="next_page">Next page</string>
@@ -384,6 +386,14 @@
     <string name="items_selected_count">%1$d items · %2$d selected</string>
     <string name="got_it_btn">Got it</string>
     <string name="ai_insight_title">AI Insight</string>
+
+    <string name="junk_category_screenshots">Screenshots</string>
+    <string name="junk_category_memes">Memes &amp; Graphics</string>
+    <string name="junk_category_documents">Receipts &amp; Docs</string>
+    <string name="junk_category_blurry">Blurry Shots</string>
+    <string name="junk_category_poor_exposure">Poor Exposure</string>
+    <string name="junk_category_blurry_desc">Out of focus or shaky images</string>
+    <string name="junk_category_poor_exposure_desc">Too dark or overexposed photos</string>
 
     <!-- Contact Deduplication Screen -->
     <string name="privacy_mode_active">Privacy Mode Active</string>

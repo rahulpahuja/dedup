@@ -154,7 +154,7 @@ class ScannerViewModel(
                         .map { it.toList() }
                 }
 
-                val finalizedGroups = BestShotAnalyzer.analyzeGroups(context, groupsToAnalyze)
+                val finalizedGroups = finalizeGroups(groupsToAnalyze)
 
                 _duplicateGroups.value = finalizedGroups
 
@@ -223,9 +223,7 @@ class ScannerViewModel(
     private fun processBatch(images: List<ScannedImage>) {
         synchronized(groupsLock) {
             for (image in images) {
-                // Stage 1: exact-byte match — requires both same size AND same CRC32 prefix.
-                // Including sizeInBytes in the key prevents 32-bit CRC32 collisions across
-                // files of different sizes, which caused false-positive duplicate groups.
+                // Stage 1: exact-byte match
                 if (image.exactHash != -1L) {
                     val exactKey = "e:${image.sizeInBytes}_${image.exactHash}"
                     if (allScannedGroups.containsKey(exactKey)) {
@@ -234,26 +232,22 @@ class ScannerViewModel(
                     }
                 }
 
-                // Stage 2: near-duplicate match via dHash — only scan "d:" groups.
-                // Never expand "e:" groups via dHash: those groups represent byte-identical files
-                // and adding a merely similar image would corrupt the exact-duplicate semantics.
-                var nearDupKey: String? = null
+                // Stage 2: near-duplicate match via dHash
+                var bestMatchKey: String? = null
+                var minDistance = similarityThreshold + 1
+
                 for ((key, group) in allScannedGroups) {
                     if (key.startsWith("e:")) continue
-                    if (ImageHasher.calculateHammingDistance(
-                            image.dHash, group.first().dHash
-                        ) <= similarityThreshold
-                    ) {
-                        nearDupKey = key
-                        break
+                    val distance = ImageHasher.calculateHammingDistance(image.dHash, group.first().dHash)
+                    if (distance < minDistance) {
+                        minDistance = distance
+                        bestMatchKey = key
                     }
                 }
 
-                if (nearDupKey != null) {
-                    allScannedGroups[nearDupKey]!!.add(image)
+                if (bestMatchKey != null) {
+                    allScannedGroups[bestMatchKey]!!.add(image)
                 } else {
-                    // New group. Use exact key when available so future byte-identical
-                    // images can find it in Stage 1; otherwise use dHash key for near-dups.
                     val newKey = if (image.exactHash != -1L)
                         "e:${image.sizeInBytes}_${image.exactHash}"
                     else
@@ -262,6 +256,27 @@ class ScannerViewModel(
                 }
             }
         }
+    }
+
+    /** Post-process groups to flag Bursts and pick the Best Shot. */
+    private suspend fun finalizeGroups(groups: List<List<ScannedImage>>): List<List<ScannedImage>> {
+        val analyzed = BestShotAnalyzer.analyzeGroups(context, groups)
+        return analyzed.map { group ->
+            val isBurst = isBurstGroup(group)
+            group.map { it.copy(isBurstGroup = isBurst) }
+        }
+    }
+
+    private fun isBurstGroup(group: List<ScannedImage>): Boolean {
+        if (group.size < 2) return false
+        val times = group.map { it.dateTaken }.filter { it > 0 }.sorted()
+        if (times.size < 2) return false
+        
+        // If max interval between consecutive shots is < 3 seconds, it's a burst.
+        for (i in 0 until times.size - 1) {
+            if (kotlin.math.abs(times[i+1] - times[i]) > 3000) return false
+        }
+        return true
     }
 
     private suspend fun saveHistory(startTime: Long, status: String) {

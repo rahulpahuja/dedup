@@ -278,6 +278,8 @@
     <string name="ml_best_choice">ML सबसे अच्छा चुनाव</string>
     <string name="keep">रखें</string>
     <string name="best_shot">सबसे अच्छा शॉट</string>
+    <string name="best_shot_label">सबसे अच्छा शॉट</string>
+    <string name="burst_label">बर्स्ट</string>
     <string name="page_number">%1$d</string>
     <string name="prev_page">पिछला पेज</string>
     <string name="next_page">अगला पेज</string>
@@ -288,4 +290,17 @@
     <string name="delete_all">सभी हटाएं</string>
     <string name="large_files">बड़ी फ़ाइलें</string>
     <string name="duplicate_groups">डुप्लिकेट समूह</string>
+
+    <!-- Smart Junk Screen Updates -->
+    <string name="ai_analyzing_progress">%1$d%%</string>
+    <string name="items_selected_count">%1$d आइटम · %2$d चयनित</string>
+    <string name="got_it_btn">समझ गया</string>
+    <string name="ai_insight_title">AI अंतर्दृष्टि</string>
+    <string name="junk_category_screenshots">स्क्रीनशॉट</string>
+    <string name="junk_category_memes">मीम्स और ग्राफिक्स</string>
+    <string name="junk_category_documents">रसीदें और दस्तावेज़</string>
+    <string name="junk_category_blurry">धुंधली तस्वीरें</string>
+    <string name="junk_category_poor_exposure">खराब एक्सपोज़र</string>
+    <string name="junk_category_blurry_desc">आउट ऑफ फोकस या हिलती हुई तस्वीरें</string>
+    <string name="junk_category_poor_exposure_desc">बहुत गहरी या बहुत अधिक चमकदार तस्वीरें</string>
 </resources>

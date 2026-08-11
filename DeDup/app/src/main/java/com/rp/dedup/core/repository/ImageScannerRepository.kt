@@ -120,7 +120,7 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
         concurrencyLevel: Int,
         excludedFolders: List<String>
     ): Flow<ScannedImage> {
-        val imageQueue = mutableListOf<Triple<Uri, Long, Long>>()
+        val imageQueue = mutableListOf<ImageMeta>()
 
         val volumeColumn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             MediaStore.Images.Media.VOLUME_NAME else null
@@ -130,6 +130,7 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
             add(MediaStore.Images.Media.SIZE)
             add(MediaStore.Images.Media.DATA)
             add(MediaStore.Images.Media.DATE_MODIFIED)
+            add(MediaStore.Images.Media.DATE_TAKEN)
             if (volumeColumn != null) add(volumeColumn)
         }.toTypedArray()
 
@@ -143,6 +144,7 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)
             val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
             val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_MODIFIED)
+            val takenColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)
             val volColumn = volumeColumn?.let { cursor.getColumnIndex(it) } ?: -1
 
             while (cursor.moveToNext()) {
@@ -151,7 +153,8 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
 
                 val id = cursor.getLong(idColumn)
                 val size = cursor.getLong(sizeColumn)
-                val date = cursor.getLong(dateColumn)
+                val dateMod = cursor.getLong(dateColumn)
+                val dateTaken = cursor.getLong(takenColumn)
 
                 // Use volume-aware URI so MediaStore.createDeleteRequest accepts it on API 30+.
                 val baseUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && volColumn >= 0) {
@@ -161,27 +164,28 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI
                 }
                 val uri = ContentUris.withAppendedId(baseUri, id)
-                imageQueue.add(Triple(uri, size, date))
+                imageQueue.add(ImageMeta(uri, size, dateMod, dateTaken))
             }
         }
 
         return imageQueue.asFlow()
-            .flatMapMerge(concurrency = concurrencyLevel) { (uri, size, date) ->
+            .flatMapMerge(concurrency = concurrencyLevel) { meta ->
                 flow {
                     // Decode at 128px minimum — 16x the dHash target height (8px).
                     // This guarantees the Canvas always downscales (never upscales),
                     // producing stable gradients for accurate hashing.
-                    val bitmap = loadBitmapEfficiently(context, uri, targetWidth = HASH_DECODE_TARGET)
+                    val bitmap = loadBitmapEfficiently(context, meta.uri, targetWidth = HASH_DECODE_TARGET)
                     if (bitmap != null) {
                         val hash = ImageHasher.calculateDHash(bitmap)
                         bitmap.recycle()
-                        val exactHash = computePartialCrc32(context, uri)
+                        val exactHash = computePartialCrc32(context, meta.uri)
                         emit(
                             ScannedImage(
-                                uri = uri.toString(),
+                                uri = meta.uri.toString(),
                                 dHash = hash,
-                                sizeInBytes = size,
-                                dateModified = date,
+                                sizeInBytes = meta.size,
+                                dateModified = meta.dateModified,
+                                dateTaken = meta.dateTaken,
                                 exactHash = exactHash
                             )
                         )
@@ -193,4 +197,6 @@ class ImageScannerRepository(private val context: Context) : IImageScannerReposi
             // without blocking the CPU thread pool that Dispatchers.Default uses.
             .flowOn(Dispatchers.IO)
     }
+
+    private data class ImageMeta(val uri: Uri, val size: Long, val dateModified: Long, val dateTaken: Long)
 }

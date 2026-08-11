@@ -50,11 +50,13 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
             val enhancedGroups = groups.mapValues { (_, items) ->
                 items.map { item ->
                     async {
-                        val reason = aiClassifier.classifyFile(
+                        val heuristicReason = aiClassifier.classifyFile(
                             item.fileName, 
                             Formatter.formatShortFileSize(getApplication(), item.size)
                         )
-                        item.copy(aiReason = reason)
+                        // Prefer pixel-based reason from repository if available
+                        val combinedReason = item.aiReason ?: heuristicReason
+                        item.copy(aiReason = combinedReason)
                     }
                 }.awaitAll()
             }

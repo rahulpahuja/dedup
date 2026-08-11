@@ -17,7 +17,9 @@ import com.rp.dedup.core.dao.TrashDao
 import com.rp.dedup.core.model.ScannedImage
 import com.rp.dedup.core.model.ScannedVideoEntity
 import com.rp.dedup.core.model.ScanHistory
+import com.rp.dedup.core.model.StorageTrend
 import com.rp.dedup.core.model.TrashItem
+import com.rp.dedup.core.dao.StorageTrendDao
 import com.rp.dedup.core.search.FloatArrayConverter
 import com.rp.dedup.core.search.ImageEmbeddingEntity
 import com.rp.dedup.core.search.LongListConverter
@@ -26,8 +28,8 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import java.io.File
 
 @Database(
-    entities = [ScannedImage::class, ScanHistory::class, ImageEmbeddingEntity::class, ScannedVideoEntity::class, TrashItem::class],
-    version = 7,
+    entities = [ScannedImage::class, ScanHistory::class, ImageEmbeddingEntity::class, ScannedVideoEntity::class, TrashItem::class, StorageTrend::class],
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(FloatArrayConverter::class, LongListConverter::class)
@@ -37,6 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun scanHistoryDao(): ScanHistoryDao
     abstract fun imageEmbeddingDao(): ImageEmbeddingDao
     abstract fun trashDao(): TrashDao
+    abstract fun storageTrendDao(): StorageTrendDao
 
     companion object {
         @Volatile
@@ -136,6 +139,27 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `storage_trends` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `timestamp` INTEGER NOT NULL,
+                        `freeBytes` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE scanned_images ADD COLUMN dateTaken INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE scanned_images ADD COLUMN isBurstGroup INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
@@ -182,7 +206,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 dbName
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .apply {
                     if (com.rp.dedup.BuildConfig.DEBUG) {
                         fallbackToDestructiveMigration(dropAllTables = true)

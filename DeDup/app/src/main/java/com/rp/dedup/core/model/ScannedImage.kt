@@ -10,8 +10,10 @@ data class ScannedImage(
     val dHash: Long,
     val sizeInBytes: Long,
     val dateModified: Long = 0L,
+    val dateTaken: Long = 0L,
     val qualityScore: Float = 0f,
     val isAiSuggestion: Boolean = false,
+    val isBurstGroup: Boolean = false,
     val exactHash: Long = -1L,
     val groupKey: String = Constants.EMPTY_STRING
 )

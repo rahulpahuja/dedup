@@ -322,11 +322,30 @@ private fun DuplicateGroupCard(
                             color = MaterialTheme.colorScheme.primary
                         )
                     )
-                    Text(
-                        stringResource(R.string.group_subtitle, group.size, formatFileSize(context, savingsBytes)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (group.firstOrNull()?.isBurstGroup == true) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                shape = RoundedCornerShape(4.dp),
+                                modifier = Modifier.padding(end = 6.dp)
+                            ) {
+                                Text(
+                                    stringResource(R.string.burst_label),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 8.sp,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                )
+                            }
+                        }
+                        Text(
+                            stringResource(R.string.group_subtitle, group.size, formatFileSize(context, savingsBytes)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 Surface(
                     shape = CircleShape,
@@ -458,8 +477,13 @@ private fun SelectableImageItem(
         )
 
         if (isKeep) {
+            val label = if (item.isAiSuggestion) {
+                if (item.isBurstGroup) stringResource(R.string.best_shot_label) else stringResource(R.string.ml_best_choice)
+            } else {
+                stringResource(R.string.keep)
+            }
             Text(
-                text = if (item.isAiSuggestion) stringResource(R.string.ml_best_choice) else stringResource(R.string.keep),
+                text = label,
                 color = Color.White,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,

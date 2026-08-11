@@ -39,6 +39,7 @@ import com.rp.dedup.Screen
 import com.rp.dedup.core.analytics.AnalyticsManager
 import com.rp.dedup.core.caching.DataStoreManager
 import com.rp.dedup.core.model.MediaCounts
+import com.rp.dedup.core.model.StorageForecast
 import com.rp.dedup.core.search.ImageSearchRepository
 import com.rp.dedup.core.viewmodels.DashboardViewModel
 import com.rp.dedup.core.viewmodels.ImageSearchViewModel
@@ -65,6 +66,7 @@ fun DashboardScreen(
     val isSearching      by searchViewModel.isSearching.collectAsState()
     val searchProgress   by searchViewModel.progress.collectAsState()
     val searchError      by searchViewModel.error.collectAsState()
+    val storageForecast  by dashboardViewModel.storageForecast.collectAsState()
 
     val tutorialShown by dataStoreManager.readData(DataStoreManager.TUTORIAL_SHOWN, false)
         .collectAsState(initial = true)
@@ -95,6 +97,7 @@ fun DashboardScreen(
         isSearching          = isSearching,
         searchProgress       = searchProgress,
         searchError          = searchError,
+        storageForecast      = storageForecast,
         onSearch             = { searchViewModel.search(it) },
         onClearSearch        = { searchViewModel.clear() },
         onDeleteSearchResult = { searchViewModel.removeDeletedResult(it) },
@@ -119,6 +122,7 @@ fun DashboardScreenContent(
     isSearching: Boolean,
     searchProgress: Pair<Int, Int>,
     searchError: String?,
+    storageForecast: StorageForecast? = null,
     onSearch: (String) -> Unit,
     onClearSearch: () -> Unit,
     onDeleteSearchResult: (Uri) -> Unit = {},
@@ -219,6 +223,10 @@ fun DashboardScreenContent(
                             content = { TutorialTooltip(stringResource(R.string.tut_quick_scan_title), stringResource(R.string.tut_quick_scan_body)) })
                     )
                     Spacer(Modifier.height(32.dp))
+                }
+                item {
+                    ForecastCard(forecast = storageForecast)
+                    if (storageForecast != null) Spacer(Modifier.height(32.dp))
                 }
                 item {
                     ShareAppCard()
