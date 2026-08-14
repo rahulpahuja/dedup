@@ -130,6 +130,10 @@ class SmartJunkViewModel(application: Application) : AndroidViewModel(applicatio
             )
 
             analyticsManager.logFilesDeleted("JUNK", deletedUris.size, freedBytes)
+            analyticsManager.logCleanupCompleted("JUNK", deletedUris.size, freedBytes)
+            if (freedBytes > 0) {
+                analyticsManager.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
+            }
         }
     }
 

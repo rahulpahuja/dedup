@@ -95,11 +95,12 @@ fun FileCleanupScreen(navController: NavHostController) {
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            analytics.logFilesDeleted(
-                selectedCategory?.toScanType() ?: "LARGE_FILE",
-                pendingDeleteUris.size,
-                pendingDeleteBytes
-            )
+            val scanType = selectedCategory?.toScanType() ?: "LARGE_FILE"
+            analytics.logFilesDeleted(scanType, pendingDeleteUris.size, pendingDeleteBytes)
+            analytics.logCleanupCompleted(scanType, pendingDeleteUris.size, pendingDeleteBytes)
+            if (pendingDeleteBytes > 0) {
+                analytics.logValueAchieved("STORAGE_RECLAIMED", pendingDeleteBytes)
+            }
             cleanupViewModel.onFilesDeleted(pendingDeleteUris.toSet())
             selectedUris       = emptySet()
             pendingDeleteUris  = emptyList()
@@ -122,6 +123,7 @@ fun FileCleanupScreen(navController: NavHostController) {
         pendingDeleteUris  = uris
         pendingDeleteBytes = freedBytes
         val scanType = selectedCategory?.toScanType() ?: "LARGE_FILE"
+        analytics.logCleanupStarted(scanType, uris.size)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
             selectedCategory == LargeFileCategory.VIDEO) {
             runCatching {
@@ -133,6 +135,8 @@ fun FileCleanupScreen(navController: NavHostController) {
                         uris.forEach { runCatching { context.contentResolver.delete(it, null, null) } }
                     }
                     analytics.logFilesDeleted(scanType, uris.size, freedBytes)
+                    analytics.logCleanupCompleted(scanType, uris.size, freedBytes)
+                    if (freedBytes > 0) analytics.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
                     cleanupViewModel.onFilesDeleted(uris.toSet())
                     selectedUris       = emptySet()
                     pendingDeleteUris   = emptyList()
@@ -145,6 +149,8 @@ fun FileCleanupScreen(navController: NavHostController) {
                     uris.forEach { runCatching { context.contentResolver.delete(it, null, null) } }
                 }
                 analytics.logFilesDeleted(scanType, uris.size, freedBytes)
+                analytics.logCleanupCompleted(scanType, uris.size, freedBytes)
+                if (freedBytes > 0) analytics.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
                 cleanupViewModel.onFilesDeleted(uris.toSet())
                 selectedUris       = emptySet()
                 pendingDeleteUris   = emptyList()

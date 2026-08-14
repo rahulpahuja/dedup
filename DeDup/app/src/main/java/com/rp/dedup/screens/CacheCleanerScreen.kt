@@ -45,11 +45,16 @@ fun CacheCleanerScreen(navController: NavHostController) {
     LaunchedEffect(startCleaning) {
         if (startCleaning) {
             analyticsManager.logScanStarted("CACHE")
+            analyticsManager.logCleanupStarted("CACHE", 0)
             CacheCleaner.clearAllCacheFlow(context).collect {
                 progressState = it
                 if (it is CleaningProgress.Finished) {
                     analyticsManager.logScanCompleted("CACHE", 0, 0, it.totalBytesCleared)
                     analyticsManager.logFilesDeleted("CACHE", 0, it.totalBytesCleared)
+                    analyticsManager.logCleanupCompleted("CACHE", 0, it.totalBytesCleared)
+                    if (it.totalBytesCleared > 0) {
+                        analyticsManager.logValueAchieved("STORAGE_RECLAIMED", it.totalBytesCleared)
+                    }
                 } else if (it is CleaningProgress.Error) {
                     analyticsManager.logError("CACHE", it.message)
                 }

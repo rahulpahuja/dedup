@@ -326,6 +326,10 @@ class ScannerViewModel(
         }
 
         analyticsManager?.logFilesDeleted("IMAGE", deletedUris.size, freedBytes)
+        analyticsManager?.logCleanupCompleted("IMAGE", deletedUris.size, freedBytes)
+        if (freedBytes > 0) {
+            analyticsManager?.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
+        }
 
         synchronized(groupsLock) {
             _duplicateGroups.value = allScannedGroups.values

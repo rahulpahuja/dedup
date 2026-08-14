@@ -52,11 +52,13 @@ class EmptyFolderViewModel(
     fun deleteFolders(folders: List<EmptyFolder>) {
         viewModelScope.launch(ioDispatcher) {
             val current = _state.value as? EmptyFolderState.Results ?: return@launch
+            analyticsManager?.logCleanupStarted("EMPTY_FOLDER", folders.size)
             val deletedPaths = folders
                 .filter { repository.deleteFolder(it) }
                 .map { it.path }
                 .toSet()
             analyticsManager?.logFilesDeleted("EMPTY_FOLDER", deletedPaths.size, 0L)
+            analyticsManager?.logCleanupCompleted("EMPTY_FOLDER", deletedPaths.size, 0L)
             _state.value = EmptyFolderState.Results(
                 current.folders.filterNot { it.path in deletedPaths }
             )

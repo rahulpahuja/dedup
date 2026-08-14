@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
 
+        AnalyticsManager.getInstance(applicationContext).logAppOpened()
+
         // Handle initial intent
         handleIntent(intent)
 

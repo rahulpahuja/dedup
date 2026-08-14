@@ -12,6 +12,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 class AnalyticsManager private constructor(context: Context) {
 
     private val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
+    private var hasLoggedAppOpened = false
 
     companion object {
         @Volatile
@@ -50,6 +51,17 @@ class AnalyticsManager private constructor(context: Context) {
         private const val EVENT_FEATURE_OPENED          = "feature_opened"
         private const val EVENT_FEATURE_CLOSED          = "feature_closed"
 
+        // --- Funnel / activation events ---
+        private const val EVENT_APP_OPENED              = "app_opened"
+        private const val EVENT_USER_TYPE_SELECTED      = "user_type_selected"
+        private const val EVENT_CLEANUP_STARTED         = "cleanup_started"
+        private const val EVENT_CLEANUP_COMPLETED       = "cleanup_completed"
+        private const val EVENT_VALUE_ACHIEVED          = "value_achieved"
+        private const val EVENT_PAYWALL_VIEWED          = "paywall_viewed"
+        private const val EVENT_PURCHASE_STARTED        = "purchase_started"
+        private const val EVENT_PURCHASE_COMPLETED      = "purchase_completed"
+        private const val EVENT_SUBSCRIPTION_CANCELLED  = "subscription_cancelled"
+
         // --- Parameter Names ---
         private const val PARAM_SCAN_TYPE        = "scan_type"       // IMAGE, VIDEO, PDF, APK, JUNK, WHATSAPP, SOCIAL, CONTACT
         private const val PARAM_TOTAL_SCANNED    = "total_scanned"
@@ -69,6 +81,11 @@ class AnalyticsManager private constructor(context: Context) {
         private const val PARAM_MERGED_COUNT     = "merged_count"
         private const val PARAM_FEATURE_NAME     = "feature_name"
         private const val PARAM_DURATION_MS      = "duration_ms"
+        private const val PARAM_USER_TYPE        = "user_type"
+        private const val PARAM_SELECTED_COUNT   = "selected_count"
+        private const val PARAM_VALUE_TYPE       = "value_type"     // STORAGE_RECLAIMED
+        private const val PARAM_SOURCE           = "source"         // where the paywall was triggered from
+        private const val PARAM_SKU              = "sku"
     }
 
     fun logScanStarted(scanType: String) {
@@ -208,5 +225,78 @@ class AnalyticsManager private constructor(context: Context) {
             putLong(PARAM_DURATION_MS, durationMs)
         }
         firebaseAnalytics.logEvent(EVENT_FEATURE_CLOSED, bundle)
+    }
+
+    /**
+     * Fire from MainActivity.onCreate. Guarded to once per process, since onCreate
+     * re-runs on config changes (rotation, etc.) that would otherwise double-count opens.
+     */
+    fun logAppOpened() {
+        if (hasLoggedAppOpened) return
+        hasLoggedAppOpened = true
+        firebaseAnalytics.logEvent(EVENT_APP_OPENED, null)
+    }
+
+    fun logUserTypeSelected(userType: String) {
+        val bundle = Bundle().apply {
+            putString(PARAM_USER_TYPE, userType)
+        }
+        firebaseAnalytics.logEvent(EVENT_USER_TYPE_SELECTED, bundle)
+    }
+
+    /** Fire when the user taps delete/confirm, before the deletion itself runs. */
+    fun logCleanupStarted(scanType: String, selectedCount: Int) {
+        val bundle = Bundle().apply {
+            putString(PARAM_SCAN_TYPE, scanType)
+            putInt(PARAM_SELECTED_COUNT, selectedCount)
+        }
+        firebaseAnalytics.logEvent(EVENT_CLEANUP_STARTED, bundle)
+    }
+
+    /** Fire after deletion finishes. Pair with [logValueAchieved] when freedBytes > 0. */
+    fun logCleanupCompleted(scanType: String, deletedCount: Int, freedBytes: Long) {
+        val bundle = Bundle().apply {
+            putString(PARAM_SCAN_TYPE, scanType)
+            putInt(PARAM_DELETED_COUNT, deletedCount)
+            putLong(PARAM_FREED_BYTES, freedBytes)
+        }
+        firebaseAnalytics.logEvent(EVENT_CLEANUP_COMPLETED, bundle)
+    }
+
+    /** Marks that the user actually realized value from the app (e.g. storage reclaimed). */
+    fun logValueAchieved(valueType: String, freedBytes: Long) {
+        val bundle = Bundle().apply {
+            putString(PARAM_VALUE_TYPE, valueType)
+            putLong(PARAM_FREED_BYTES, freedBytes)
+        }
+        firebaseAnalytics.logEvent(EVENT_VALUE_ACHIEVED, bundle)
+    }
+
+    fun logPaywallViewed(source: String) {
+        val bundle = Bundle().apply {
+            putString(PARAM_SOURCE, source)
+        }
+        firebaseAnalytics.logEvent(EVENT_PAYWALL_VIEWED, bundle)
+    }
+
+    fun logPurchaseStarted(sku: String) {
+        val bundle = Bundle().apply {
+            putString(PARAM_SKU, sku)
+        }
+        firebaseAnalytics.logEvent(EVENT_PURCHASE_STARTED, bundle)
+    }
+
+    fun logPurchaseCompleted(sku: String) {
+        val bundle = Bundle().apply {
+            putString(PARAM_SKU, sku)
+        }
+        firebaseAnalytics.logEvent(EVENT_PURCHASE_COMPLETED, bundle)
+    }
+
+    fun logSubscriptionCancelled(sku: String) {
+        val bundle = Bundle().apply {
+            putString(PARAM_SKU, sku)
+        }
+        firebaseAnalytics.logEvent(EVENT_SUBSCRIPTION_CANCELLED, bundle)
     }
 }

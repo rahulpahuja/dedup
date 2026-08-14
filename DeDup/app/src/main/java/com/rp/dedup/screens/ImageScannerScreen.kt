@@ -147,6 +147,7 @@ fun ImageScannerScreen(navController: NavHostController) {
 
     fun triggerOSDeletionPrompt(uris: List<Uri>) {
         if (uris.isEmpty()) return
+        analyticsManager.logCleanupStarted("IMAGE", uris.size)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // MediaStore.createDeleteRequest throws IllegalArgumentException (rather than
             // failing gracefully) if any uri no longer refers to an existing media item —

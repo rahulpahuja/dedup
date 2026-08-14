@@ -75,6 +75,7 @@ fun SmartJunkScreen(navController: NavHostController) {
     fun triggerDelete(uris: List<Uri>) {
         if (uris.isEmpty()) return
         pendingDeleteUris = uris
+        analyticsManager.logCleanupStarted("JUNK", uris.size)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val pi = MediaStore.createDeleteRequest(context.contentResolver, uris)
             deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())

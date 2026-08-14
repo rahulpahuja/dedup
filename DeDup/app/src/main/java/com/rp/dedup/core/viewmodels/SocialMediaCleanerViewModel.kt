@@ -100,10 +100,15 @@ class SocialMediaCleanerViewModel(
             val current = _state.value as? SocialMediaCleanerState.Results ?: return@launch
             val toDelete = current.duplicateGroups.flatten().filter { it.uri in uris }
             val freedBytes = toDelete.sumOf { it.size }
-            
+
+            analyticsManager?.logCleanupStarted("SOCIAL_MEDIA", uris.size)
             repository.deleteFiles(uris)
-            
+
             analyticsManager?.logFilesDeleted("SOCIAL_MEDIA", uris.size, freedBytes)
+            analyticsManager?.logCleanupCompleted("SOCIAL_MEDIA", uris.size, freedBytes)
+            if (freedBytes > 0) {
+                analyticsManager?.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
+            }
 
             val remaining = current.duplicateGroups
                 .map { group -> group.filterNot { it.uri in uris } }

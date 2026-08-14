@@ -143,6 +143,10 @@ fun DashboardScreenContent(
     val deleteLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             analyticsManager?.logFilesDeleted("DASHBOARD_SEARCH", 1, pendingDeleteFileSize)
+            analyticsManager?.logCleanupCompleted("DASHBOARD_SEARCH", 1, pendingDeleteFileSize)
+            if (pendingDeleteFileSize > 0) {
+                analyticsManager?.logValueAchieved("STORAGE_RECLAIMED", pendingDeleteFileSize)
+            }
             pendingDeleteUri?.let { onDeleteSearchResult(it) }
             pendingDeleteUri = null; pendingDeleteFileSize = 0L
         }
@@ -150,6 +154,7 @@ fun DashboardScreenContent(
 
     fun requestDelete(uri: Uri) {
         if (isGuest) { showGuestDeleteDialog = true; return }
+        analyticsManager?.logCleanupStarted("DASHBOARD_SEARCH", 1)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             pendingDeleteUri = uri
             scope.launch {
@@ -165,6 +170,8 @@ fun DashboardScreenContent(
                 ?.use { c -> if (c.moveToFirst()) c.getLong(0) else 0L } ?: 0L
             context.contentResolver.delete(uri, null, null)
             analyticsManager?.logFilesDeleted("DASHBOARD_SEARCH", 1, size)
+            analyticsManager?.logCleanupCompleted("DASHBOARD_SEARCH", 1, size)
+            if (size > 0) analyticsManager?.logValueAchieved("STORAGE_RECLAIMED", size)
             onDeleteSearchResult(uri)
         }
     }

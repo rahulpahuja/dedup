@@ -132,6 +132,10 @@ class FileScannerViewModel(
             _files.value = currentFiles
             findDuplicates(currentFiles)
             analyticsManager?.logFilesDeleted(scanTypeName, deletedUris.size, freedBytes)
+            analyticsManager?.logCleanupCompleted(scanTypeName, deletedUris.size, freedBytes)
+            if (freedBytes > 0) {
+                analyticsManager?.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
+            }
         }
     }
 

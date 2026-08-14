@@ -89,7 +89,8 @@ fun FileScannerScreen(
     fun triggerDelete(uris: List<Uri>) {
         if (uris.isEmpty()) return
         pendingDeleteUris = uris
-        
+        analyticsManager.logCleanupStarted(historyType, uris.size)
+
         try {
             uris.forEach { uri ->
                 context.contentResolver.delete(uri, null, null)

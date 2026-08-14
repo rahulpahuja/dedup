@@ -71,9 +71,14 @@ class WhatsAppCleanerViewModel(
                           current.data.redundantSentMedia
             
             val freedBytes = allFiles.filter { it.uri in removed }.distinctBy { it.uri }.sumOf { it.size }
-            
+
+            analyticsManager?.logCleanupStarted("WHATSAPP", uris.size)
             repository.deleteFiles(uris)
             analyticsManager?.logFilesDeleted("WHATSAPP", uris.size, freedBytes)
+            analyticsManager?.logCleanupCompleted("WHATSAPP", uris.size, freedBytes)
+            if (freedBytes > 0) {
+                analyticsManager?.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
+            }
 
             val updated = current.data.copy(
                 duplicateMedia = current.data.duplicateMedia

@@ -369,6 +369,10 @@ class VideoScannerViewModel(
             }
 
             analyticsManager?.logFilesDeleted("VIDEO", deletedUris.size, freedBytes)
+            analyticsManager?.logCleanupCompleted("VIDEO", deletedUris.size, freedBytes)
+            if (freedBytes > 0) {
+                analyticsManager?.logValueAchieved("STORAGE_RECLAIMED", freedBytes)
+            }
         }
     }
 
