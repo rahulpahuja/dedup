@@ -435,7 +435,7 @@ class ChatViewModel(
                 suggestions = listOf("Show newest $label", "Show largest $label", "Find duplicates"),
             )
             wantsLargest && !hasType -> StorageQuery(
-                config      = FilterConfig(mediaTypes = setOf(MediaType.IMAGE, MediaType.VIDEO), sortBy = SortBy.SIZE, sortOrder = SortOrder.DESC),
+                config      = FilterConfig(mediaTypes = setOf(MediaType.IMAGE, MediaType.VIDEO, MediaType.DOCUMENT), sortBy = SortBy.SIZE, sortOrder = SortOrder.DESC),
                 limit       = n,
                 mode        = "list",
                 label       = "largest files",

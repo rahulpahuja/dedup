@@ -151,10 +151,16 @@ class FirebaseAuthManager(
             return null
         }
 
+        if (!NativeLib.isAvailable) {
+            Log.e(TAG, "Native library unavailable — cannot resolve Google server client ID")
+            toastManager.showLong("Google sign-in isn't available on this device right now.")
+            return null
+        }
+
         val credentialManager = CredentialManager.create(activity)
 
         val serverClientId = NativeLib().getGoogleWebClientId()
-        
+
         // Log basic configuration info to help debugging (Obfuscated Client ID)
         val obfuscatedClientId = if (serverClientId.length > 10) 
             "${serverClientId.take(5)}...${serverClientId.takeLast(5)}" else "invalid"

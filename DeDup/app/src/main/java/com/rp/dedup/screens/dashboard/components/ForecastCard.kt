@@ -1,5 +1,6 @@
 package com.rp.dedup.screens.dashboard.components
 
+import android.content.res.Configuration
 import android.text.format.DateUtils
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.*
@@ -18,12 +19,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rp.dedup.R
 import com.rp.dedup.core.model.ForecastConfidence
 import com.rp.dedup.core.model.StorageForecast
+import com.rp.dedup.ui.theme.DeDupTheme
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -110,5 +114,30 @@ fun ForecastCard(
                 }
             }
         }
+    }
+}
+
+private fun sampleForecast(daysRemaining: Int, confidence: ForecastConfidence) = StorageForecast(
+    daysRemaining = daysRemaining,
+    estimatedFullDate = Date(System.currentTimeMillis() + daysRemaining * 24L * 60 * 60 * 1000),
+    dailyUsageVelocity = 180L * 1024 * 1024,
+    confidence = confidence
+)
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun ForecastCardHealthyPreview() {
+    DeDupTheme {
+        ForecastCard(forecast = sampleForecast(daysRemaining = 45, confidence = ForecastConfidence.HIGH))
+    }
+}
+
+@Preview(showBackground = true, name = "Light Mode — Low Storage")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode — Low Storage")
+@Composable
+private fun ForecastCardLowStoragePreview() {
+    DeDupTheme {
+        ForecastCard(forecast = sampleForecast(daysRemaining = 3, confidence = ForecastConfidence.LOW))
     }
 }

@@ -72,9 +72,14 @@ class LocalStorageRepository(private val context: Context) {
             if (MediaType.AUDIO in filters.mediaTypes) {
                 addAll(queryMedia(audioUri(), MediaType.AUDIO, query, filters, order))
             }
-            // DOCUMENT always needs a mimeTypeFilter — querying all Files without one would return everything
-            if (MediaType.DOCUMENT in filters.mediaTypes && filters.mimeTypeFilter != null) {
-                addAll(queryMedia(filesUri(), MediaType.DOCUMENT, query, filters, order))
+            // DOCUMENT always needs a mimeTypeFilter — querying all Files without one would return
+            // everything, including images/videos/audio already covered above. Default to the
+            // application/* wildcard (PDFs, ZIPs, APKs, Office docs) when the caller didn't ask
+            // for a specific MIME type.
+            if (MediaType.DOCUMENT in filters.mediaTypes) {
+                val docFilters = if (filters.mimeTypeFilter == null)
+                    filters.copy(mimeTypeFilter = "application/%") else filters
+                addAll(queryMedia(filesUri(), MediaType.DOCUMENT, query, docFilters, order))
             }
         }.let { list ->
             // Re-sort the merged image+video list in memory to honour the user's sort intent

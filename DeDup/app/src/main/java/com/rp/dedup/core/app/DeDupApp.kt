@@ -21,11 +21,13 @@ class DeDupApp : Application() {
             // Native library already loaded or unavailable
         }
         FirebaseApp.initializeApp(applicationContext)
-        try {
-            FacebookSdk.setClientToken(NativeLib().getFacebookClientToken())
-            FacebookSdk.fullyInitialize()
-        } catch (_: UnsatisfiedLinkError) {
-            // Native lib not available in unit tests
+        if (NativeLib.isAvailable) {
+            try {
+                FacebookSdk.setClientToken(NativeLib().getFacebookClientToken())
+                FacebookSdk.fullyInitialize()
+            } catch (_: UnsatisfiedLinkError) {
+                // Native lib not available in unit tests
+            }
         }
 
         // Log Firebase Token for debugging and verify registration (Non-Prod only)

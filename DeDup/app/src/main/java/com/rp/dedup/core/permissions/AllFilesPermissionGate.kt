@@ -1,5 +1,6 @@
 package com.rp.dedup.core.permissions
 
+import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,10 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.rp.dedup.ui.theme.DeDupTheme
 
 /**
  * Special gate for the MANAGE_EXTERNAL_STORAGE permission (Android 11+).
@@ -133,5 +136,18 @@ private fun AllFilesDeniedCard(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun AllFilesDeniedCardPreview() {
+    DeDupTheme {
+        AllFilesDeniedCard(
+            title = "All Files Access Needed",
+            message = "DeDup needs permission to scan your entire storage for duplicate documents and APKs.",
+            onGrantClick = {}
+        )
     }
 }

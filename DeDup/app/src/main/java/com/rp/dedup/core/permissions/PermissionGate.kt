@@ -1,5 +1,6 @@
 package com.rp.dedup.core.permissions
 
+import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -13,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.rp.dedup.ui.theme.DeDupTheme
 
 /**
  * Renders [content] only after all [permissions] are granted.
@@ -206,5 +209,18 @@ private fun PermissionDeniedCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Light Mode")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@Composable
+private fun PermissionDeniedCardPreview() {
+    DeDupTheme {
+        PermissionDeniedCard(
+            title = "Gallery Access Needed",
+            message = "We need access to scan for duplicate images.",
+            onRetry = {}
+        )
     }
 }

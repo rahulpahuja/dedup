@@ -85,6 +85,16 @@ fun AiScanningAnimation(
                         radius = baseRadius * 3
                     )
 
+                    // Reads `progress` here (outside onDrawWithContent) so this Shader is only
+                    // rebuilt when progress actually changes (a handful of times per scan),
+                    // not on every rotation/pulse redraw frame (~60/sec) — building a new
+                    // SweepGradientShader per frame was the source of the reported jank.
+                    val sweepBrush = Brush.sweepGradient(
+                        0f to Color.Transparent,
+                        progress to orbitColor1,
+                        center = center
+                    )
+
                     onDrawWithContent {
                         // Background Glow
                         drawCircle(brush = glowBrush, radius = baseRadius * 3, center = center)
@@ -115,13 +125,9 @@ fun AiScanningAnimation(
                             )
                         }
 
-                        // Progress Sweep (Uses standard draw because gradient changes with rotation/progress)
+                        // Progress Sweep
                         drawArc(
-                            brush = Brush.sweepGradient(
-                                0f to Color.Transparent,
-                                progress to orbitColor1,
-                                center = center
-                            ),
+                            brush = sweepBrush,
                             startAngle = -90f,
                             sweepAngle = 360f * progress,
                             useCenter = false,
