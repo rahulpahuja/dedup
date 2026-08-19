@@ -106,6 +106,8 @@
     <string name="scanner_header">स्कैनर</string>
     <string name="scanned_videos_summary">%1$d वीडियो स्कैन किए गए · %2$d समूह मिले</string>
     <string name="analyzing_videos">डुप्लिकेट के लिए वीडियो का विश्लेषण किया जा रहा है…</string>
+    <string name="scan_progress_percent">स्कैन हो रहा है… %1$d%%</string>
+    <string name="scan_progress_count">%2$d में से %1$d</string>
     <string name="no_video_duplicates">कोई डुप्लिकेट नहीं मिला। स्कैन पर टैप करें।</string>
     <string name="duplicate_group_items">डुप्लिकेट समूह (%1$d आइटम)</string>
     <string name="play">चलाएं</string>

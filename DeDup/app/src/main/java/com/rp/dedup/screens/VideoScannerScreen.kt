@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit
 import androidx.core.content.FileProvider
 import java.io.File
 import com.rp.dedup.core.ui.DeDupTopBar
+import com.rp.dedup.core.ui.ScanProgressBar
 import android.content.res.Configuration
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +69,7 @@ fun VideoScannerScreen(navController: NavHostController) {
     val duplicateGroups by viewModel.duplicateGroups.collectAsState()
     val isScanning by viewModel.isScanning.collectAsState()
     val scannedCount by viewModel.scannedCount.collectAsState()
+    val totalCount by viewModel.totalCount.collectAsState()
     val cacheLoaded by viewModel.cacheLoaded.collectAsState()
     val resumedCount by viewModel.resumedCount.collectAsState()
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
@@ -366,6 +368,11 @@ fun VideoScannerScreen(navController: NavHostController) {
             }
 
             if (isScanning && duplicateGroups.isEmpty()) {
+                ScanProgressBar(
+                    scannedCount = scannedCount,
+                    totalCount = totalCount,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -400,7 +407,10 @@ fun VideoScannerScreen(navController: NavHostController) {
                 }
             } else {
                 if (isScanning) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    ScanProgressBar(
+                        scannedCount = scannedCount,
+                        totalCount = totalCount
+                    )
                 }
 
                 val videoPageSize = 5

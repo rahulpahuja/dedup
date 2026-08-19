@@ -47,6 +47,12 @@ class ScannerViewModel(
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
+    private val _totalCount = MutableStateFlow(0)
+    val totalCount: StateFlow<Int> = _totalCount.asStateFlow()
+
+    private val _scannedCount = MutableStateFlow(0)
+    val scannedCount: StateFlow<Int> = _scannedCount.asStateFlow()
+
     private val _isStale = MutableStateFlow(false)
     val isStale: StateFlow<Boolean> = _isStale.asStateFlow()
 
@@ -62,6 +68,11 @@ class ScannerViewModel(
 
     private var similarityThreshold = 6
     private var excludedFolders = emptyList<String>()
+
+    // Image decode + hash is IO-bound, so concurrency can safely exceed CPU core count.
+    // Capped at 12 to avoid unbounded memory pressure from many in-flight bitmaps on
+    // very high-core devices.
+    private val imageScanConcurrency = (Runtime.getRuntime().availableProcessors() * 2).coerceIn(4, 12)
 
     init {
         viewModelScope.launch(ioDispatcher) {
@@ -92,6 +103,28 @@ class ScannerViewModel(
         return maxModifiedSec * 1000L > lastScanMs
     }
 
+    /** Quick row count for the progress denominator — no bitmap decoding involved. */
+    private fun countTotalImages(excludedFolders: List<String>): Int {
+        if (excludedFolders.isEmpty()) {
+            return context.contentResolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                arrayOf("COUNT(*)"), null, null, null
+            )?.use { cursor -> if (cursor.moveToFirst()) cursor.getInt(0) else 0 } ?: 0
+        }
+        var count = 0
+        context.contentResolver.query(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            arrayOf(MediaStore.Images.Media.DATA), null, null, null
+        )?.use { cursor ->
+            val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            while (cursor.moveToNext()) {
+                val path = cursor.getString(dataColumn) ?: ""
+                if (excludedFolders.none { path.startsWith(it) }) count++
+            }
+        }
+        return count
+    }
+
     private fun queryMaxMediaStoreModified(): Long {
         val projection = arrayOf("MAX(${MediaStore.Images.Media.DATE_MODIFIED})")
         return context.contentResolver.query(
@@ -109,6 +142,8 @@ class ScannerViewModel(
         _isScanning.value = true
         synchronized(groupsLock) { allScannedGroups.clear() }
         _duplicateGroups.value = emptyList()
+        _totalCount.value = 0
+        _scannedCount.value = 0
 
         analyticsManager?.logScanStarted("IMAGE")
 
@@ -122,11 +157,20 @@ class ScannerViewModel(
                         .map { if (it.isEmpty()) emptyList() else it.split(",") }.first()
                 }
 
+                // Runs on the same dispatcher as the (also blocking) MediaStore query
+                // scanImagesInParallel performs below — no dispatcher hop needed here.
+                _totalCount.value = countTotalImages(excludedFolders)
+
                 val batchBuffer = mutableListOf<ScannedImage>()
                 var lastUiUpdateTime = System.currentTimeMillis()
+                var processedCount = 0
 
-                repository.scanImagesInParallel(concurrencyLevel = 4, excludedFolders = excludedFolders).collect { newImage ->
+                repository.scanImagesInParallel(
+                    concurrencyLevel = imageScanConcurrency,
+                    excludedFolders = excludedFolders
+                ).collect { newImage ->
                     batchBuffer.add(newImage)
+                    processedCount++
 
                     if (batchBuffer.size >= 20) {
                         processBatch(batchBuffer)
@@ -139,6 +183,7 @@ class ScannerViewModel(
                                     .filter { it.size > 1 }
                                     .map { it.toList() }
                             }
+                            _scannedCount.value = processedCount
                             lastUiUpdateTime = currentTime
                         }
                     }
@@ -147,6 +192,7 @@ class ScannerViewModel(
                 if (batchBuffer.isNotEmpty()) {
                     processBatch(batchBuffer)
                 }
+                _scannedCount.value = processedCount
 
                 val groupsToAnalyze = synchronized(groupsLock) {
                     allScannedGroups.values

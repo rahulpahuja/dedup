@@ -13,7 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue
  */
 object BitmapPool {
     // 2× the scan concurrency level so threads rarely need to allocate fresh bitmaps.
-    private const val POOL_SIZE = 8
+    private const val POOL_SIZE = 16
     private val pool = ArrayBlockingQueue<Bitmap>(POOL_SIZE)
 
     fun acquire(width: Int, height: Int, config: Bitmap.Config): Bitmap {

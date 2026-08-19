@@ -2,6 +2,7 @@ package com.rp.dedup.core.repository
 
 import android.content.ContentUris
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import com.rp.dedup.core.common.Constants.EMPTY_STRING
@@ -9,13 +10,35 @@ import com.rp.dedup.core.model.ScannedVideo
 import com.rp.dedup.core.common.VideoExtensions
 import com.rp.dedup.core.video.VideoFrameHasher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withTimeoutOrNull
 
 class VideoScannerRepository(private val context: Context) : IVideoScannerRepository {
 
+    companion object {
+        // Frame extraction (MediaMetadataRetriever) is the slow step. Running several
+        // videos concurrently — instead of one at a time — is what actually makes the
+        // scan fast; most hardware decoders comfortably support this many concurrent
+        // sessions without starving any single one.
+        private const val SCAN_CONCURRENCY = 3
+
+        // Guards against a single corrupt/DRM-protected/unreadable video hanging its
+        // MediaMetadataRetriever call forever and stalling the whole scan (the main
+        // source of "scan gets stuck" reports).
+        private const val FRAME_HASH_TIMEOUT_MS = 8_000L
+    }
+
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     override fun scanVideos(deepScan: Boolean): Flow<ScannedVideo> = flow {
+        val videoQueue = mutableListOf<VideoMeta>()
+
         val projection = buildList {
             add(MediaStore.Video.Media._ID)
             add(MediaStore.Video.Media.DISPLAY_NAME)
@@ -62,24 +85,48 @@ class VideoScannerRepository(private val context: Context) : IVideoScannerReposi
                 }
                 val uri = ContentUris.withAppendedId(baseUri, id)
 
-                val frameHashes = if (deepScan && duration > 0) {
-                    VideoFrameHasher.calculateFrameHashes(context, uri, duration)
-                } else {
-                    emptyList()
-                }
-
-                emit(
-                    ScannedVideo(
-                        uri = uri,
-                        name = name,
-                        sizeInBytes = size,
-                        durationMs = duration,
-                        mimeType = mimeType,
-                        frameHashes = frameHashes,
-                        path = path
-                    )
-                )
+                videoQueue.add(VideoMeta(uri, name, size, duration, mimeType, path))
             }
         }
+
+        val hashingFlow = videoQueue.asFlow()
+            .flatMapMerge(concurrency = SCAN_CONCURRENCY) { meta ->
+                flow {
+                    val frameHashes = if (deepScan && meta.duration > 0) {
+                        try {
+                            withTimeoutOrNull(FRAME_HASH_TIMEOUT_MS) {
+                                VideoFrameHasher.calculateFrameHashes(context, meta.uri, meta.duration)
+                            } ?: emptyList()
+                        } catch (e: Exception) {
+                            emptyList()
+                        }
+                    } else {
+                        emptyList()
+                    }
+
+                    emit(
+                        ScannedVideo(
+                            uri = meta.uri,
+                            name = meta.name,
+                            sizeInBytes = meta.size,
+                            durationMs = meta.duration,
+                            mimeType = meta.mimeType,
+                            frameHashes = frameHashes,
+                            path = meta.path
+                        )
+                    )
+                }
+            }
+
+        emitAll(hashingFlow)
     }.flowOn(Dispatchers.IO)
+
+    private data class VideoMeta(
+        val uri: Uri,
+        val name: String,
+        val size: Long,
+        val duration: Long,
+        val mimeType: String,
+        val path: String?
+    )
 }

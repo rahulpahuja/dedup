@@ -69,13 +69,13 @@ class BitmapPoolTest {
 
     @Test
     fun `release recycles bitmap when pool is full`() {
-        // Fill the pool to its max size (8)
-        val bitmaps = (0 until 8).map {
+        // Fill the pool to its max size (16)
+        val bitmaps = (0 until 16).map {
             mockk<Bitmap>(relaxed = true).also { b -> every { b.isRecycled } returns false }
         }
         bitmaps.forEach { BitmapPool.release(it) }
 
-        // The 9th bitmap should be recycled
+        // The 17th bitmap should be recycled
         val overflow = mockk<Bitmap>(relaxed = true)
         every { overflow.isRecycled } returns false
         BitmapPool.release(overflow)

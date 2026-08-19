@@ -41,7 +41,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -80,6 +79,7 @@ import com.rp.dedup.ui.theme.DeDupTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.rp.dedup.core.ui.DeDupTopBar
+import com.rp.dedup.core.ui.ScanProgressBar
 import android.content.res.Configuration
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,6 +100,8 @@ fun ImageScannerScreen(navController: NavHostController) {
     val isScanning by viewModel.isScanning.collectAsState()
     val isStale by viewModel.isStale.collectAsState()
     val cacheLoaded by viewModel.cacheLoaded.collectAsState()
+    val scannedCount by viewModel.scannedCount.collectAsState()
+    val totalCount by viewModel.totalCount.collectAsState()
     val analyticsManager = remember { com.rp.dedup.core.analytics.AnalyticsManager.getInstance(context) }
 
     com.rp.dedup.core.analytics.TrackFeatureUsage("ImageScanner")
@@ -294,7 +296,7 @@ fun ImageScannerScreen(navController: NavHostController) {
                 )
 
                 if (isScanning) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    ScanProgressBar(scannedCount = scannedCount, totalCount = totalCount)
                 }
 
                 if (isStale && !isScanning && hasResults) {

@@ -109,6 +109,8 @@
     <string name="scanner_header">Scanner</string>
     <string name="scanned_videos_summary">Scanned %1$d videos · %2$d groups found</string>
     <string name="analyzing_videos">Analyzing videos for duplicates…</string>
+    <string name="scan_progress_percent">Scanning… %1$d%%</string>
+    <string name="scan_progress_count">%1$d of %2$d</string>
     <string name="no_video_duplicates">No duplicates found. Tap Scan.</string>
     <string name="duplicate_group_items">Duplicate Group (%1$d items)</string>
     <string name="play">Play</string>

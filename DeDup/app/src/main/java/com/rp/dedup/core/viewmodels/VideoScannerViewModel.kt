@@ -2,9 +2,11 @@ package com.rp.dedup.core.viewmodels
 
 import android.content.Context
 import android.net.Uri
+import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.rp.dedup.core.common.VideoExtensions
 import com.rp.dedup.core.db.AppDatabase
 import com.rp.dedup.core.repository.VideoScannerRepository
 import com.rp.dedup.core.model.ScanHistory
@@ -35,7 +37,10 @@ class VideoScannerViewModel(
     private val historyRepository: ScanHistoryRepository? = null,
     private val analyticsManager: AnalyticsManager? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    // Optional: only used to compute the progress-bar denominator via a lightweight
+    // MediaStore count query. Left null in tests that don't care about progress totals.
+    private val context: Context? = null
 ) : ViewModel() {
 
     private val _duplicateGroups = MutableStateFlow<List<List<ScannedVideo>>>(emptyList())
@@ -49,6 +54,9 @@ class VideoScannerViewModel(
 
     private val _scannedCount = MutableStateFlow(0)
     val scannedCount: StateFlow<Int> = _scannedCount.asStateFlow()
+
+    private val _totalCount = MutableStateFlow(0)
+    val totalCount: StateFlow<Int> = _totalCount.asStateFlow()
 
     /** True once the initial cache-load attempt has finished (whether results exist or not). */
     private val _cacheLoaded = MutableStateFlow(false)
@@ -104,6 +112,10 @@ class VideoScannerViewModel(
                 videoRepository?.getScannedUris() ?: emptySet()
             }
             _resumedCount.value = alreadyScannedUris.size
+
+            context?.let { ctx ->
+                _totalCount.value = withContext(ioDispatcher) { countTotalVideos(ctx) }
+            }
 
             analyticsManager?.logScanStarted("VIDEO")
 
@@ -208,6 +220,23 @@ class VideoScannerViewModel(
                 _cacheLoaded.value = true
             }
         }
+    }
+
+    /** Quick row count for the progress denominator — no frame extraction involved. */
+    private fun countTotalVideos(ctx: Context): Int {
+        var count = 0
+        ctx.contentResolver.query(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            arrayOf(MediaStore.Video.Media.DISPLAY_NAME), null, null, null
+        )?.use { cursor ->
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+            while (cursor.moveToNext()) {
+                val name = cursor.getString(nameColumn) ?: continue
+                val extension = name.substringAfterLast('.', "").lowercase()
+                if (extension in VideoExtensions.list) count++
+            }
+        }
+        return count
     }
 
     // ── Persistence helpers ─────────────────────────────────────────────────
@@ -379,12 +408,14 @@ class VideoScannerViewModel(
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            val db = AppDatabase.getDatabase(context)
+            val appContext = context.applicationContext
+            val db = AppDatabase.getDatabase(appContext)
             return VideoScannerViewModel(
-                repository = VideoScannerRepository(context),
+                repository = VideoScannerRepository(appContext),
                 videoRepository = ScannedVideoRepository(db.scannedVideoDao()),
                 historyRepository = ScanHistoryRepository(db.scanHistoryDao()),
-                analyticsManager = AnalyticsManager.getInstance(context)
+                analyticsManager = AnalyticsManager.getInstance(appContext),
+                context = appContext
             ) as T
         }
     }
